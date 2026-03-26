@@ -2,3 +2,5 @@ openenv
 anthropic
 supabase
 python-dotenv
+fastapi
+uvicorn

@@ -1,0 +1,22 @@
+# openenv.yaml
+# Metadata for the Autonomous SaaS Factory Environment
+
+# The name of the environment
+name: "AutonomousSaaSFactory"
+
+# A brief, one-line description of the environment
+description: "An OpenEnv environment that simulates a real-world SaaS development workflow, from feature request to deployment."
+
+# The version of the environment
+version: "0.1.0"
+
+# The author of the environment
+author: "AI Agent Team"
+
+# A list of keywords that describe the environment
+tags:
+  - "software-development"
+  - "backend"
+  - "api"
+  - "deployment"
+  - "supabase"

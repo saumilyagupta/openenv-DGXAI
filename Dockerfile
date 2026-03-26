@@ -15,4 +15,4 @@ COPY src/ .
 
 # Specify the command to run on container start
 # This will eventually run our main orchestrator script
-CMD ["python", "orchestrator/main.py"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
