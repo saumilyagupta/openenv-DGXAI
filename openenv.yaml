@@ -1,11 +1,11 @@
 # openenv.yaml
-# Metadata for the Autonomous SaaS Factory Environment
+# Metadata for the OpenRange Cybersecurity Simulation Environment
 
 # The name of the environment
-name: "AutonomousSaaSFactory"
+name: "OpenRangeCyber"
 
 # A brief, one-line description of the environment
-description: "An OpenEnv environment that simulates a real-world SaaS development workflow, from feature request to deployment."
+description: "An OpenEnv environment simulating a Red vs. Blue team cybersecurity exercise."
 
 # The version of the environment
 version: "0.1.0"
@@ -15,8 +15,8 @@ author: "AI Agent Team"
 
 # A list of keywords that describe the environment
 tags:
-  - "software-development"
-  - "backend"
-  - "api"
-  - "deployment"
-  - "supabase"
+  - "cybersecurity"
+  - "network-security"
+  - "red-team"
+  - "blue-team"
+  - "simulation"
