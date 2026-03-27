@@ -1,3 +1,12 @@
+---
+title: OpenRange Cyber Gym
+emoji: 🛡️
+colorFrom: red
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
 # OpenRange Cyber Gym
 
 **OpenRange** is an OpenEnv environment that simulates a "Red vs. Blue" cybersecurity exercise.
