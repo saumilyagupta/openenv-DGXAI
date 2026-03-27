@@ -10,9 +10,8 @@ COPY requirements.txt .
 # Install any dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the content of the local src directory to the working directory
-COPY src/ .
+# Copy the src directory into the container
+COPY src/ ./src/
 
 # Specify the command to run on container start
-# This will eventually run our main orchestrator script
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

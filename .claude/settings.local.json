@@ -7,7 +7,8 @@
       "Glob",
       "Grep",
       "Bash",
-      "WebFetch(domain:www.scaler.com)"
+      "WebFetch(domain:www.scaler.com)",
+      "WebSearch"
     ]
   }
 }
