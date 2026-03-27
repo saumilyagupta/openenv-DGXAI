@@ -56,7 +56,12 @@ class CyberSimulation:
             return {}, -0.1, "Invalid action.", f"Unknown action type: {action_type}"
 
     def _handle_scan(self, target_ip: str) -> Tuple[Dict[str, Any], float, str, str]:
-        self.discovered_nodes.add(target_ip)
+        # Reward Hacking Fix: Only reward if it's a NEW discovery
+        reward = 0.0
+        if target_ip not in self.discovered_nodes:
+            reward = 0.3
+            self.discovered_nodes.add(target_ip)
+
         node_info = self.network[target_ip]
 
         scan_results = {
@@ -71,11 +76,11 @@ class CyberSimulation:
                 "version": details["version"]
             })
 
-        reward = 0.3 # Reward for successful mapping
         return {"scan_results": scan_results}, reward, f"Scan completed for {target_ip}", None
 
     def _handle_exploit(self, target_ip: str, port: int, payload_type: str) -> Tuple[Dict[str, Any], float, str, str]:
         if self.access_levels[target_ip] in ["user", "root"]:
+            # Reward Hacking Fix: Don't reward exploiting a machine we already own
             return {}, 0.0, "Already have access.", "You already have access to this machine."
 
         node_info = self.network[target_ip]
@@ -100,6 +105,7 @@ class CyberSimulation:
             return {}, -0.1, "Escalation failed.", "You need user access first before escalating."
 
         if self.access_levels[target_ip] == "root":
+            # Reward Hacking Fix: Don't reward escalating a machine we already have root on
             return {}, 0.0, "Already root.", "You already have root access."
 
         node_info = self.network[target_ip]
