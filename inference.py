@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BASE_URL = "http://localhost:8000"
+# We need to target the port we just configured for Uvicorn
+BASE_URL = "http://localhost:7860"
 
 def run_agent_on_task(task_id: int, max_steps: int = 10):
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -92,7 +93,7 @@ if __name__ == "__main__":
         except:
             print("Starting local server...")
             import subprocess
-            server_process = subprocess.Popen(["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"])
+            server_process = subprocess.Popen(["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "7860"])
             time.sleep(3) # Wait for server to boot
 
         scores = {}
