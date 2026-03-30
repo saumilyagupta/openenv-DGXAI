@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 import logging
 import os
 from openenv.core.env_server.http_server import create_app
@@ -14,6 +14,21 @@ logging.basicConfig(
 )
 
 app = create_app(lambda: EpistemicNavEnvironment(), EpistemicAction, EpistemicObservation)
+
+
+@app.get("/")
+def root() -> dict:
+    return {
+        "name": "epistemic-nav",
+        "status": "ok",
+        "docs": "/docs",
+    }
+
+
+@app.get("/favicon.ico")
+def favicon() -> Response:
+    # Avoid noisy 404 logs from browser favicon requests.
+    return Response(status_code=204)
 
 def main():
     import uvicorn
