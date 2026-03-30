@@ -1,5 +1,6 @@
 import uuid
 import random
+import logging
 from typing import Dict, Any, Optional
 
 from openenv.core.env_server.interfaces import Environment
@@ -7,6 +8,8 @@ from models import EpistemicAction, EpistemicObservation, ActionType, EvidenceSn
 from server.retriever import BM25Retriever
 from server.grader import compute_reward
 import json
+
+logger = logging.getLogger(__name__)
 
 
 class EpistemicNavEnvironment(Environment):
@@ -44,6 +47,13 @@ class EpistemicNavEnvironment(Environment):
         self.evidence_gathered = []
         self.budget_remaining = self.max_budget
         self.episode_id = str(uuid.uuid4())
+        logger.info(
+            "episode_reset id=%s task_level=%s claim_id=%s budget=%s",
+            self.episode_id,
+            task_level,
+            self.current_claim.get("id", "unknown"),
+            self.budget_remaining,
+        )
 
         return self._get_observation()
 
@@ -55,6 +65,10 @@ class EpistemicNavEnvironment(Environment):
     ) -> EpistemicObservation:
         if self.budget_remaining <= 0 and action.action_type != ActionType.COMMIT:
             # Force commit if budget is 0
+            logger.info(
+                "budget_exhausted id=%s forcing_commit verdict=uncertain confidence=0.5",
+                self.episode_id,
+            )
             action = EpistemicAction(
                 action_type=ActionType.COMMIT,
                 verdict="uncertain",
@@ -66,6 +80,7 @@ class EpistemicNavEnvironment(Environment):
 
         if action.action_type == ActionType.QUERY:
             self.budget_remaining -= 1
+            added_snippets = 0
             if action.query_text:
                 results = self.retriever.search(action.query_text)
                 for res in results:
@@ -77,9 +92,20 @@ class EpistemicNavEnvironment(Environment):
                     # avoid exact duplicates
                     if not any(e.id == snippet.id for e in self.evidence_gathered):
                         self.evidence_gathered.append(snippet)
+                        added_snippets += 1
 
             reward = 0.0
             done = False
+            logger.info(
+                "episode_step id=%s action=query query=%r added_evidence=%s total_evidence=%s budget_remaining=%s reward=%.3f done=%s",
+                self.episode_id,
+                action.query_text or "",
+                added_snippets,
+                len(self.evidence_gathered),
+                self.budget_remaining,
+                reward,
+                done,
+            )
 
         elif action.action_type == ActionType.COMMIT:
             ground_truth = self.current_claim.get("ground_truth", "uncertain")
@@ -91,6 +117,16 @@ class EpistemicNavEnvironment(Environment):
                 max_budget=self.max_budget
             )
             done = True
+            logger.info(
+                "episode_step id=%s action=commit verdict=%s confidence=%.3f ground_truth=%s budget_remaining=%s reward=%.3f done=%s",
+                self.episode_id,
+                action.verdict or "uncertain",
+                action.confidence if action.confidence is not None else 0.5,
+                ground_truth,
+                self.budget_remaining,
+                reward,
+                done,
+            )
 
         obs = self._get_observation(is_done=done, last_reward=reward)
         obs.done = done
