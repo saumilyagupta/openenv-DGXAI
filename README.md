@@ -1,3 +1,12 @@
+---
+title: EpistemicNav
+emoji: 🧭
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+---
+
 # EpistemicNav — Adaptive Inquiry Agent Environment
 
 An RL environment that trains LLM agents to reason accurately under uncertainty — rewarding calibrated confidence, not just correct answers.
