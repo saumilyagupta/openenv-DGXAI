@@ -1,22 +1,22 @@
-# openenv.yaml
-# Metadata for the OpenRange Cybersecurity Simulation Environment
-
-# The name of the environment
-name: "OpenRangeCyber"
-
-# A brief, one-line description of the environment
-description: "An OpenEnv environment simulating a Red vs. Blue team cybersecurity exercise."
-
-# The version of the environment
-version: "0.1.0"
-
-# The author of the environment
-author: "AI Agent Team"
-
-# A list of keywords that describe the environment
-tags:
-  - "cybersecurity"
-  - "network-security"
-  - "red-team"
-  - "blue-team"
-  - "simulation"
+name: epistemic-nav
+version: 0.1.0
+description: >
+  RL environment for training agents to reason accurately under uncertainty.
+  Agents gather evidence via BM25 search, then commit a verdict with a confidence
+  score. Rewarded by Brier score — calibrated confidence matters as much as
+  getting the answer right.
+author: your-hf-username
+tasks:
+  - id: single_hop
+    description: Single-hop factual claim. One query sufficient.
+    difficulty: easy
+  - id: multi_hop
+    description: Multi-hop claim requiring evidence synthesis.
+    difficulty: medium
+  - id: contradictory
+    description: Contradictory evidence. Correct answer is uncertain.
+    difficulty: hard
+max_budget: 8
+reward_range: [0.0, 1.0]
+hf_space: your-username/epistemic-nav
+python_requires: ">=3.10"

@@ -1,0 +1,499 @@
+[
+  {
+    "id": "ev_1_6ef0",
+    "text": "Water boils at 100 degrees Celsius (212\u00b0F) at sea level (1 atm pressure).",
+    "relevance_tags": [
+      "physics",
+      "water",
+      "boiling point"
+    ]
+  },
+  {
+    "id": "ev_2_5e94",
+    "text": "Standard atmospheric pressure is defined as 1 atmosphere (atm) or 101.325 kilopascals (kPa).",
+    "relevance_tags": [
+      "physics",
+      "atmospheric pressure"
+    ]
+  },
+  {
+    "id": "ev_3_f486",
+    "text": "The boiling point of water decreases with increasing altitude due to lower atmospheric pressure.",
+    "relevance_tags": [
+      "physics",
+      "water",
+      "boiling point",
+      "altitude"
+    ]
+  },
+  {
+    "id": "ev_4_e343",
+    "text": "At the summit of Mount Everest, water boils at approximately 71\u00b0C (160\u00b0F) due to significantly lower atmospheric pressure.",
+    "relevance_tags": [
+      "physics",
+      "water",
+      "boiling point",
+      "altitude",
+      "Mount Everest"
+    ]
+  },
+  {
+    "id": "ev_5_1e76",
+    "text": "The Earth is not a perfect sphere; it is more accurately described as an oblate spheroid.",
+    "relevance_tags": [
+      "astronomy",
+      "geography",
+      "Earth's shape"
+    ]
+  },
+  {
+    "id": "ev_6_0831",
+    "text": "An oblate spheroid is a sphere that is slightly flattened at the poles and bulges at the equator.",
+    "relevance_tags": [
+      "astronomy",
+      "geography",
+      "Earth's shape"
+    ]
+  },
+  {
+    "id": "ev_7_8491",
+    "text": "Earth's equatorial diameter is approximately 12,756 kilometers (7,926 miles).",
+    "relevance_tags": [
+      "astronomy",
+      "geography",
+      "Earth's dimensions"
+    ]
+  },
+  {
+    "id": "ev_8_afa0",
+    "text": "Earth's polar diameter is approximately 12,714 kilometers (7,900 miles), showing a measurable difference from its equatorial diameter.",
+    "relevance_tags": [
+      "astronomy",
+      "geography",
+      "Earth's dimensions"
+    ]
+  },
+  {
+    "id": "ev_9_e570",
+    "text": "The difference between Earth's equatorial and polar diameters is about 42 kilometers, indicating its non-spherical shape.",
+    "relevance_tags": [
+      "astronomy",
+      "geography",
+      "Earth's shape",
+      "dimensions"
+    ]
+  },
+  {
+    "id": "ev_10_40ee",
+    "text": "The Earth's rotation causes the centrifugal force that results in its equatorial bulge.",
+    "relevance_tags": [
+      "astronomy",
+      "geography",
+      "Earth's rotation",
+      "Earth's shape"
+    ]
+  },
+  {
+    "id": "ev_11_6879",
+    "text": "Paris has been the capital city of France for many centuries, serving as its political and cultural center.",
+    "relevance_tags": [
+      "geography",
+      "France",
+      "Paris",
+      "capital cities"
+    ]
+  },
+  {
+    "id": "ev_12_38e2",
+    "text": "The French government's primary administrative and political institutions, including the \u00c9lys\u00e9e Palace and Parliament, are based in Paris.",
+    "relevance_tags": [
+      "geography",
+      "France",
+      "Paris",
+      "government"
+    ]
+  },
+  {
+    "id": "ev_13_2f05",
+    "text": "The human heart consists of four distinct chambers: the right atrium, right ventricle, left atrium, and left ventricle.",
+    "relevance_tags": [
+      "biology",
+      "human anatomy",
+      "heart"
+    ]
+  },
+  {
+    "id": "ev_14_b5c4",
+    "text": "This four-chambered structure of the human heart ensures efficient separation of oxygenated and deoxygenated blood.",
+    "relevance_tags": [
+      "biology",
+      "human anatomy",
+      "heart",
+      "circulation"
+    ]
+  },
+  {
+    "id": "ev_15_9382",
+    "text": "Methuselah is a Great Basin Bristlecone Pine (Pinus longaeva) located in the White Mountains of California.",
+    "relevance_tags": [
+      "biology",
+      "botany",
+      "oldest organisms",
+      "trees"
+    ]
+  },
+  {
+    "id": "ev_16_35bc",
+    "text": "Dendrochronology has determined Methuselah's age to be approximately 4,856 years old as of 2024, germinating in 2832 BC.",
+    "relevance_tags": [
+      "biology",
+      "botany",
+      "oldest organisms",
+      "trees",
+      "dating"
+    ]
+  },
+  {
+    "id": "ev_17_9aea",
+    "text": "For decades, Methuselah was widely recognized as the oldest known living non-clonal individual organism on Earth.",
+    "relevance_tags": [
+      "biology",
+      "botany",
+      "oldest organisms",
+      "trees"
+    ]
+  },
+  {
+    "id": "ev_18_fe57",
+    "text": "In 2012, another unnamed Bristlecone Pine in the same area was discovered, estimated to be over 5,000 years old, surpassing Methuselah.",
+    "relevance_tags": [
+      "biology",
+      "botany",
+      "oldest organisms",
+      "trees",
+      "new discoveries"
+    ]
+  },
+  {
+    "id": "ev_19_fdd9",
+    "text": "The tree known as 'Prometheus,' a Bristlecone Pine older than Methuselah, was unfortunately cut down in 1964; its age was estimated at around 4,900-5,000 years.",
+    "relevance_tags": [
+      "biology",
+      "botany",
+      "oldest organisms",
+      "trees",
+      "history"
+    ]
+  },
+  {
+    "id": "ev_20_b5dd",
+    "text": "On December 8, 2020, China and Nepal jointly announced the official height of Mount Everest as 8,848.86 meters (29,031.7 feet) above sea level.",
+    "relevance_tags": [
+      "geography",
+      "Mount Everest",
+      "measurement",
+      "official data"
+    ]
+  },
+  {
+    "id": "ev_21_f048",
+    "text": "This joint measurement superseded the previous widely accepted height of 8,848 meters, which was established by India in 1954.",
+    "relevance_tags": [
+      "geography",
+      "Mount Everest",
+      "measurement",
+      "history"
+    ]
+  },
+  {
+    "id": "ev_22_46cc",
+    "text": "The 2020 measurement incorporated advanced surveying techniques including Global Positioning System (GPS), gravimetry, and ground-penetrating radar.",
+    "relevance_tags": [
+      "geography",
+      "Mount Everest",
+      "measurement",
+      "technology"
+    ]
+  },
+  {
+    "id": "ev_23_72cb",
+    "text": "Neil Armstrong became the first human to walk on the Moon on July 20, 1969, during the Apollo 11 mission.",
+    "relevance_tags": [
+      "space exploration",
+      "Apollo program",
+      "Moon landing",
+      "Neil Armstrong"
+    ]
+  },
+  {
+    "id": "ev_24_eca8",
+    "text": "Buzz Aldrin followed Neil Armstrong, becoming the second person to walk on the Moon during the same Apollo 11 mission.",
+    "relevance_tags": [
+      "space exploration",
+      "Apollo program",
+      "Moon landing",
+      "Buzz Aldrin"
+    ]
+  },
+  {
+    "id": "ev_25_a18d",
+    "text": "A total of twelve American astronauts walked on the Moon during the six successful Apollo missions (Apollo 11, 12, 14, 15, 16, 17).",
+    "relevance_tags": [
+      "space exploration",
+      "Apollo program",
+      "Moon landing",
+      "astronauts"
+    ]
+  },
+  {
+    "id": "ev_26_f0eb",
+    "text": "Pete Conrad and Alan Bean were the third and fourth humans to walk on the Moon, during the Apollo 12 mission in November 1969.",
+    "relevance_tags": [
+      "space exploration",
+      "Apollo program",
+      "Moon landing",
+      "astronauts"
+    ]
+  },
+  {
+    "id": "ev_27_40da",
+    "text": "Lunar Module Pilots David Scott and James Irwin conducted extensive geological exploration during their moonwalks on Apollo 15.",
+    "relevance_tags": [
+      "space exploration",
+      "Apollo program",
+      "Moon landing",
+      "astronauts"
+    ]
+  },
+  {
+    "id": "ev_28_a6c9",
+    "text": "Gene Cernan and Harrison Schmitt, part of Apollo 17 in December 1972, were the last humans to walk on the lunar surface.",
+    "relevance_tags": [
+      "space exploration",
+      "Apollo program",
+      "Moon landing",
+      "astronauts"
+    ]
+  },
+  {
+    "id": "ev_29_5312",
+    "text": "All lunar Extravehicular Activities (EVAs), including walking on the Moon, were performed exclusively by American astronauts.",
+    "relevance_tags": [
+      "space exploration",
+      "Apollo program",
+      "Moon landing",
+      "astronauts"
+    ]
+  },
+  {
+    "id": "ev_30_04bb",
+    "text": "In 1802, Humphry Davy demonstrated an electric arc lamp, creating light by passing current between two charcoal electrodes.",
+    "relevance_tags": [
+      "invention",
+      "electricity",
+      "lighting",
+      "Humphry Davy"
+    ]
+  },
+  {
+    "id": "ev_31_38e5",
+    "text": "Davy's arc lamp, while producing brilliant light, was not a practical or long-lasting solution for general illumination due to its intensity and rapid consumption of electrodes.",
+    "relevance_tags": [
+      "invention",
+      "electricity",
+      "lighting",
+      "Humphry Davy",
+      "limitations"
+    ]
+  },
+  {
+    "id": "ev_32_a28b",
+    "text": "Thomas Edison patented his commercially successful incandescent light bulb with a durable, carbonized bamboo filament in 1879.",
+    "relevance_tags": [
+      "invention",
+      "electricity",
+      "lighting",
+      "Thomas Edison"
+    ]
+  },
+  {
+    "id": "ev_33_5d98",
+    "text": "Edison's contributions focused on developing a reliable, affordable, and practical incandescent bulb suitable for widespread home and industrial use.",
+    "relevance_tags": [
+      "invention",
+      "electricity",
+      "lighting",
+      "Thomas Edison",
+      "commercialization"
+    ]
+  },
+  {
+    "id": "ev_34_e303",
+    "text": "Joseph Swan, a British inventor, developed an incandescent light bulb with a carbonized paper filament and vacuum-sealed glass bulb as early as 1860.",
+    "relevance_tags": [
+      "invention",
+      "electricity",
+      "lighting",
+      "Joseph Swan"
+    ]
+  },
+  {
+    "id": "ev_35_32ba",
+    "text": "The development of the electric light bulb was a process of incremental improvements by numerous inventors over many decades, rather than a single 'first' invention.",
+    "relevance_tags": [
+      "invention",
+      "electricity",
+      "lighting",
+      "history of technology"
+    ]
+  },
+  {
+    "id": "ev_36_e982",
+    "text": "In August 2006, the International Astronomical Union (IAU) voted to reclassify Pluto as a 'dwarf planet.'",
+    "relevance_tags": [
+      "astronomy",
+      "Pluto",
+      "IAU",
+      "dwarf planet"
+    ]
+  },
+  {
+    "id": "ev_37_8d18",
+    "text": "The IAU defined a planet as a celestial body that orbits the Sun, is nearly round, and has cleared its orbital path of other debris.",
+    "relevance_tags": [
+      "astronomy",
+      "planet definition",
+      "IAU"
+    ]
+  },
+  {
+    "id": "ev_38_2dd8",
+    "text": "Pluto met the first two criteria but failed the third, as it shares its orbital region with many other Kuiper Belt objects.",
+    "relevance_tags": [
+      "astronomy",
+      "Pluto",
+      "dwarf planet",
+      "Kuiper Belt"
+    ]
+  },
+  {
+    "id": "ev_39_0b23",
+    "text": "The decision to reclassify Pluto was, and remains, a contentious issue within the astronomical community, with many scientists disagreeing with the IAU's definition.",
+    "relevance_tags": [
+      "astronomy",
+      "Pluto",
+      "IAU",
+      "scientific debate"
+    ]
+  },
+  {
+    "id": "ev_40_4eae",
+    "text": "Many planetary scientists argue that the IAU's definition is flawed and does not adequately account for geological activity or intrinsic properties of celestial bodies like Pluto.",
+    "relevance_tags": [
+      "astronomy",
+      "Pluto",
+      "scientific debate",
+      "planet definition"
+    ]
+  },
+  {
+    "id": "ev_41_42ed",
+    "text": "Some astronomers advocate for a geophysical definition of a planet, focusing on a body's internal geological processes and spherical shape, which Pluto would meet.",
+    "relevance_tags": [
+      "astronomy",
+      "Pluto",
+      "scientific debate",
+      "planet definition"
+    ]
+  },
+  {
+    "id": "ev_42_75ad",
+    "text": "The discovery of Eris, a Kuiper Belt object more massive than Pluto, prompted the IAU to establish clearer definitions for planets and dwarf planets.",
+    "relevance_tags": [
+      "astronomy",
+      "Pluto",
+      "Eris",
+      "Kuiper Belt",
+      "IAU"
+    ]
+  },
+  {
+    "id": "ev_43_6a78",
+    "text": "Napoleon Bonaparte's height was officially recorded at his autopsy as 5 feet 2 inches (French measure, pied et pouce).",
+    "relevance_tags": [
+      "history",
+      "Napoleon",
+      "biography",
+      "height"
+    ]
+  },
+  {
+    "id": "ev_44_bf70",
+    "text": "One French pied was equivalent to approximately 32.48 centimeters, while an English foot was 30.48 centimeters, leading to confusion in historical records.",
+    "relevance_tags": [
+      "history",
+      "measurement units",
+      "Napoleon"
+    ]
+  },
+  {
+    "id": "ev_45_b65d",
+    "text": "When converted to modern metric measurements, Napoleon's height was approximately 1.68 meters, or 5 feet 6 inches (English measure).",
+    "relevance_tags": [
+      "history",
+      "Napoleon",
+      "height",
+      "measurement conversion"
+    ]
+  },
+  {
+    "id": "ev_46_ae7e",
+    "text": "The average height for a French man in the early 19th century was estimated to be around 1.67 meters (5 feet 5.75 inches).",
+    "relevance_tags": [
+      "history",
+      "social history",
+      "height",
+      "Napoleon"
+    ]
+  },
+  {
+    "id": "ev_47_3bf9",
+    "text": "This data indicates that Napoleon was of average height or slightly taller than average for his era, not significantly shorter.",
+    "relevance_tags": [
+      "history",
+      "Napoleon",
+      "height",
+      "myth debunking"
+    ]
+  },
+  {
+    "id": "ev_48_8445",
+    "text": "The notion of Napoleon being unusually short was largely propagated by British political caricatures during his lifetime as a form of propaganda.",
+    "relevance_tags": [
+      "history",
+      "Napoleon",
+      "propaganda",
+      "myth origin"
+    ]
+  },
+  {
+    "id": "ev_49_5561",
+    "text": "The term 'Napoleon complex,' describing aggressive behavior or a domineering attitude in short individuals, is considered a psychological misconception often debunked by research.",
+    "relevance_tags": [
+      "psychology",
+      "social psychology",
+      "Napoleon complex",
+      "myth debunking"
+    ]
+  },
+  {
+    "id": "ev_50_3d3d",
+    "text": "British satirists like James Gillray frequently depicted Napoleon as diminutive and childish to mock and undermine his stature and authority.",
+    "relevance_tags": [
+      "history",
+      "Napoleon",
+      "propaganda",
+      "caricatures"
+    ]
+  }
+]

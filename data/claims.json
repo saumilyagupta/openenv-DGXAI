@@ -1,0 +1,106 @@
+[
+  {
+    "id": "claim_1_8eb8",
+    "text": "The boiling point of water at standard atmospheric pressure is 100\u00b0C.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "physics",
+      "water"
+    ]
+  },
+  {
+    "id": "claim_2_bc17",
+    "text": "Earth is perfectly spherical.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_3_f425",
+    "text": "Paris is the capital city of France.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_4_f1b4",
+    "text": "The human heart typically has four chambers.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "anatomy"
+    ]
+  },
+  {
+    "id": "claim_5_3f5b",
+    "text": "One of the oldest known non-clonal organisms on Earth is a Bristlecone Pine named Methuselah, which is over 4,800 years old.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "biology",
+      "botany",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_6_68f7",
+    "text": "Mount Everest's official height, as measured by China and Nepal in 2020, is 8,848.86 meters above sea level.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "geography",
+      "measurement"
+    ]
+  },
+  {
+    "id": "claim_7_2e8b",
+    "text": "Neil Armstrong was the first person to walk on the moon in 1969, making him the only American astronaut to do so during the Apollo program.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "space exploration",
+      "history",
+      "biography"
+    ]
+  },
+  {
+    "id": "claim_8_b11e",
+    "text": "While Thomas Edison is often credited, the very first electric light bulb was invented by Humphry Davy decades before Edison's commercially successful version.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "invention",
+      "history",
+      "physics"
+    ]
+  },
+  {
+    "id": "claim_9_f389",
+    "text": "Pluto's reclassification as a dwarf planet in 2006 was universally accepted by the scientific community and ended all debate about its planetary status.",
+    "ground_truth": "false",
+    "task_level": "hard",
+    "evidence_tags": [
+      "astronomy",
+      "controversy"
+    ]
+  },
+  {
+    "id": "claim_10_f022",
+    "text": "Napoleon Bonaparte suffered from a medical condition that caused him to be significantly shorter than the average European man of his time, which is the origin of the 'Napoleon complex' term.",
+    "ground_truth": "false",
+    "task_level": "hard",
+    "evidence_tags": [
+      "history",
+      "biography",
+      "psychology"
+    ]
+  }
+]

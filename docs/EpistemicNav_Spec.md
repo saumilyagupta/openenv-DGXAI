@@ -1,4 +1,5 @@
 # EpistemicNav — Adaptive Inquiry Agent Environment
+
 ### Meta PyTorch OpenEnv Hackathon × SST 2026 — Complete Project Spec
 
 > **One-line pitch:** An RL environment that trains LLM agents to reason accurately under uncertainty — rewarding calibrated confidence, not just correct answers.
@@ -38,13 +39,15 @@ The critical insight: Task 3's correct answer is `"uncertain"`. Teaching an agen
 
 ## 2. Why This Wins
 
-| Gate | Status | Reason |
-|---|---|---|
-| Automated disqualification | Pass | BM25 = 8ms/query, no GPU, no external API, deterministic |
-| LLM scoring | High | Brier score reward is mathematically sound, partial progress is real |
-| Meta engineer review | Top 15 | Calibration is Meta's #1 unsolved deployment problem |
-| Domain novelty | Unique | Zero existing OpenEnv environments cover calibrated reasoning |
-| Spec compliance | Perfect | step/reset/state map cleanly to inquiry loop |
+
+| Gate                       | Status  | Reason                                                               |
+| -------------------------- | ------- | -------------------------------------------------------------------- |
+| Automated disqualification | Pass    | BM25 = 8ms/query, no GPU, no external API, deterministic             |
+| LLM scoring                | High    | Brier score reward is mathematically sound, partial progress is real |
+| Meta engineer review       | Top 15  | Calibration is Meta's #1 unsolved deployment problem                 |
+| Domain novelty             | Unique  | Zero existing OpenEnv environments cover calibrated reasoning        |
+| Spec compliance            | Perfect | step/reset/state map cleanly to inquiry loop                         |
+
 
 ---
 
@@ -104,22 +107,26 @@ epistemic_nav/
 
 ### Env server (Dockerfile)
 
-| Package | Version | Why |
-|---|---|---|
-| `openenv-core` | 0.2.x | Framework — step/reset/state base classes |
-| `fastapi` | >=0.104 | WebSocket + HTTP server |
-| `uvicorn[standard]` | >=0.24 | ASGI runner |
-| `pydantic` | v2 | Typed action/observation models — required by OpenEnv spec |
-| `rank_bm25` | 0.2.2 | Evidence retrieval — pure Python, no GPU, 8ms per lookup |
-| `numpy` | >=1.24 | Brier score math |
-| `httpx` | >=0.25 | Async HTTP client |
+
+| Package             | Version | Why                                                        |
+| ------------------- | ------- | ---------------------------------------------------------- |
+| `openenv-core`      | 0.2.x   | Framework — step/reset/state base classes                  |
+| `fastapi`           | >=0.104 | WebSocket + HTTP server                                    |
+| `uvicorn[standard]` | >=0.24  | ASGI runner                                                |
+| `pydantic`          | v2      | Typed action/observation models — required by OpenEnv spec |
+| `rank_bm25`         | 0.2.2   | Evidence retrieval — pure Python, no GPU, 8ms per lookup   |
+| `numpy`             | >=1.24  | Brier score math                                           |
+| `httpx`             | >=0.25  | Async HTTP client                                          |
+
 
 ### Inference runner only
 
-| Package | Version | Why |
-|---|---|---|
-| `openai` | >=1.0 | LLM calls via `API_BASE_URL` env var (hackathon-provided) |
-| `openenv-core` | 0.2.x | Same package — env client side |
+
+| Package        | Version | Why                                                       |
+| -------------- | ------- | --------------------------------------------------------- |
+| `openai`       | >=1.0   | LLM calls via `API_BASE_URL` env var (hackathon-provided) |
+| `openenv-core` | 0.2.x   | Same package — env client side                            |
+
 
 **No sentence-transformers. No FAISS. No torch. No GPU dependencies.** This is intentional — it's the difference between a 280MB image and a 4GB image, and between 8ms retrieval and 500ms retrieval on 2vCPU.
 
@@ -172,7 +179,9 @@ Query steps return zero reward — the agent earns its score *entirely* through 
 
 **Description:** Multi-hop claim requiring synthesis of 3–4 evidence pieces.
 
-**Example claim:** `"The country with the most UNESCO World Heritage Sites is also a member of the G7"`
+**Example claim:** `"The country with the most UNESCO World Heritage Sites is also a membe`
+
+`.9997"`
 
 **What a good agent does:** Queries for UNESCO rankings, queries for G7 membership, synthesises, commits with moderate-high confidence.
 
@@ -231,6 +240,7 @@ def compute_reward(
 ```
 
 **Properties:**
+
 - Range: always `[0.0, 1.0]` — passes spec validation
 - Overconfident wrong answer (`confidence=0.9, correct=0`): reward ≈ 0.09
 - Underconfident right answer (`confidence=0.3, correct=1`): reward ≈ 0.56
@@ -466,72 +476,81 @@ if __name__ == "__main__":
 
 ## 14. Compute & Cost
 
-| Resource | Spec | Cost |
-|---|---|---|
-| HF Spaces CPU env server | 2 vCPU, 16 GB RAM, free tier | **$0 / month** |
-| Docker image size | ~280 MB (python:3.11-slim) | — |
-| Memory at runtime | ~190 MB (BM25 index in RAM) | — |
-| Per-step latency | < 8 ms (BM25 lookup) | — |
-| inference.py runtime | ~10–14 min (30 episodes × 3 tasks) | **< 20 min cap ✓** |
-| External LLM calls | Provided by hackathon via `API_BASE_URL` | **$0** |
-| **Total build cost** | | **$0** |
+
+| Resource                 | Spec                                     | Cost               |
+| ------------------------ | ---------------------------------------- | ------------------ |
+| HF Spaces CPU env server | 2 vCPU, 16 GB RAM, free tier             | **$0 / month**     |
+| Docker image size        | ~280 MB (python:3.11-slim)               | —                  |
+| Memory at runtime        | ~190 MB (BM25 index in RAM)              | —                  |
+| Per-step latency         | < 8 ms (BM25 lookup)                     | —                  |
+| inference.py runtime     | ~10–14 min (30 episodes × 3 tasks)       | **< 20 min cap ✓** |
+| External LLM calls       | Provided by hackathon via `API_BASE_URL` | **$0**             |
+| **Total build cost**     |                                          | **$0**             |
+
 
 ---
 
 ## 15. Build Order (14 Days)
 
-| Day | Task | Output |
-|---|---|---|
-| 1–2 | Build `claims.json` (400 claims) + `evidence.json` (2000 snippets) | The real intellectual work |
-| 3 | `models.py` — Pydantic Action/Observation types | Spec foundation |
-| 4 | `retriever.py` + `grader.py` — BM25 + Brier | Unit test both in isolation |
-| 5–6 | `environment.py` — wire `step()`/`reset()`/`state()` | Run locally |
-| 7 | `Dockerfile` + `openenv.yaml` → push to HF Spaces | Verify deploys, returns 200 |
-| 8 | `client.py` + `inference.py` — full loop end-to-end | Agent completes an episode |
-| 9 | Pre-submission validation script | Fix anything that breaks |
-| 10 | `README.md` — action/obs spaces, setup, task descriptions | Judged explicitly |
-| 11–12 | Run 10 full episodes per task level, check runtime | Confirm < 20 min |
-| 13 | `openenv push` to HF Hub | Public deployment |
-| 14 | Buffer — fix edge cases, improve README | Polish |
+
+| Day   | Task                                                               | Output                      |
+| ----- | ------------------------------------------------------------------ | --------------------------- |
+| 1–2   | Build `claims.json` (400 claims) + `evidence.json` (2000 snippets) | The real intellectual work  |
+| 3     | `models.py` — Pydantic Action/Observation types                    | Spec foundation             |
+| 4     | `retriever.py` + `grader.py` — BM25 + Brier                        | Unit test both in isolation |
+| 5–6   | `environment.py` — wire `step()`/`reset()`/`state()`               | Run locally                 |
+| 7     | `Dockerfile` + `openenv.yaml` → push to HF Spaces                  | Verify deploys, returns 200 |
+| 8     | `client.py` + `inference.py` — full loop end-to-end                | Agent completes an episode  |
+| 9     | Pre-submission validation script                                   | Fix anything that breaks    |
+| 10    | `README.md` — action/obs spaces, setup, task descriptions          | Judged explicitly           |
+| 11–12 | Run 10 full episodes per task level, check runtime                 | Confirm < 20 min            |
+| 13    | `openenv push` to HF Hub                                           | Public deployment           |
+| 14    | Buffer — fix edge cases, improve README                            | Polish                      |
+
 
 ---
 
 ## 16. Key Design Decisions
 
 ### BM25 over embeddings
+
 Every competing team building a "reasoning env" will reach for a vector DB — sentence-transformers, FAISS, 500ms per lookup, probable timeout on 2vCPU. BM25 is 8ms, pure Python, no model weights. The judge's automated ping gets a 200 response in under 100ms. Teams with embedding stacks will have flaky deploys.
 
 ### Query reward = 0, not negative
+
 Negative step rewards break the `[0, 1]` reward range requirement. The grader will still accept them but the LLM judge will flag spec inconsistency. Zero reward on query forces the agent to learn efficiency through opportunity cost (foregone commit reward), not punishment. Cleaner RL theory, cleaner spec compliance.
 
 ### "uncertain" as a valid verdict with explicit reward
+
 Every existing benchmark (TruthfulQA, FActScore, HaluEval) treats "uncertain" as a cop-out. This env rewards it when earned. A Meta AI engineer reading the README will recognise this as the correct framing for epistemic calibration — it's what Meta, Anthropic, and DeepMind alignment teams actually care about. No other submitted environment will do this.
 
 ### Pre-cached data, zero external calls
+
 All evidence lives in `evidence.json` — no Wikipedia API, no web requests from the env server. The environment is fully reproducible on any machine at any time. This is critical for the automated grader and for post-competition reproducibility.
 
 ### python:3.11-slim base image
+
 280 MB image. No dev tools. Fast HF Space boot (< 30 seconds). Compared to a typical ML image (4–8 GB), this means faster evaluation and lower chance of OOM errors on the free tier.
 
 ---
 
 ## Submission checklist
 
-- [ ] `openenv init epistemic_nav` scaffolded
-- [ ] `claims.json` — 400 claims, balanced distribution
-- [ ] `evidence.json` — 2000 snippets, 15+ domains
-- [ ] `models.py` — typed Pydantic v2 Action + Observation
-- [ ] `server/environment.py` — `step()`, `reset()`, `state()` implemented
-- [ ] `server/grader.py` — Brier score, all 3 task graders, scores in `[0.0, 1.0]`
-- [ ] `server/retriever.py` — BM25, top-k, < 10ms per query
-- [ ] `Dockerfile` builds locally
-- [ ] `openenv.yaml` valid — name, tasks, reward_range
-- [ ] HF Space deployed — returns 200, responds to `reset()`
-- [ ] `inference.py` in root — uses `API_BASE_URL`, `MODEL_NAME`, `HF_TOKEN`
-- [ ] `inference.py` runtime < 20 min on 2vCPU / 8GB
-- [ ] `README.md` — action space, observation space, setup instructions, task descriptions
-- [ ] Pre-submission validation script passes all 5 checks
-- [ ] HF Spaces URL ready to paste on dashboard before **April 8, 11:59 PM IST**
+- `openenv init epistemic_nav` scaffolded
+- `claims.json` — 400 claims, balanced distribution
+- `evidence.json` — 2000 snippets, 15+ domains
+- `models.py` — typed Pydantic v2 Action + Observation
+- `server/environment.py` — `step()`, `reset()`, `state()` implemented
+- `server/grader.py` — Brier score, all 3 task graders, scores in `[0.0, 1.0]`
+- `server/retriever.py` — BM25, top-k, < 10ms per query
+- `Dockerfile` builds locally
+- `openenv.yaml` valid — name, tasks, reward_range
+- HF Space deployed — returns 200, responds to `reset()`
+- `inference.py` in root — uses `API_BASE_URL`, `MODEL_NAME`, `HF_TOKEN`
+- `inference.py` runtime < 20 min on 2vCPU / 8GB
+- `README.md` — action space, observation space, setup instructions, task descriptions
+- Pre-submission validation script passes all 5 checks
+- HF Spaces URL ready to paste on dashboard before **April 8, 11:59 PM IST**
 
 ---
 
