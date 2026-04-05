@@ -1,27 +1,108 @@
 [
   {
-    "id": "claim_1_8eb8",
-    "text": "The boiling point of water at standard atmospheric pressure is 100\u00b0C.",
+    "id": "claim_1",
+    "text": "The boiling point of water at standard atmospheric pressure is 100 degrees Celsius.",
     "ground_truth": "true",
     "task_level": "easy",
     "evidence_tags": [
-      "physics",
-      "water"
+      "science",
+      "engineering"
     ]
   },
   {
-    "id": "claim_2_bc17",
-    "text": "Earth is perfectly spherical.",
+    "id": "claim_2",
+    "text": "Mercury is the largest planet in our solar system.",
     "ground_truth": "false",
     "task_level": "easy",
     "evidence_tags": [
       "astronomy",
-      "geography"
+      "science"
     ]
   },
   {
-    "id": "claim_3_f425",
-    "text": "Paris is the capital city of France.",
+    "id": "claim_3",
+    "text": "The Great Wall of China is visible from the Moon with the naked eye.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "history",
+      "astronomy"
+    ]
+  },
+  {
+    "id": "claim_4",
+    "text": "DNA stands for deoxyribonucleic acid.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_5",
+    "text": "The Amazon River is the longest river in the world.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_6",
+    "text": "Insulin is a hormone produced by the pancreas.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_7",
+    "text": "The speed of light in a vacuum is approximately 300,000 kilometers per second.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "astronomy"
+    ]
+  },
+  {
+    "id": "claim_8",
+    "text": "The United States Constitution was ratified in 1776.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "history",
+      "law",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_9",
+    "text": "Python is a compiled programming language.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_10",
+    "text": "Gold has the chemical symbol Gd.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_11",
+    "text": "Tokyo is the capital of Japan.",
     "ground_truth": "true",
     "task_level": "easy",
     "evidence_tags": [
@@ -30,77 +111,4091 @@
     ]
   },
   {
-    "id": "claim_4_f1b4",
-    "text": "The human heart typically has four chambers.",
+    "id": "claim_12",
+    "text": "The square root of 144 is 14.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_13",
+    "text": "The human body has 206 bones in adulthood.",
     "ground_truth": "true",
     "task_level": "easy",
     "evidence_tags": [
       "biology",
-      "anatomy"
+      "medicine"
     ]
   },
   {
-    "id": "claim_5_3f5b",
-    "text": "One of the oldest known non-clonal organisms on Earth is a Bristlecone Pine named Methuselah, which is over 4,800 years old.",
-    "ground_truth": "true",
-    "task_level": "medium",
+    "id": "claim_14",
+    "text": "Hindi is the most spoken native language in the world by number of speakers.",
+    "ground_truth": "false",
+    "task_level": "easy",
     "evidence_tags": [
-      "biology",
-      "botany",
+      "linguistics",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_15",
+    "text": "An Olympic swimming pool is 100 meters long.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_16",
+    "text": "Vitamin C is also known as ascorbic acid.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_17",
+    "text": "The GDP of the United States is the largest in the world by nominal value.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "economics",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_18",
+    "text": "Mars has three moons.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_19",
+    "text": "The Eiffel Tower is located in Berlin, Germany.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
       "history"
     ]
   },
   {
-    "id": "claim_6_68f7",
-    "text": "Mount Everest's official height, as measured by China and Nepal in 2020, is 8,848.86 meters above sea level.",
+    "id": "claim_20",
+    "text": "The first programmable computer was invented by Charles Babbage.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_21",
+    "text": "Water is composed of one hydrogen atom and two oxygen atoms.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_22",
+    "text": "The Supreme Court of the United States has 12 justices.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "law",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_23",
+    "text": "Photosynthesis converts carbon dioxide and water into glucose and oxygen.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_24",
+    "text": "The circumference of the Earth at the equator is approximately 40,075 kilometers.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "astronomy"
+    ]
+  },
+  {
+    "id": "claim_25",
+    "text": "A marathon race is exactly 20 miles long.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_26",
+    "text": "The chemical formula for table salt is NaCl.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "nutrition"
+    ]
+  },
+  {
+    "id": "claim_27",
+    "text": "Isaac Newton published the Principia Mathematica in 1727.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "history",
+      "mathematics"
+    ]
+  },
+  {
+    "id": "claim_28",
+    "text": "TCP stands for Transfer Control Protocol.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_29",
+    "text": "The liver is the largest internal organ in the human body.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_30",
+    "text": "Mount Everest is located in the Andes mountain range.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_31",
+    "text": "The Pythagorean theorem states that a squared plus b squared equals c squared for a right triangle.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_32",
+    "text": "Esperanto is a natural language that evolved in Eastern Europe.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_33",
+    "text": "Silicon is the most abundant element in the Earth's crust.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_34",
+    "text": "The FIFA World Cup is held every two years.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_35",
+    "text": "Inflation refers to a general increase in prices and a fall in the purchasing value of money.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "economics",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_36",
+    "text": "The International Space Station orbits at an altitude of approximately 400 kilometers.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_37",
+    "text": "Alexander Fleming discovered penicillin in 1928.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "medicine",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_38",
+    "text": "The binary number system uses digits 0 through 9.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_39",
+    "text": "Bananas are a good source of Vitamin B12.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_40",
+    "text": "The patent system grants inventors exclusive rights to their inventions for a limited period.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "law",
+      "economics"
+    ]
+  },
+  {
+    "id": "claim_41",
+    "text": "The Sahara Desert is the largest hot desert in the world.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_42",
+    "text": "HTML is a programming language used for machine learning.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_43",
+    "text": "The mitochondria is often called the powerhouse of the cell.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_44",
+    "text": "Jupiter is the largest planet in our solar system.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_45",
+    "text": "The Treaty of Versailles ended World War I in 1919.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_46",
+    "text": "Scurvy is caused by a deficiency of Vitamin D.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_47",
+    "text": "The value of pi is exactly 3.14.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_48",
+    "text": "Rubber is a good conductor of electricity.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "engineering",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_49",
+    "text": "The Korean language uses an alphabet called Hangul.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_50",
+    "text": "Basketball was invented in Canada in 1891 by James Naismith.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_51",
+    "text": "The Nile River flows through Egypt.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_52",
+    "text": "Antibiotics are effective against viral infections.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_53",
+    "text": "The Euro is the official currency of the United Kingdom.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "economics",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_54",
+    "text": "Sound travels faster than light.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "astronomy"
+    ]
+  },
+  {
+    "id": "claim_55",
+    "text": "The transistor was invented at Bell Labs in 1947.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "history",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_56",
+    "text": "Pluto is classified as a full planet in our solar system.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_57",
+    "text": "The Berlin Wall fell in 1989.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_58",
+    "text": "An adult human heart beats approximately 100,000 times per day.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_59",
+    "text": "The Pacific Ocean is the largest ocean on Earth.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_60",
+    "text": "A prime number is divisible only by 1 and itself.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_61",
+    "text": "The Geneva Convention regulates the treatment of prisoners of war.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "law",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_62",
+    "text": "Ethernet was invented by Robert Metcalfe in the 1970s.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_63",
+    "text": "Italian is the only official language of Vatican City.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_64",
+    "text": "The human genome contains approximately 20,000 to 25,000 protein-coding genes.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_65",
+    "text": "Roger Federer won 25 Grand Slam singles titles.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_66",
+    "text": "Omega-3 fatty acids are found in fish such as salmon and mackerel.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_67",
+    "text": "The Federal Reserve is the central bank of Canada.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "economics",
+      "law"
+    ]
+  },
+  {
+    "id": "claim_68",
+    "text": "Venus is the coldest planet in our solar system.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_69",
+    "text": "The printing press was invented by Johannes Gutenberg around 1440.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "history",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_70",
+    "text": "Diamonds are made of pure iron.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_71",
+    "text": "The Richter scale measures wind speed.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_72",
+    "text": "The United Nations was established in 1919.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "politics",
+      "history",
+      "law"
+    ]
+  },
+  {
+    "id": "claim_73",
+    "text": "The speed of sound in dry air at 20 degrees Celsius is approximately 343 meters per second.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_74",
+    "text": "Arabic is written from left to right.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_75",
+    "text": "The Great Barrier Reef is located off the coast of Brazil.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_76",
+    "text": "HTTP stands for HyperText Transfer Protocol.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_77",
+    "text": "The ozone layer protects the Earth from harmful ultraviolet radiation.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_78",
+    "text": "A basketball court is 120 feet long in the NBA.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_79",
+    "text": "Iron deficiency is the most common nutritional deficiency worldwide.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_80",
+    "text": "Supply and demand was first theorized by Karl Marx.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "economics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_81",
+    "text": "Saturn is the only planet in our solar system with rings.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_82",
+    "text": "The Wright brothers made the first sustained powered airplane flight in 1903.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "history",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_83",
+    "text": "Malaria is caused by a virus.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_84",
+    "text": "The sum of the angles in a triangle is 180 degrees.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_85",
+    "text": "The tongue is the strongest muscle in the human body.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_86",
+    "text": "The Universal Declaration of Human Rights was adopted in 1948.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "law",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_87",
+    "text": "Linux was created by Linus Torvalds in 1991.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_88",
+    "text": "The Mandarin Chinese language has an alphabet with 26 letters.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_89",
+    "text": "Mount Kilimanjaro is the tallest mountain in Africa.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_90",
+    "text": "The Wimbledon tennis tournament is played on clay courts.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_91",
+    "text": "Oxygen makes up approximately 78 percent of the Earth's atmosphere.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_92",
+    "text": "Calcium is important for bone health.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_93",
+    "text": "The Magna Carta was signed in 1215.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "law",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_94",
+    "text": "Absolute zero is 0 degrees Celsius.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_95",
+    "text": "The Hubble Space Telescope was launched in 1990.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_96",
+    "text": "Brazil is the smallest country in South America.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_97",
+    "text": "The decimal number system is base-12.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_98",
+    "text": "Elephants are the largest land animals on Earth.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_99",
+    "text": "Adam Smith wrote 'The Wealth of Nations' in 1776.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "economics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_100",
+    "text": "The Panama Canal connects the Atlantic Ocean and the Indian Ocean.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_101",
+    "text": "The human brain uses approximately 20 percent of the body's total energy.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_102",
+    "text": "Thomas Edison invented the telephone.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "history",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_103",
+    "text": "The pH of pure water is 5.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_104",
+    "text": "The Dewey Decimal System is used to classify books in libraries.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_105",
+    "text": "A leap year occurs every three years.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "mathematics"
+    ]
+  },
+  {
+    "id": "claim_106",
+    "text": "The femur is the longest bone in the human body.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_107",
+    "text": "Sanskrit is considered one of the oldest languages in the world.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_108",
+    "text": "Michael Phelps won 28 Olympic gold medals.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_109",
+    "text": "Fiber is an essential macronutrient that provides calories.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_110",
+    "text": "A recession is commonly defined as two consecutive quarters of negative GDP growth.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "economics",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_111",
+    "text": "The Sun is a red dwarf star.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_112",
+    "text": "The Suez Canal connects the Mediterranean Sea and the Red Sea.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_113",
+    "text": "Marie Curie won two Nobel Prizes.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_114",
+    "text": "The Fourth Amendment to the U.S. Constitution protects against unreasonable searches and seizures.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "law",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_115",
+    "text": "RAM stands for Rapid Application Memory.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_116",
+    "text": "The Amazon rainforest produces 50 percent of the world's oxygen.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_117",
+    "text": "The number zero was first used as a placeholder in ancient Mesopotamian mathematics.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_118",
+    "text": "Usain Bolt holds the world record for the 100-meter dash.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_119",
+    "text": "The Rosetta Stone helped scholars decipher Egyptian hieroglyphics.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_120",
+    "text": "Vitamin B12 is abundantly found in fruits and vegetables.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_121",
+    "text": "The Doppler effect describes the change in frequency of a wave relative to an observer.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "astronomy"
+    ]
+  },
+  {
+    "id": "claim_122",
+    "text": "New Zealand is both a country and a continent.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_123",
+    "text": "The Kelvin temperature scale starts at minus 100 degrees Celsius.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_124",
+    "text": "Habeas corpus is a legal principle that protects against unlawful detention.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "law",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_125",
+    "text": "The first email was sent in 1971 by Ray Tomlinson.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_126",
+    "text": "Neptune is the planet closest to the Sun.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_127",
+    "text": "The Roman Empire fell in 476 AD.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_128",
+    "text": "Hemoglobin carries carbon dioxide from the lungs to body tissues.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_129",
+    "text": "The Dead Sea is the lowest point on Earth's surface.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_130",
+    "text": "Euler's number e is approximately equal to 3.14159.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_131",
+    "text": "The Japanese writing system includes three scripts: hiragana, katakana, and kanji.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_132",
+    "text": "Cricket is the most popular sport in Brazil.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_133",
+    "text": "Sodium is an essential mineral needed for fluid balance in the body.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_134",
+    "text": "Gross Domestic Product measures the total value of goods and services produced in a country.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "economics",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_135",
+    "text": "The Milky Way is an elliptical galaxy.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_136",
+    "text": "The Hoover Dam is located on the Mississippi River.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "engineering",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_137",
+    "text": "The French Revolution began in 1789.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_138",
+    "text": "Type 1 diabetes is caused by obesity.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_139",
+    "text": "The Earth's core is primarily composed of iron and nickel.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_140",
+    "text": "Fibonacci numbers follow the pattern where each number is the product of the two preceding ones.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_141",
+    "text": "Copyright law protects inventions and mechanical processes.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "law",
+      "economics"
+    ]
+  },
+  {
+    "id": "claim_142",
+    "text": "The World Wide Web was invented by Tim Berners-Lee in 1989.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_143",
+    "text": "Swahili is a member of the Indo-European language family.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_144",
+    "text": "The human stomach produces hydrochloric acid to aid digestion.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_145",
+    "text": "The 2008 Summer Olympics were held in Beijing, China.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_146",
+    "text": "Trans fats are considered beneficial for heart health.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_147",
+    "text": "Hyperinflation occurred in Zimbabwe in the late 2000s.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "economics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_148",
+    "text": "A light-year is a measure of time.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_149",
+    "text": "The Mariana Trench is the deepest known part of the ocean.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_150",
+    "text": "Stainless steel is an alloy that contains aluminum.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "engineering",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_151",
+    "text": "The Bubonic Plague, also known as the Black Death, occurred primarily in the 16th century.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "history",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_152",
+    "text": "Chlorophyll gives plants their green color.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_153",
+    "text": "The hexadecimal number system uses base-16.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_154",
+    "text": "The Miranda warning is required by law enforcement in the United Kingdom.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "law",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_155",
+    "text": "Moore's Law predicts the doubling of transistors on a microchip approximately every two years.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_156",
+    "text": "Finnish and Hungarian are related languages.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_157",
+    "text": "The Super Bowl is the championship game for European football.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_158",
+    "text": "Protein is made up of fatty acids.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_159",
+    "text": "OPEC stands for Organization of the Petroleum Exporting Countries.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "economics",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_160",
+    "text": "The Andromeda Galaxy is the nearest major galaxy to the Milky Way.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_161",
+    "text": "Antarctica is the driest continent on Earth.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_162",
+    "text": "Niels Bohr developed the theory of general relativity.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_163",
+    "text": "The human eye can distinguish approximately 100 different colors.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_164",
+    "text": "The International Criminal Court is headquartered in Geneva, Switzerland.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "law",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_165",
+    "text": "The GPS satellite system was originally developed by the U.S. Department of Defense.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_166",
+    "text": "The Cyrillic alphabet is used to write Russian.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_167",
+    "text": "The Tour de France is a professional cycling race.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_168",
+    "text": "Cholesterol is exclusively harmful to the body.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_169",
+    "text": "A trade deficit occurs when a country imports more than it exports.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "economics",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_170",
+    "text": "The Sun is approximately 10 billion years old.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_171",
+    "text": "The Caspian Sea is the largest enclosed inland body of water on Earth.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_172",
+    "text": "The periodic table was first published by Antoine Lavoisier.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "science",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_173",
+    "text": "Concrete is the most widely used construction material in the world.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "engineering",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_174",
+    "text": "The Emancipation Proclamation was issued by Abraham Lincoln in 1863.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "history",
+      "law",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_175",
+    "text": "Red blood cells are produced in the liver.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_176",
+    "text": "The factorial of 5 is 120.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_177",
+    "text": "Bluetooth technology was named after a medieval English king.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_178",
+    "text": "English has more native speakers than Spanish.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_179",
+    "text": "The Stanley Cup is awarded in professional ice hockey.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_180",
+    "text": "Carbohydrates are the body's primary source of energy.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_181",
+    "text": "The World Bank is headquartered in New York City.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "economics",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_182",
+    "text": "Black holes are regions of space where gravity is so strong that nothing can escape.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_183",
+    "text": "Iceland is covered mostly by ice, while Greenland is mostly green.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_184",
+    "text": "Aluminum has a higher strength-to-weight ratio than titanium.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "engineering",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_185",
+    "text": "The Industrial Revolution began in France.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "history",
+      "economics"
+    ]
+  },
+  {
+    "id": "claim_186",
+    "text": "Vaccines work by stimulating the immune system to produce antibodies.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_187",
+    "text": "Pi is a rational number.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_188",
+    "text": "Double jeopardy prohibits being tried twice for the same crime.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "law",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_189",
+    "text": "The first iPhone was released in 2007.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "technology",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_190",
+    "text": "Basque is a Romance language derived from Latin.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_191",
+    "text": "The modern Olympic Games were first held in Athens in 1896.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "sports",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_192",
+    "text": "Vitamin A is important for maintaining healthy vision.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "nutrition",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_193",
+    "text": "Compound interest means earning interest only on the principal amount.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "economics",
+      "mathematics"
+    ]
+  },
+  {
+    "id": "claim_194",
+    "text": "The Sun orbits around the Earth.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_195",
+    "text": "The Danube River flows through multiple European countries.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "geography",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_196",
+    "text": "Carbon fiber is heavier and weaker than traditional steel.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "engineering",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_197",
+    "text": "The Renaissance began in Germany in the 12th century.",
+    "ground_truth": "false",
+    "task_level": "easy",
+    "evidence_tags": [
+      "history",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_198",
+    "text": "CRISPR is a technology used for editing genes.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "biology",
+      "technology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_199",
+    "text": "The number e is the base of the natural logarithm.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "mathematics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_200",
+    "text": "The International Phonetic Alphabet was first published in 1888.",
+    "ground_truth": "true",
+    "task_level": "easy",
+    "evidence_tags": [
+      "linguistics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_201",
+    "text": "The element with atomic number 79 is used in the currency standard that was abandoned by the United States in 1971.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "economics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_202",
+    "text": "The country that hosted the first modern Olympic Games is also a founding member of the European Union.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "sports",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_203",
+    "text": "The programming language created by Guido van Rossum is named after a species of snake native to Southeast Asia.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "biology",
+      "linguistics"
+    ]
+  },
+  {
+    "id": "claim_204",
+    "text": "The longest river in Africa flows through the capital city of the most populous Arab country.",
     "ground_truth": "true",
     "task_level": "medium",
     "evidence_tags": [
       "geography",
-      "measurement"
+      "politics"
     ]
   },
   {
-    "id": "claim_7_2e8b",
-    "text": "Neil Armstrong was the first person to walk on the moon in 1969, making him the only American astronaut to do so during the Apollo program.",
-    "ground_truth": "false",
-    "task_level": "medium",
-    "evidence_tags": [
-      "space exploration",
-      "history",
-      "biography"
-    ]
-  },
-  {
-    "id": "claim_8_b11e",
-    "text": "While Thomas Edison is often credited, the very first electric light bulb was invented by Humphry Davy decades before Edison's commercially successful version.",
+    "id": "claim_205",
+    "text": "The scientist who formulated the three laws of motion also served as a member of the British Parliament.",
     "ground_truth": "true",
     "task_level": "medium",
     "evidence_tags": [
-      "invention",
+      "science",
       "history",
-      "physics"
+      "politics"
     ]
   },
   {
-    "id": "claim_9_f389",
-    "text": "Pluto's reclassification as a dwarf planet in 2006 was universally accepted by the scientific community and ended all debate about its planetary status.",
+    "id": "claim_206",
+    "text": "The vitamin primarily synthesized through human skin exposure to sunlight is also essential for calcium absorption in the intestines.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "medicine",
+      "biology",
+      "nutrition"
+    ]
+  },
+  {
+    "id": "claim_207",
+    "text": "The mathematical constant pi is a rational number that can be expressed as the ratio of a circle's circumference to its diameter.",
     "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "mathematics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_208",
+    "text": "The treaty that ended World War I was signed in the same palace where the German Empire was proclaimed in 1871.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "history",
+      "politics",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_209",
+    "text": "The tallest mountain in the solar system, Olympus Mons, is located on the planet that has the longest orbital period among the terrestrial planets.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "astronomy",
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_210",
+    "text": "The country with the largest economy by GDP in South America is also the only Portuguese-speaking country on the continent.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "economics",
+      "geography",
+      "linguistics"
+    ]
+  },
+  {
+    "id": "claim_211",
+    "text": "The human body's largest organ by weight is the liver, which also produces bile for fat digestion.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "biology",
+      "medicine",
+      "nutrition"
+    ]
+  },
+  {
+    "id": "claim_212",
+    "text": "The inventor of the World Wide Web also won the Turing Award, which is often called the Nobel Prize of computing.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "history",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_213",
+    "text": "The constitutional amendment that abolished slavery in the United States was ratified before the end of the American Civil War.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "law",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_214",
+    "text": "The dwarf planet Pluto was discovered by an American astronomer and was named after the Roman god of the underworld.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "astronomy",
+      "history",
+      "linguistics"
+    ]
+  },
+  {
+    "id": "claim_215",
+    "text": "The Great Wall of China is visible to the naked eye from the International Space Station's standard orbital altitude.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "engineering",
+      "astronomy",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_216",
+    "text": "The process of photosynthesis in plants converts carbon dioxide and water into glucose and oxygen, using chlorophyll to absorb primarily red and blue light wavelengths.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "biology",
+      "science",
+      "nutrition"
+    ]
+  },
+  {
+    "id": "claim_217",
+    "text": "The country that built the first nuclear power plant for civilian use is also the country that launched the first artificial satellite.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "history",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_218",
+    "text": "The sport of basketball was invented in Canada by a Canadian physical education instructor working in the United States.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "sports",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_219",
+    "text": "The pH scale, which measures acidity and alkalinity, was developed by a Danish chemist working at the Carlsberg brewery laboratory.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "history",
+      "economics"
+    ]
+  },
+  {
+    "id": "claim_220",
+    "text": "The language family that includes both Hindi and English also includes Mandarin Chinese, making it the largest language family by number of speakers.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "linguistics",
+      "geography",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_221",
+    "text": "The Panama Canal connects the Atlantic and Pacific Oceans and was completed by the United States after France abandoned its initial construction attempt.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "engineering",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_222",
+    "text": "The Nobel Prize in Economics was established in Alfred Nobel's original 1895 will alongside the prizes for Physics, Chemistry, Medicine, Literature, and Peace.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "economics",
+      "history",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_223",
+    "text": "The asteroid belt in our solar system is located between the orbits of Mars and Jupiter, and contains the dwarf planet Ceres, which is also the largest object in the belt.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "astronomy",
+      "science",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_224",
+    "text": "The disease caused by a deficiency of vitamin C, known as scurvy, was a major problem for sailors and was eventually prevented by the British Navy's use of lime juice.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "medicine",
+      "nutrition",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_225",
+    "text": "The Pythagorean theorem applies to all triangles regardless of their angles, stating that the square of the longest side equals the sum of the squares of the other two sides.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "mathematics",
+      "science",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_226",
+    "text": "The International Court of Justice, the principal judicial organ of the United Nations, is located in The Hague, which is also the seat of government of the Netherlands.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "law",
+      "politics",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_227",
+    "text": "Silicon, the element most commonly used in semiconductor chips, is the second most abundant element in the Earth's crust after oxygen.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "science",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_228",
+    "text": "The sport of cricket originated in England and is now most popular by viewership in India, which is also the country with the second-largest population in the world.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "sports",
+      "geography",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_229",
+    "text": "The Rosetta Stone, which was key to deciphering Egyptian hieroglyphics, contains text in three scripts and was discovered during Napoleon's military campaign in Egypt.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "linguistics",
+      "history",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_230",
+    "text": "The gene editing technology CRISPR-Cas9 was developed using a defense mechanism originally found in bacteria, and its co-developers won the Nobel Prize in Chemistry in 2020.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "biology",
+      "technology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_231",
+    "text": "The country with the highest per capita GDP in the world is also the smallest country in the European Union by area.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "economics",
+      "geography",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_232",
+    "text": "The Hubble Space Telescope was launched by the Space Shuttle Discovery and orbits Earth at an altitude lower than the International Space Station.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "astronomy",
+      "engineering",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_233",
+    "text": "The Magna Carta, signed in 1215, established the principle that the king is subject to law, and directly influenced the United States Bill of Rights.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "law",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_234",
+    "text": "Omega-3 fatty acids, found abundantly in salmon and other fatty fish, have been shown to reduce inflammation and are classified as essential fatty acids because the human body cannot synthesize them.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "nutrition",
+      "biology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_235",
+    "text": "The Dead Sea, the lowest point on Earth's surface, is located on the border between Israel and Egypt.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "geography",
+      "science",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_236",
+    "text": "Alan Turing, who is considered the father of theoretical computer science, also played a crucial role in breaking the Enigma code during World War II.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "history",
+      "mathematics"
+    ]
+  },
+  {
+    "id": "claim_237",
+    "text": "The first successful human heart transplant was performed by Christiaan Barnard in South Africa, a country that was under apartheid at the time of the surgery.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "medicine",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_238",
+    "text": "The Golden Gate Bridge in San Francisco uses a suspension design and was the longest suspension bridge in the world when it was completed in 1937.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "engineering",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_239",
+    "text": "The official language of Brazil is Spanish because Brazil was colonized by Spain during the Age of Exploration.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "linguistics",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_240",
+    "text": "The Fibonacci sequence appears in the spiral patterns of sunflower seeds and the arrangement of pinecone scales, and the ratio of consecutive terms converges to the golden ratio.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "mathematics",
+      "biology",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_241",
+    "text": "The Kyoto Protocol, an international treaty on climate change, was signed in the country that has the third-largest economy in the world by nominal GDP.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "politics",
+      "economics",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_242",
+    "text": "The sport of rugby originated in England when a student at Rugby School picked up the ball during a football match, and the Rugby World Cup trophy is named after that student.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "sports",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_243",
+    "text": "The antibiotic penicillin was discovered accidentally by Alexander Fleming and later mass-produced during World War II, saving countless lives from bacterial infections on the battlefield.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "medicine",
+      "history",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_244",
+    "text": "The Suez Canal connects the Mediterranean Sea to the Red Sea and was nationalized by Egyptian President Gamal Abdel Nasser in 1956, triggering an international crisis.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "engineering",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_245",
+    "text": "Light travels faster in water than in a vacuum, which is why objects appear distorted when viewed through water.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_246",
+    "text": "The European Union's single currency, the euro, is used by all 27 EU member states as their official currency.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "economics",
+      "politics",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_247",
+    "text": "Mount Everest, the tallest mountain above sea level, is located on the border between Nepal and the Tibet Autonomous Region of China.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "geography",
+      "science",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_248",
+    "text": "The binary number system used in modern computers was formalized by Gottfried Wilhelm Leibniz, who was also a co-inventor of calculus alongside Isaac Newton.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "mathematics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_249",
+    "text": "The International Space Station orbits Earth approximately once every 90 minutes and has been continuously occupied since November 2000.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "astronomy",
+      "engineering",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_250",
+    "text": "The Geneva Conventions, which establish international legal standards for humanitarian treatment in war, were first adopted in the country where the Red Cross was founded.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "law",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_251",
+    "text": "Human trafficking is explicitly prohibited under the Universal Declaration of Human Rights, which was adopted by the United Nations General Assembly in 1948 in Paris.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "law",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_252",
+    "text": "The Amazon rainforest produces approximately 20% of the world's oxygen and spans nine South American countries, with the largest portion in Brazil.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "biology",
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_253",
+    "text": "The transistor, which revolutionized electronics, was invented at Bell Labs, the same research laboratory where the Unix operating system was later developed.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "engineering",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_254",
+    "text": "The marathon race distance of 26.2 miles was standardized at the 1908 London Olympics and commemorates the legendary run from Marathon to Athens in ancient Greece.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "sports",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_255",
+    "text": "The human genome contains approximately 20,000-25,000 protein-coding genes, which is fewer than the number of protein-coding genes found in rice.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "biology",
+      "science",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_256",
+    "text": "The Richter scale, used to measure earthquake magnitude, is a logarithmic scale, meaning each whole number increase represents a tenfold increase in measured amplitude.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "mathematics",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_257",
+    "text": "Iceland, which sits on the Mid-Atlantic Ridge, generates over 70% of its energy from geothermal and hydroelectric sources and is a member of NATO despite having no standing army.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "geography",
+      "engineering",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_258",
+    "text": "The hormone insulin, which regulates blood sugar levels, was first isolated from the pancreas of dogs by researchers at the University of Oxford.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "medicine",
+      "biology",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_259",
+    "text": "The word 'algorithm' derives from the name of the Persian mathematician al-Khwarizmi, whose work also gave us the word 'algebra'.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "linguistics",
+      "mathematics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_260",
+    "text": "China's One Belt One Road initiative, now called the Belt and Road Initiative, is the largest infrastructure investment project in history, surpassing the Marshall Plan in inflation-adjusted spending.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "economics",
+      "politics",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_261",
+    "text": "The planet Venus rotates in the opposite direction to most other planets in the solar system and has a day that is longer than its year.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_262",
+    "text": "The Nuremberg Trials after World War II established the legal precedent that individuals can be held accountable for crimes against humanity, even if acting under government orders.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "law",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_263",
+    "text": "Vitamin B12 is naturally found in large quantities in fruits and vegetables, making a vegan diet a reliable source of this essential nutrient.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "nutrition",
+      "biology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_264",
+    "text": "The Three Gorges Dam in China is the world's largest hydroelectric power station by installed capacity and displaced over one million people during its construction.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "engineering",
+      "economics",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_265",
+    "text": "The speed of sound in air at sea level is approximately 343 meters per second, which is faster than the speed of sound in water.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_266",
+    "text": "Sanskrit, one of the oldest known Indo-European languages, is an official language of India and shares grammatical structures with Latin and Ancient Greek.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "linguistics",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_267",
+    "text": "The first woman to win a Nobel Prize also remains the only person to have won Nobel Prizes in two different scientific disciplines.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_268",
+    "text": "The Global Positioning System (GPS) must account for both special and general relativistic effects on satellite clocks to maintain its accuracy.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "science",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_269",
+    "text": "The World Health Organization classifies processed meat as a Group 1 carcinogen, placing it in the same category as tobacco smoking and asbestos in terms of certainty of evidence.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "medicine",
+      "nutrition",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_270",
+    "text": "The Mariana Trench, the deepest point in the ocean, is located in the Atlantic Ocean near the coast of Puerto Rico.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "geography",
+      "science",
+      "astronomy"
+    ]
+  },
+  {
+    "id": "claim_271",
+    "text": "India's space agency ISRO successfully reached Mars orbit on its first attempt in 2014, spending less on the mission than the budget of the Hollywood film Gravity.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "astronomy",
+      "economics"
+    ]
+  },
+  {
+    "id": "claim_272",
+    "text": "The Bayesian theorem, a fundamental concept in probability theory, was first described by Thomas Bayes, who was a Presbyterian minister in England.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "mathematics",
+      "history",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_273",
+    "text": "The United Nations Security Council has six permanent members, each with veto power over substantive resolutions.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "politics",
+      "law",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_274",
+    "text": "The Coriolis effect, caused by Earth's rotation, causes hurricanes to rotate counterclockwise in the Northern Hemisphere and clockwise in the Southern Hemisphere.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "geography",
+      "astronomy"
+    ]
+  },
+  {
+    "id": "claim_275",
+    "text": "The smallpox vaccine, the first successful vaccine ever developed, was created by Edward Jenner using material from cowpox lesions, and smallpox was declared eradicated by the WHO in 1980.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "medicine",
+      "history",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_276",
+    "text": "The blockchain technology underlying Bitcoin was invented by Satoshi Nakamoto, who has been confirmed to be a Japanese computer scientist living in Tokyo.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "economics",
+      "mathematics"
+    ]
+  },
+  {
+    "id": "claim_277",
+    "text": "The FIFA World Cup trophy is made of 18-karat gold, and Brazil holds the record for the most World Cup titles with five victories.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "sports",
+      "economics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_278",
+    "text": "The ozone layer, which protects Earth from ultraviolet radiation, is located in the troposphere, the lowest layer of Earth's atmosphere.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "geography",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_279",
+    "text": "The Silk Road, an ancient trade route connecting China to the Mediterranean, facilitated the spread of both Buddhism and the Black Death plague to Europe.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "history",
+      "economics",
+      "medicine",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_280",
+    "text": "Euler's identity, often called the most beautiful equation in mathematics, connects five fundamental constants: e, i, pi, 1, and 0.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "mathematics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_281",
+    "text": "The International Criminal Court, which prosecutes individuals for genocide and war crimes, is headquartered in Geneva, Switzerland.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "law",
+      "politics",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_282",
+    "text": "The human body produces its own supply of cholesterol in the liver, and dietary cholesterol from eggs has been shown to have a minimal effect on blood cholesterol levels in most people.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "nutrition",
+      "biology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_283",
+    "text": "The Hoover Dam, built during the Great Depression, created Lake Mead, which is the largest reservoir in the United States by water capacity.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "engineering",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_284",
+    "text": "DNA was first identified by Friedrich Miescher in 1869, but its double helix structure was not discovered until 1953 by Watson, Crick, and Franklin.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "biology",
+      "history",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_285",
+    "text": "The country with the most time zones in the world is Russia, which spans 11 time zones and also has the longest railway line in the world.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "geography",
+      "engineering",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_286",
+    "text": "The Esperanto language was created in the 19th century by L.L. Zamenhof, a Polish ophthalmologist, with the goal of becoming a universal second language, and it is now an official language of the European Union.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "linguistics",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_287",
+    "text": "The Apollo 11 mission that first landed humans on the Moon used a computer with less processing power than a modern smartphone.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "astronomy",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_288",
+    "text": "Japan's bullet train system, the Shinkansen, has had zero passenger fatalities due to derailments or collisions since its introduction in 1964.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "engineering",
+      "technology",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_289",
+    "text": "The hepatitis B vaccine was the first vaccine to prevent a type of cancer, as chronic hepatitis B infection can lead to liver cancer.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "medicine",
+      "biology",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_290",
+    "text": "The Marshall Plan, which helped rebuild Europe after World War II, was funded by the Soviet Union and the United States as a joint effort.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "economics",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_291",
+    "text": "The longest-running experiment in physics, the pitch drop experiment at the University of Queensland, demonstrates that pitch is a fluid and has been running since 1927.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "history",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_292",
+    "text": "The Mercator map projection, widely used in navigation, accurately represents the relative sizes of countries near the equator but greatly distorts areas near the poles.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "geography",
+      "mathematics",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_293",
+    "text": "Bananas are a good source of potassium, but avocados contain more potassium per serving, and potassium is essential for maintaining normal heart rhythm.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "nutrition",
+      "biology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_294",
+    "text": "The Olympic sport of fencing includes three disciplines: foil, epee, and saber, and it has been part of every modern Olympic Games since 1896.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "sports",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_295",
+    "text": "The theory of plate tectonics was widely accepted by the scientific community in the 1920s, shortly after Alfred Wegener proposed continental drift.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_296",
+    "text": "The programming language Java was originally called Oak, was developed at Sun Microsystems, and was designed to be platform-independent through the use of a virtual machine.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "history",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_297",
+    "text": "The Treaty of Westphalia in 1648 established the modern concept of state sovereignty and ended the Hundred Years' War between England and France.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "law",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_298",
+    "text": "The Large Hadron Collider at CERN is the world's largest and most powerful particle accelerator, straddling the border between Switzerland and France.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "engineering",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_299",
+    "text": "The currency of Switzerland is the Swiss franc, and Switzerland is a member of the European Economic Area but not the European Union.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "economics",
+      "politics",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_300",
+    "text": "Helicobacter pylori bacteria are responsible for most stomach ulcers, and the Australian scientists who discovered this won the Nobel Prize in Physiology or Medicine in 2005.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "medicine",
+      "biology",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_301",
+    "text": "The periodic table was independently proposed by Dmitri Mendeleev and Lothar Meyer, and Mendeleev's version successfully predicted the existence of then-undiscovered elements.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "history",
+      "mathematics"
+    ]
+  },
+  {
+    "id": "claim_302",
+    "text": "The Antarctic Treaty System designates Antarctica as a scientific preserve, bans military activity, and has been signed by all 193 United Nations member states.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "law",
+      "politics",
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_303",
+    "text": "The Trans-Siberian Railway, the longest railway line in the world, connects Moscow to Vladivostok and passes through eight time zones.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "engineering",
+      "geography",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_304",
+    "text": "The Doppler effect explains why an ambulance siren sounds higher-pitched when approaching and lower-pitched when receding, and the same principle is used in medical ultrasound technology.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "medicine",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_305",
+    "text": "The Chinese writing system uses an alphabet of approximately 5,000 characters, each representing a specific sound rather than a meaning.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "linguistics",
+      "history",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_306",
+    "text": "The sport of tennis evolved from a French game called jeu de paume, and the term 'love' for zero in tennis scoring likely derives from the French word 'l'oeuf' meaning egg.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "sports",
+      "linguistics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_307",
+    "text": "Prions, the misfolded proteins that cause mad cow disease, are unique among infectious agents because they contain no DNA or RNA.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "biology",
+      "medicine",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_308",
+    "text": "The Bretton Woods Agreement of 1944 established the International Monetary Fund and the World Bank, and pegged global currencies to the British pound sterling.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "economics",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_309",
+    "text": "The concept of zero as a number was independently developed in ancient India and by the Maya civilization, and the Hindu-Arabic numeral system eventually spread to Europe through Arabic scholars.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "mathematics",
+      "history",
+      "linguistics"
+    ]
+  },
+  {
+    "id": "claim_310",
+    "text": "The South Pole is located on a continental landmass covered in ice, while the North Pole is located over ocean water, making their climates fundamentally different.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "geography",
+      "science",
+      "astronomy"
+    ]
+  },
+  {
+    "id": "claim_311",
+    "text": "The invention of the printing press by Johannes Gutenberg around 1440 preceded the Protestant Reformation, and many historians argue it was a necessary condition for the Reformation's spread.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_312",
+    "text": "The mitochondria in human cells contain their own DNA, which is inherited exclusively from the mother, and mitochondrial DNA analysis is used in forensic science and ancestry tracing.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "biology",
+      "medicine",
+      "law"
+    ]
+  },
+  {
+    "id": "claim_313",
+    "text": "The country of Australia is both a continent and a country, and it has more sheep than people, with the sheep population exceeding 200 million.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "geography",
+      "economics",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_314",
+    "text": "The glycemic index measures how quickly foods raise blood sugar levels, and white rice has a higher glycemic index than brown rice due to its lower fiber content.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "nutrition",
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_315",
+    "text": "The Voyager 1 spacecraft, launched in 1977, has entered interstellar space and carries a golden record containing sounds and images representing life on Earth.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "astronomy",
+      "technology",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_316",
+    "text": "The legal concept of habeas corpus, which protects against unlawful detention, originated in Roman law and was first codified in the United States Constitution.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "law",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_317",
+    "text": "The semiconductor company TSMC, headquartered in Taiwan, manufactures chips for both Apple and Nvidia and is the world's largest dedicated independent semiconductor foundry.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "economics",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_318",
+    "text": "The sport of baseball was invented by Abner Doubleday in Cooperstown, New York, which is why the Baseball Hall of Fame is located there.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "sports",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_319",
+    "text": "The human brain consumes approximately 20% of the body's total energy despite comprising only about 2% of body weight, primarily using glucose as its fuel source.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "biology",
+      "medicine",
+      "nutrition"
+    ]
+  },
+  {
+    "id": "claim_320",
+    "text": "The Aswan High Dam on the Nile River in Egypt created Lake Nasser, one of the world's largest artificial lakes, and its construction required the relocation of the Abu Simbel temples.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "engineering",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_321",
+    "text": "Quantum entanglement allows information to be transmitted faster than the speed of light, which Einstein famously dismissed as 'spooky action at a distance'.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "technology",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_322",
+    "text": "The GDP of the state of California, if it were an independent country, would rank among the top five largest economies in the world.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "economics",
+      "geography",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_323",
+    "text": "The first programmable electronic computer, Colossus, was built in Britain during World War II to help break encrypted German communications.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "history",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_324",
+    "text": "The language of Basque, spoken in parts of Spain and France, belongs to the Romance language family like Spanish and French.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "linguistics",
+      "geography",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_325",
+    "text": "The planet Saturn's rings are primarily composed of ice particles and rock debris, and Saturn is the least dense planet in the solar system, less dense than water.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_326",
+    "text": "The Rome Statute, which established the International Criminal Court, has been ratified by all five permanent members of the UN Security Council.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "law",
+      "politics",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_327",
+    "text": "Turmeric contains curcumin, which has anti-inflammatory properties studied in clinical trials, and turmeric has been used in traditional Ayurvedic medicine for thousands of years.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "nutrition",
+      "medicine",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_328",
+    "text": "The Channel Tunnel connecting England and France is the longest undersea tunnel in the world and was completed using tunnel boring machines that started from both sides simultaneously.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "engineering",
+      "geography",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_329",
+    "text": "The Galapagos Islands, which inspired Darwin's theory of evolution, are a province of Ecuador and are located in the Pacific Ocean approximately 1,000 kilometers from the South American mainland.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "biology",
+      "geography",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_330",
+    "text": "Moore's Law, which predicted the doubling of transistors on integrated circuits approximately every two years, was formulated by Gordon Moore, a co-founder of Intel.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "economics",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_331",
+    "text": "The decibel scale used to measure sound intensity is named after Alexander Graham Bell, the inventor of the telephone, and is a logarithmic scale.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "engineering",
+      "linguistics"
+    ]
+  },
+  {
+    "id": "claim_332",
+    "text": "The Schengen Area in Europe allows passport-free travel between member states, and all European Union member states are part of the Schengen Area.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "politics",
+      "law",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_333",
+    "text": "The placebo effect, where patients improve after receiving an inert treatment, has been documented to trigger measurable neurochemical changes in the brain including endorphin release.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "medicine",
+      "biology",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_334",
+    "text": "The Suez Canal is longer than the Panama Canal, and unlike the Panama Canal, it does not use any locks because the Mediterranean and Red Seas are at approximately the same elevation.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "engineering",
+      "geography",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_335",
+    "text": "The currency used in Japan, the yen, has its name derived from a Chinese word meaning 'round object', and Japan has the highest government debt-to-GDP ratio of any developed country.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "economics",
+      "linguistics",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_336",
+    "text": "The sport of golf originated in Scotland in the 15th century, and the oldest golf course in the world, the Old Course at St Andrews, has 18 holes because that was the original standard set by the rules of golf.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "sports",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_337",
+    "text": "The discovery of the structure of benzene by August Kekule was reportedly inspired by a dream of a snake biting its own tail, representing the cyclic structure of the molecule.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "history",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_338",
+    "text": "The geosynchronous orbit altitude of approximately 35,786 km above Earth was first calculated by Arthur C. Clarke, which is why it is sometimes called the Clarke orbit.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "astronomy",
+      "engineering",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_339",
+    "text": "Under international law, the Law of the Sea grants coastal nations an exclusive economic zone extending 500 nautical miles from their coastline.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "law",
+      "geography",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_340",
+    "text": "The fermentation process used to make yogurt involves bacteria converting lactose into lactic acid, and regular yogurt consumption has been associated with improved gut microbiome diversity.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "nutrition",
+      "biology",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_341",
+    "text": "The Burj Khalifa in Dubai is the tallest building in the world, and its design was inspired by the Hymenocallis flower, with its structural system derived from ancient Islamic architecture.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "engineering",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_342",
+    "text": "Coral reefs support approximately 25% of all marine species despite covering less than 1% of the ocean floor, and the Great Barrier Reef is the largest living structure on Earth.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "biology",
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_343",
+    "text": "The Linux operating system kernel was created by Linus Torvalds while he was a student at MIT in the United States.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_344",
+    "text": "The prime number theorem, which describes the asymptotic distribution of prime numbers, shows that primes become less frequent as numbers get larger, with the gap between consecutive primes growing on average.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "mathematics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_345",
+    "text": "The Haber-Bosch process for synthesizing ammonia from nitrogen and hydrogen is estimated to sustain roughly half the world's population through its use in fertilizer production.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "science",
+      "economics",
+      "engineering",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_346",
+    "text": "The Universal Declaration of Human Rights was drafted primarily by Eleanor Roosevelt and was adopted without any abstentions by the United Nations General Assembly.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "law",
+      "history",
+      "politics"
+    ]
+  },
+  {
+    "id": "claim_347",
+    "text": "The phenomenon of antibiotic resistance, identified as a global health threat by the WHO, was predicted by Alexander Fleming in his Nobel Prize acceptance speech in 1945.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "medicine",
+      "biology",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_348",
+    "text": "The internet protocol TCP/IP was developed by Vint Cerf and Bob Kahn, and the first message ever sent over ARPANET was the complete word 'login' transmitted from UCLA to Stanford.",
+    "ground_truth": "false",
+    "task_level": "medium",
+    "evidence_tags": [
+      "technology",
+      "history",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_349",
+    "text": "The Svalbard Global Seed Vault, located on a Norwegian archipelago in the Arctic, stores duplicate samples of seeds from gene banks worldwide and is designed to withstand both natural and man-made disasters.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "biology",
+      "engineering",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_350",
+    "text": "The economic concept of comparative advantage, first described by David Ricardo in 1817, demonstrates that free trade can benefit all participating nations even when one nation is more efficient at producing every good.",
+    "ground_truth": "true",
+    "task_level": "medium",
+    "evidence_tags": [
+      "economics",
+      "history",
+      "mathematics"
+    ]
+  },
+  {
+    "id": "claim_351",
+    "text": "Dark matter constitutes exactly 27% of the universe's total mass-energy content.",
+    "ground_truth": "uncertain",
     "task_level": "hard",
     "evidence_tags": [
       "astronomy",
-      "controversy"
+      "science"
     ]
   },
   {
-    "id": "claim_10_f022",
-    "text": "Napoleon Bonaparte suffered from a medical condition that caused him to be significantly shorter than the average European man of his time, which is the origin of the 'Napoleon complex' term.",
-    "ground_truth": "false",
+    "id": "claim_352",
+    "text": "Coffee consumption reduces the overall risk of cardiovascular disease.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "medicine",
+      "nutrition",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_353",
+    "text": "Pluto's reclassification as a dwarf planet was universally accepted by the scientific community.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "astronomy",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_354",
+    "text": "The construction of the Great Pyramid of Giza required a workforce of over 100,000 laborers.",
+    "ground_truth": "uncertain",
     "task_level": "hard",
     "evidence_tags": [
       "history",
-      "biography",
-      "psychology"
+      "engineering",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_355",
+    "text": "Low-fat diets are more effective than low-carbohydrate diets for long-term weight loss.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "nutrition",
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_356",
+    "text": "The Viking explorer Leif Erikson reached North America before Christopher Columbus.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_357",
+    "text": "Artificial general intelligence will be achieved within the next 20 years.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "technology",
+      "science",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_358",
+    "text": "The Riemann Hypothesis, if proven true, would fundamentally alter modern cryptographic systems.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "mathematics",
+      "technology",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_359",
+    "text": "Minimum wage increases consistently lead to higher unemployment rates among low-skilled workers.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "economics",
+      "politics",
+      "law"
+    ]
+  },
+  {
+    "id": "claim_360",
+    "text": "The Sapir-Whorf hypothesis accurately describes how language determines the limits of human thought.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "linguistics",
+      "science",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_361",
+    "text": "Intermittent fasting provides metabolic benefits beyond those achieved by simple calorie restriction.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "nutrition",
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_362",
+    "text": "The speed of light has remained constant throughout the entire history of the universe.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "science",
+      "astronomy",
+      "mathematics"
+    ]
+  },
+  {
+    "id": "claim_363",
+    "text": "Nuclear energy is the safest form of power generation when measured by deaths per unit of energy produced.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "engineering",
+      "science",
+      "economics"
+    ]
+  },
+  {
+    "id": "claim_364",
+    "text": "The use of performance-enhancing substances was widespread among athletes in ancient Olympic Games.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "sports",
+      "history",
+      "medicine"
+    ]
+  },
+  {
+    "id": "claim_365",
+    "text": "Organic food is significantly more nutritious than conventionally grown food.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "nutrition",
+      "science",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_366",
+    "text": "Quantum computers will render all current encryption methods obsolete within a decade.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "technology",
+      "mathematics",
+      "engineering"
+    ]
+  },
+  {
+    "id": "claim_367",
+    "text": "The collapse of the Bronze Age civilizations around 1200 BCE was primarily caused by the Sea Peoples invasions.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "history",
+      "geography",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_368",
+    "text": "Saturated fat consumption is the primary dietary cause of coronary heart disease.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "medicine",
+      "nutrition",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_369",
+    "text": "The P versus NP problem will be resolved with a proof that P does not equal NP.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "mathematics",
+      "technology",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_370",
+    "text": "Human activities are the sole driver of the current rate of species extinction.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "biology",
+      "science",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_371",
+    "text": "The precise date of the eruption of Thera that devastated the Minoan civilization has been definitively established.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "history",
+      "science",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_372",
+    "text": "Gene therapy will replace most pharmaceutical treatments within the next 50 years.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "medicine",
+      "biology",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_373",
+    "text": "The economic multiplier effect of government spending during recessions exceeds 1.5.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "economics",
+      "politics",
+      "mathematics"
+    ]
+  },
+  {
+    "id": "claim_374",
+    "text": "Head injuries in American football cause chronic traumatic encephalopathy in the majority of professional players.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "sports",
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_375",
+    "text": "The Voynich Manuscript is a genuine medieval document and not a modern forgery.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "history",
+      "linguistics",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_376",
+    "text": "String theory is the most promising framework for unifying quantum mechanics and general relativity.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "science",
+      "mathematics",
+      "astronomy"
+    ]
+  },
+  {
+    "id": "claim_377",
+    "text": "Universal basic income programs reduce workforce participation rates in the long term.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "economics",
+      "politics",
+      "law"
+    ]
+  },
+  {
+    "id": "claim_378",
+    "text": "The number of neurons in the human brain is approximately 86 billion.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "biology",
+      "medicine",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_379",
+    "text": "International patent law effectively promotes innovation in developing countries.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "law",
+      "economics",
+      "technology"
+    ]
+  },
+  {
+    "id": "claim_380",
+    "text": "The Proto-Indo-European homeland was located in the Pontic-Caspian steppe.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "linguistics",
+      "history",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_381",
+    "text": "Mars once had a global magnetic field strong enough to sustain a thick atmosphere.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "astronomy",
+      "science",
+      "geography"
+    ]
+  },
+  {
+    "id": "claim_382",
+    "text": "Glyphosate, the active ingredient in Roundup, is carcinogenic to humans at typical exposure levels.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "medicine",
+      "biology",
+      "law",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_383",
+    "text": "Cryptocurrency will eventually replace fiat currency as the dominant medium of exchange globally.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "technology",
+      "economics",
+      "law"
+    ]
+  },
+  {
+    "id": "claim_384",
+    "text": "The Library of Alexandria's destruction was a single catastrophic event rather than a gradual decline.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "history",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_385",
+    "text": "Regular moderate alcohol consumption has net health benefits for adults over 40.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "medicine",
+      "nutrition",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_386",
+    "text": "The expansion rate of the universe, known as the Hubble constant, has been precisely measured at 73 km/s/Mpc.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "astronomy",
+      "science",
+      "mathematics"
+    ]
+  },
+  {
+    "id": "claim_387",
+    "text": "Autonomous vehicles will reduce traffic fatalities by more than 90% once widely adopted.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "technology",
+      "engineering",
+      "law"
+    ]
+  },
+  {
+    "id": "claim_388",
+    "text": "The Younger Dryas climate event was triggered by a large extraterrestrial impact.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "science",
+      "geography",
+      "history"
+    ]
+  },
+  {
+    "id": "claim_389",
+    "text": "High-frequency trading improves overall market efficiency and liquidity for retail investors.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "economics",
+      "technology",
+      "law"
+    ]
+  },
+  {
+    "id": "claim_390",
+    "text": "CRISPR gene editing of human embryos can be performed without introducing unintended off-target mutations.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "biology",
+      "medicine",
+      "technology",
+      "law"
+    ]
+  },
+  {
+    "id": "claim_391",
+    "text": "The Antikythera mechanism was built solely by Greek engineers without influence from other civilizations.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "history",
+      "engineering",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_392",
+    "text": "Microplastics in the human bloodstream pose a significant risk of organ damage at current exposure levels.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "medicine",
+      "biology",
+      "science"
+    ]
+  },
+  {
+    "id": "claim_393",
+    "text": "Carbon capture and storage technology can scale sufficiently to meaningfully mitigate climate change.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "engineering",
+      "science",
+      "economics"
+    ]
+  },
+  {
+    "id": "claim_394",
+    "text": "The Fermi Paradox is best explained by the Great Filter hypothesis, where most civilizations destroy themselves.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "astronomy",
+      "science",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_395",
+    "text": "Bilingual individuals have a significantly delayed onset of Alzheimer's disease compared to monolinguals.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "linguistics",
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_396",
+    "text": "The precise number of people who died during the Bengal Famine of 1943 exceeded 3 million.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "history",
+      "politics",
+      "economics"
+    ]
+  },
+  {
+    "id": "claim_397",
+    "text": "Dark energy is a cosmological constant rather than a dynamic field that changes over time.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "astronomy",
+      "science",
+      "mathematics"
+    ]
+  },
+  {
+    "id": "claim_398",
+    "text": "Stretching before exercise significantly reduces the risk of injury during athletic performance.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "sports",
+      "medicine",
+      "biology"
+    ]
+  },
+  {
+    "id": "claim_399",
+    "text": "Large language models possess a form of understanding rather than merely performing sophisticated pattern matching.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "technology",
+      "science",
+      "linguistics"
+    ]
+  },
+  {
+    "id": "claim_400",
+    "text": "The construction techniques used at Gobekli Tepe prove that complex social organization existed before the advent of agriculture.",
+    "ground_truth": "uncertain",
+    "task_level": "hard",
+    "evidence_tags": [
+      "history",
+      "science",
+      "engineering"
     ]
   }
 ]

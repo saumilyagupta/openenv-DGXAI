@@ -5,7 +5,7 @@ description: >
   Agents gather evidence via BM25 search, then commit a verdict with a confidence
   score. Rewarded by Brier score — calibrated confidence matters as much as
   getting the answer right.
-author: your-hf-username
+author: krrishchoudhary109
 tasks:
   - id: single_hop
     description: Single-hop factual claim. One query sufficient.
@@ -18,5 +18,5 @@ tasks:
     difficulty: hard
 max_budget: 8
 reward_range: [0.0, 1.0]
-hf_space: your-username/epistemic-nav
+hf_space: krrishchoudhary109/epistemic-nav
 python_requires: ">=3.10"

@@ -3,3 +3,10 @@
 __pycache__/
 *.pyc
 .claude/
+data/claims_easy.json
+data/claims_medium.json
+data/claims_hard.json
+data/claims_partial.json
+data/evidence_easy.json
+data/evidence_medium.json
+data/evidence_hard.json

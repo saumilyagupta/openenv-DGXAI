@@ -13,7 +13,8 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s - %(message)s",
 )
 
-app = create_app(lambda: EpistemicNavEnvironment(), EpistemicAction, EpistemicObservation)
+_env_instance = EpistemicNavEnvironment()
+app = create_app(lambda: _env_instance, EpistemicAction, EpistemicObservation)
 
 
 @app.get("/")
