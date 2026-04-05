@@ -44,7 +44,7 @@ TASK_MAP = {
     "hard": "contradictory",
 }
 MAX_STEPS = 8
-EPISODES_PER_TASK = 2
+EPISODES_PER_TASK = 5
 TEMPERATURE = 0.1
 
 logging.basicConfig(

@@ -24,6 +24,8 @@ class EpistemicNavEnvironment(Environment):
         self.evidence_gathered: list[EvidenceSnippet] = []
         self.budget_remaining: int = max_budget
         self.episode_id: str = ""
+        self._is_done: bool = False
+        self._last_reward: Optional[float] = None
 
     def _load_claims(self, path: str) -> list[Dict[str, Any]]:
         try:
@@ -47,6 +49,8 @@ class EpistemicNavEnvironment(Environment):
         self.evidence_gathered = []
         self.budget_remaining = self.max_budget
         self.episode_id = str(uuid.uuid4())
+        self._is_done = False
+        self._last_reward = None
         logger.info(
             "episode_reset id=%s task_level=%s claim_id=%s budget=%s",
             self.episode_id,
@@ -63,6 +67,21 @@ class EpistemicNavEnvironment(Environment):
         timeout_s: Optional[float] = None,
         **kwargs: Any,
     ) -> EpistemicObservation:
+        # Guard: no actions after episode is done
+        if self._is_done:
+            logger.warning("step_after_done id=%s — call /reset first", self.episode_id)
+            return self._get_observation(is_done=True, last_reward=self._last_reward)
+
+        # Validate commit fields
+        if action.action_type == ActionType.COMMIT:
+            if action.verdict and action.verdict not in ("true", "false", "uncertain"):
+                logger.warning("invalid_verdict id=%s verdict=%r — defaulting to uncertain", self.episode_id, action.verdict)
+                action = EpistemicAction(
+                    action_type=ActionType.COMMIT,
+                    verdict="uncertain",
+                    confidence=action.confidence if action.confidence is not None else 0.5,
+                )
+
         if self.budget_remaining <= 0 and action.action_type != ActionType.COMMIT:
             # Force commit if budget is 0
             logger.info(
@@ -81,6 +100,7 @@ class EpistemicNavEnvironment(Environment):
         if action.action_type == ActionType.QUERY:
             self.budget_remaining -= 1
             added_snippets = 0
+            total_relevance = 0.0
             if action.query_text:
                 results = self.retriever.search(action.query_text)
                 for res in results:
@@ -89,12 +109,21 @@ class EpistemicNavEnvironment(Environment):
                         text=res["text"],
                         relevance_score=res["relevance_score"]
                     )
-                    # avoid exact duplicates
                     if not any(e.id == snippet.id for e in self.evidence_gathered):
                         self.evidence_gathered.append(snippet)
                         added_snippets += 1
+                        total_relevance += res["relevance_score"]
 
-            reward = 0.0
+            # Intermediate reward: small signal based on evidence quality
+            # - Novel evidence with high relevance scores higher
+            # - Duplicate/low-relevance queries score near zero
+            # - Capped at 0.05 to keep COMMIT reward dominant
+            if added_snippets > 0 and total_relevance > 0:
+                relevance_signal = min(total_relevance / (added_snippets * 20.0), 1.0)
+                reward = round(0.05 * relevance_signal * (added_snippets / 3.0), 4)
+                reward = min(reward, 0.05)
+            else:
+                reward = 0.0
             done = False
             logger.info(
                 "episode_step id=%s action=query query=%r added_evidence=%s total_evidence=%s budget_remaining=%s reward=%.3f done=%s",
@@ -128,6 +157,8 @@ class EpistemicNavEnvironment(Environment):
                 done,
             )
 
+        self._is_done = done
+        self._last_reward = reward
         obs = self._get_observation(is_done=done, last_reward=reward)
         obs.done = done
         obs.reward = reward
@@ -146,4 +177,4 @@ class EpistemicNavEnvironment(Environment):
 
     @property
     def state(self) -> EpistemicObservation:
-        return self._get_observation()
+        return self._get_observation(is_done=self._is_done, last_reward=self._last_reward)
