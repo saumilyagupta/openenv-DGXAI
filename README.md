@@ -37,15 +37,18 @@ The key insight: **"I don't know" is sometimes the right answer.** When evidence
 
 ## Baseline Scores
 
-### LLM Agent (Qwen2.5-72B-Instruct via HuggingFace Router)
+### Multi-Model Comparison
 
-| Metric | Easy | Medium | Hard |
-|--------|------|--------|------|
-| **Mean reward** | **0.98** | **0.96** | **0.57** |
-| Avg queries used | 1 | 1.5 | 2 |
-| Typical verdict | true/false (high conf) | true/false (high conf) | mixed — uncertain or wrong |
+| Model | Easy | Medium | Hard | Avg | Notes |
+|-------|------|--------|------|-----|-------|
+| **Claude Sonnet 4** | **0.99** | **0.97** | **0.55** | **0.84** | Best overall — varied queries, calibrated confidence |
+| **Qwen2.5-72B-Instruct** | 0.98 | 0.96 | 0.57 | 0.84 | Strong calibration, similar to Claude |
+| **GPT-4o-mini** | 0.99* | 0.98 | 0.36 | 0.78 | *Stuck in query loops on 1 easy claim (drops to 0.80 with it) |
 
-The agent scores near-perfectly on easy/medium tasks with minimal queries. Hard tasks expose real calibration failures: Qwen correctly identified uncertainty on one claim (0.89) but overconfidently committed "false" on another contradictory claim (0.25) — demonstrating the environment genuinely challenges frontier models.
+**Key findings:**
+- **Easy/Medium tasks**: All three models score 0.96-0.99 with 1-2 queries — reward correctly signals these are straightforward.
+- **Hard tasks genuinely challenge frontier models**: Scores range 0.36-0.57. Models either correctly identify uncertainty (0.80-0.89 reward) or overconfidently commit the wrong verdict (0.02-0.04 penalty). This variance is the signal judges want to see.
+- **Search strategy matters**: GPT-4o-mini sometimes repeats identical queries, burning budget with no new evidence. Claude and Qwen naturally vary their search terms. The environment exposes this capability gap — a real agent training signal.
 
 ### Exploit-Resistance (Deterministic Strategy Baselines)
 
@@ -57,8 +60,8 @@ The agent scores near-perfectly on easy/medium tasks with minimal queries. Hard 
 | **Always "uncertain"** (conf 0.0) | 0.30 | 0.30 | 0.80 | 0.47 | Best exploit — still 2x worse than calibrated |
 
 **Anti-exploit properties:**
-- Calibrated agent (0.92 avg) dominates ALL fixed strategies by 2x+ margin
-- Wrong answers are ALWAYS capped at 0.30 reward regardless of confidence
+- Calibrated agents (0.84 avg) dominate ALL fixed strategies by 2x+ margin
+- Wrong answers capped at 0.10 reward regardless of confidence
 - No single fixed strategy exceeds 0.47 average across all tasks
 - Gaming the grader (always same verdict) produces suboptimal scores
 - Hard tasks specifically reward agents that can say "I don't know"
