@@ -5,6 +5,12 @@ def compute_reward(
     budget_remaining: int,
     max_budget: int = 8,
 ) -> float:
+    # Clamp confidence to valid range (defense in depth)
+    confidence = max(0.0, min(1.0, confidence))
+
+    # Guard against division by zero
+    if max_budget <= 0:
+        max_budget = 1
 
     # Special case: genuine uncertainty rewarded
     if verdict == "uncertain" and ground_truth == "uncertain":
@@ -12,16 +18,20 @@ def compute_reward(
         efficiency = 0.1 * (budget_remaining / max_budget)
         return min(1.0, base + efficiency)
 
-    correct = 1.0 if verdict == ground_truth else 0.0
+    correct = verdict == ground_truth
 
-    # Brier score: 1 - (confidence - correctness)^2
-    # Penalises overconfidence on wrong answers AND underconfidence on right ones
-    calibration = 1.0 - (confidence - correct) ** 2
+    if correct:
+        # Brier-style: reward scales with confidence when correct
+        # High confidence + correct = high reward
+        # Low confidence + correct = lower reward (underconfidence penalty)
+        calibration = 1.0 - (1.0 - confidence) ** 2
+        efficiency = 0.1 * (budget_remaining / max_budget)
+        reward = calibration * 0.9 + efficiency
+    else:
+        # Wrong verdict: penalize proportional to confidence
+        # High confidence + wrong = near-zero reward (overconfidence penalty)
+        # Low confidence + wrong = small consolation (still wrong, just less cocky)
+        calibration = (1.0 - confidence) ** 2
+        reward = calibration * 0.3  # cap at 0.3 max — wrong is always bad
 
-    # Small efficiency bonus — only when correct
-    efficiency = budget_remaining / max_budget
-    efficiency_bonus = 0.1 * efficiency if correct else 0.0
-
-    # Final reward — always in [0.0, 1.0]
-    reward = calibration * 0.9 + efficiency_bonus
-    return round(float(reward), 4)
+    return round(min(1.0, max(0.0, float(reward))), 4)
