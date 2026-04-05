@@ -188,7 +188,9 @@ def run_episode(env, task_level: str) -> float:
                 error=None,
             )
 
-        score = rewards[-1] if rewards else 0.0
+        # Score = final commit reward (the Brier score), always in [0, 1]
+        commit_reward = rewards[-1] if rewards else 0.0
+        score = min(max(commit_reward, 0.0), 1.0)
         success = score > 0.0
         log_end(success=success, steps=step_idx, score=score, rewards=rewards)
         return score
@@ -204,26 +206,16 @@ def run_episode(env, task_level: str) -> float:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    from contextlib import contextmanager
-
-    @contextmanager
-    def open_env(base_url: str):
-        client = EpistemicEnv(base_url=base_url)
-        sync_method = getattr(client, "sync", None)
-        if callable(sync_method):
-            with sync_method() as env:
-                yield env
-        else:
-            with client as env:
-                yield env
-
+    env = EpistemicEnv(base_url=HF_SPACE_URL)
     all_scores: dict[str, list[float]] = {"easy": [], "medium": [], "hard": []}
 
-    with open_env(base_url=HF_SPACE_URL) as env:
+    try:
         for task_level in ["easy", "medium", "hard"]:
             for _ in range(EPISODES_PER_TASK):
                 score = run_episode(env, task_level)
                 all_scores[task_level].append(score)
+    finally:
+        env.close()
 
     summary = {
         level: round(sum(scores) / len(scores), 2) if scores else 0.0

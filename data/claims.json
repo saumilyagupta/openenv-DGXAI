@@ -2062,8 +2062,8 @@
   },
   {
     "id": "claim_206",
-    "text": "The vitamin primarily synthesized through human skin exposure to sunlight is also essential for calcium absorption in the intestines.",
-    "ground_truth": "true",
+    "text": "It is incorrect to claim that the vitamin primarily synthesized through human skin exposure to sunlight is also essential for calcium absorption in the intestines.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "medicine",
@@ -2083,8 +2083,8 @@
   },
   {
     "id": "claim_208",
-    "text": "The treaty that ended World War I was signed in the same palace where the German Empire was proclaimed in 1871.",
-    "ground_truth": "true",
+    "text": "It is not true that the treaty that ended World War I was signed in the same palace where the German Empire was proclaimed in 1871.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "history",
@@ -2193,8 +2193,8 @@
   },
   {
     "id": "claim_218",
-    "text": "The sport of basketball was invented in Canada by a Canadian physical education instructor working in the United States.",
-    "ground_truth": "true",
+    "text": "It is not true that the sport of basketball was invented in Canada by a Canadian physical education instructor working in the United States.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "sports",
@@ -2226,8 +2226,8 @@
   },
   {
     "id": "claim_221",
-    "text": "The Panama Canal connects the Atlantic and Pacific Oceans and was completed by the United States after France abandoned its initial construction attempt.",
-    "ground_truth": "true",
+    "text": "It is not true that the Panama Canal connects the Atlantic and Pacific Oceans and was completed by the United States after France abandoned its initial construction attempt.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "engineering",
@@ -2248,8 +2248,8 @@
   },
   {
     "id": "claim_223",
-    "text": "The asteroid belt in our solar system is located between the orbits of Mars and Jupiter, and contains the dwarf planet Ceres, which is also the largest object in the belt.",
-    "ground_truth": "true",
+    "text": "Contrary to popular belief, it is false that the asteroid belt in our solar system is located between the orbits of Mars and Jupiter, and contains the dwarf planet Ceres, which is also the largest object in the belt.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "astronomy",
@@ -2292,8 +2292,8 @@
   },
   {
     "id": "claim_227",
-    "text": "Silicon, the element most commonly used in semiconductor chips, is the second most abundant element in the Earth's crust after oxygen.",
-    "ground_truth": "true",
+    "text": "Contrary to popular belief, it is false that silicon, the element most commonly used in semiconductor chips, is the second most abundant element in the Earth's crust after oxygen.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "technology",
@@ -2435,8 +2435,8 @@
   },
   {
     "id": "claim_240",
-    "text": "The Fibonacci sequence appears in the spiral patterns of sunflower seeds and the arrangement of pinecone scales, and the ratio of consecutive terms converges to the golden ratio.",
-    "ground_truth": "true",
+    "text": "It is not true that the Fibonacci sequence appears in the spiral patterns of sunflower seeds and the arrangement of pinecone scales, and the ratio of consecutive terms converges to the golden ratio.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "mathematics",
@@ -2468,8 +2468,8 @@
   },
   {
     "id": "claim_243",
-    "text": "The antibiotic penicillin was discovered accidentally by Alexander Fleming and later mass-produced during World War II, saving countless lives from bacterial infections on the battlefield.",
-    "ground_truth": "true",
+    "text": "It is not true that the antibiotic penicillin was discovered accidentally by Alexander Fleming and later mass-produced during World War II, saving countless lives from bacterial infections on the battlefield.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "medicine",
@@ -2479,8 +2479,8 @@
   },
   {
     "id": "claim_244",
-    "text": "The Suez Canal connects the Mediterranean Sea to the Red Sea and was nationalized by Egyptian President Gamal Abdel Nasser in 1956, triggering an international crisis.",
-    "ground_truth": "true",
+    "text": "It is not true that the Suez Canal connects the Mediterranean Sea to the Red Sea and was nationalized by Egyptian President Gamal Abdel Nasser in 1956, triggering an international crisis.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "engineering",
@@ -2511,8 +2511,8 @@
   },
   {
     "id": "claim_247",
-    "text": "Mount Everest, the tallest mountain above sea level, is located on the border between Nepal and the Tibet Autonomous Region of China.",
-    "ground_truth": "true",
+    "text": "Contrary to popular belief, it is false that mount Everest, the tallest mountain above sea level, is located on the border between Nepal and the Tibet Autonomous Region of China.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "geography",
@@ -2533,8 +2533,8 @@
   },
   {
     "id": "claim_249",
-    "text": "The International Space Station orbits Earth approximately once every 90 minutes and has been continuously occupied since November 2000.",
-    "ground_truth": "true",
+    "text": "It is incorrect to claim that the International Space Station orbits Earth approximately once every 90 minutes and has been continuously occupied since November 2000.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "astronomy",
@@ -2588,8 +2588,8 @@
   },
   {
     "id": "claim_254",
-    "text": "The marathon race distance of 26.2 miles was standardized at the 1908 London Olympics and commemorates the legendary run from Marathon to Athens in ancient Greece.",
-    "ground_truth": "true",
+    "text": "Contrary to popular belief, it is false that the marathon race distance of 26.2 miles was standardized at the 1908 London Olympics and commemorates the legendary run from Marathon to Athens in ancient Greece.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "sports",
@@ -2861,8 +2861,8 @@
   },
   {
     "id": "claim_279",
-    "text": "The Silk Road, an ancient trade route connecting China to the Mediterranean, facilitated the spread of both Buddhism and the Black Death plague to Europe.",
-    "ground_truth": "true",
+    "text": "It is incorrect to claim that the Silk Road, an ancient trade route connecting China to the Mediterranean, facilitated the spread of both Buddhism and the Black Death plague to Europe.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "history",
@@ -2873,8 +2873,8 @@
   },
   {
     "id": "claim_280",
-    "text": "Euler's identity, often called the most beautiful equation in mathematics, connects five fundamental constants: e, i, pi, 1, and 0.",
-    "ground_truth": "true",
+    "text": "It is incorrect to claim that euler's identity, often called the most beautiful equation in mathematics, connects five fundamental constants: e, i, pi, 1, and 0.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "mathematics",
@@ -3015,8 +3015,8 @@
   },
   {
     "id": "claim_293",
-    "text": "Bananas are a good source of potassium, but avocados contain more potassium per serving, and potassium is essential for maintaining normal heart rhythm.",
-    "ground_truth": "true",
+    "text": "It is incorrect to claim that bananas are a good source of potassium, but avocados contain more potassium per serving, and potassium is essential for maintaining normal heart rhythm.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "nutrition",
@@ -3102,8 +3102,8 @@
   },
   {
     "id": "claim_301",
-    "text": "The periodic table was independently proposed by Dmitri Mendeleev and Lothar Meyer, and Mendeleev's version successfully predicted the existence of then-undiscovered elements.",
-    "ground_truth": "true",
+    "text": "It is incorrect to claim that the periodic table was independently proposed by Dmitri Mendeleev and Lothar Meyer, and Mendeleev's version successfully predicted the existence of then-undiscovered elements.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "science",
@@ -3136,8 +3136,8 @@
   },
   {
     "id": "claim_304",
-    "text": "The Doppler effect explains why an ambulance siren sounds higher-pitched when approaching and lower-pitched when receding, and the same principle is used in medical ultrasound technology.",
-    "ground_truth": "true",
+    "text": "It is incorrect to claim that the Doppler effect explains why an ambulance siren sounds higher-pitched when approaching and lower-pitched when receding, and the same principle is used in medical ultrasound technology.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "science",
@@ -3202,8 +3202,8 @@
   },
   {
     "id": "claim_310",
-    "text": "The South Pole is located on a continental landmass covered in ice, while the North Pole is located over ocean water, making their climates fundamentally different.",
-    "ground_truth": "true",
+    "text": "Contrary to popular belief, it is false that the South Pole is located on a continental landmass covered in ice, while the North Pole is located over ocean water, making their climates fundamentally different.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "geography",
@@ -3224,8 +3224,8 @@
   },
   {
     "id": "claim_312",
-    "text": "The mitochondria in human cells contain their own DNA, which is inherited exclusively from the mother, and mitochondrial DNA analysis is used in forensic science and ancestry tracing.",
-    "ground_truth": "true",
+    "text": "It is not true that the mitochondria in human cells contain their own DNA, which is inherited exclusively from the mother, and mitochondrial DNA analysis is used in forensic science and ancestry tracing.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "biology",
@@ -3301,8 +3301,8 @@
   },
   {
     "id": "claim_319",
-    "text": "The human brain consumes approximately 20% of the body's total energy despite comprising only about 2% of body weight, primarily using glucose as its fuel source.",
-    "ground_truth": "true",
+    "text": "It is not true that the human brain consumes approximately 20% of the body's total energy despite comprising only about 2% of body weight, primarily using glucose as its fuel source.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "biology",
@@ -3388,8 +3388,8 @@
   },
   {
     "id": "claim_327",
-    "text": "Turmeric contains curcumin, which has anti-inflammatory properties studied in clinical trials, and turmeric has been used in traditional Ayurvedic medicine for thousands of years.",
-    "ground_truth": "true",
+    "text": "Contrary to popular belief, it is false that turmeric contains curcumin, which has anti-inflammatory properties studied in clinical trials, and turmeric has been used in traditional Ayurvedic medicine for thousands of years.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "nutrition",
@@ -3454,8 +3454,8 @@
   },
   {
     "id": "claim_333",
-    "text": "The placebo effect, where patients improve after receiving an inert treatment, has been documented to trigger measurable neurochemical changes in the brain including endorphin release.",
-    "ground_truth": "true",
+    "text": "It is incorrect to claim that the placebo effect, where patients improve after receiving an inert treatment, has been documented to trigger measurable neurochemical changes in the brain including endorphin release.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "medicine",
@@ -3465,8 +3465,8 @@
   },
   {
     "id": "claim_334",
-    "text": "The Suez Canal is longer than the Panama Canal, and unlike the Panama Canal, it does not use any locks because the Mediterranean and Red Seas are at approximately the same elevation.",
-    "ground_truth": "true",
+    "text": "Contrary to popular belief, it is false that the Suez Canal is longer than the Panama Canal, and unlike the Panama Canal, it does not use any locks because the Mediterranean and Red Seas are at approximately the same elevation.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "engineering",
@@ -3476,8 +3476,8 @@
   },
   {
     "id": "claim_335",
-    "text": "The currency used in Japan, the yen, has its name derived from a Chinese word meaning 'round object', and Japan has the highest government debt-to-GDP ratio of any developed country.",
-    "ground_truth": "true",
+    "text": "Contrary to popular belief, it is false that the currency used in Japan, the yen, has its name derived from a Chinese word meaning 'round object', and Japan has the highest government debt-to-GDP ratio of any developed country.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "economics",
@@ -3509,8 +3509,8 @@
   },
   {
     "id": "claim_338",
-    "text": "The geosynchronous orbit altitude of approximately 35,786 km above Earth was first calculated by Arthur C. Clarke, which is why it is sometimes called the Clarke orbit.",
-    "ground_truth": "true",
+    "text": "It is not true that the geosynchronous orbit altitude of approximately 35,786 km above Earth was first calculated by Arthur C. Clarke, which is why it is sometimes called the Clarke orbit.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "astronomy",
@@ -3542,8 +3542,8 @@
   },
   {
     "id": "claim_341",
-    "text": "The Burj Khalifa in Dubai is the tallest building in the world, and its design was inspired by the Hymenocallis flower, with its structural system derived from ancient Islamic architecture.",
-    "ground_truth": "true",
+    "text": "It is not true that the Burj Khalifa in Dubai is the tallest building in the world, and its design was inspired by the Hymenocallis flower, with its structural system derived from ancient Islamic architecture.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "engineering",
@@ -3585,8 +3585,8 @@
   },
   {
     "id": "claim_345",
-    "text": "The Haber-Bosch process for synthesizing ammonia from nitrogen and hydrogen is estimated to sustain roughly half the world's population through its use in fertilizer production.",
-    "ground_truth": "true",
+    "text": "It is incorrect to claim that the Haber-Bosch process for synthesizing ammonia from nitrogen and hydrogen is estimated to sustain roughly half the world's population through its use in fertilizer production.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "science",
@@ -3608,8 +3608,8 @@
   },
   {
     "id": "claim_347",
-    "text": "The phenomenon of antibiotic resistance, identified as a global health threat by the WHO, was predicted by Alexander Fleming in his Nobel Prize acceptance speech in 1945.",
-    "ground_truth": "true",
+    "text": "Contrary to popular belief, it is false that the phenomenon of antibiotic resistance, identified as a global health threat by the WHO, was predicted by Alexander Fleming in his Nobel Prize acceptance speech in 1945.",
+    "ground_truth": "false",
     "task_level": "medium",
     "evidence_tags": [
       "medicine",
