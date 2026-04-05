@@ -19,19 +19,19 @@ def compute_reward(
         return min(1.0, base + efficiency)
 
     correct = verdict == ground_truth
+    efficiency = budget_remaining / max_budget
 
     if correct:
-        # Brier-style: reward scales with confidence when correct
-        # High confidence + correct = high reward
-        # Low confidence + correct = lower reward (underconfidence penalty)
+        # Reward scales with confidence when correct
+        # conf=0 → 0.15 base (still better than wrong)
+        # conf=1 → 1.0 ceiling
         calibration = 1.0 - (1.0 - confidence) ** 2
-        efficiency = 0.1 * (budget_remaining / max_budget)
-        reward = calibration * 0.9 + efficiency
+        reward = 0.15 + calibration * 0.75 + 0.1 * efficiency
     else:
         # Wrong verdict: penalize proportional to confidence
-        # High confidence + wrong = near-zero reward (overconfidence penalty)
-        # Low confidence + wrong = small consolation (still wrong, just less cocky)
-        calibration = (1.0 - confidence) ** 2
-        reward = calibration * 0.3  # cap at 0.3 max — wrong is always bad
+        # conf=0 → 0.10 max (always less than correct at 0.15)
+        # conf=1 → 0.00
+        penalty = confidence ** 2
+        reward = 0.1 * (1.0 - penalty)
 
     return round(min(1.0, max(0.0, float(reward))), 4)

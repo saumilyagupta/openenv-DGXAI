@@ -117,11 +117,11 @@ class EpistemicNavEnvironment(Environment):
             # Intermediate reward: small signal based on evidence quality
             # - Novel evidence with high relevance scores higher
             # - Duplicate/low-relevance queries score near zero
-            # - Capped at 0.05 to keep COMMIT reward dominant
+            # - Capped at 0.01 per query, max ~0.08 over 8 queries
             if added_snippets > 0 and total_relevance > 0:
                 relevance_signal = min(total_relevance / (added_snippets * 20.0), 1.0)
-                reward = round(0.05 * relevance_signal * (added_snippets / 3.0), 4)
-                reward = min(reward, 0.05)
+                reward = round(0.01 * relevance_signal * min(added_snippets, 3) / 3.0, 4)
+                reward = min(reward, 0.01)
             else:
                 reward = 0.0
             done = False
