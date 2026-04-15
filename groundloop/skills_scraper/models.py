@@ -13,7 +13,7 @@ class SourceRoot(BaseModel):
 
 class ParsedSkill(BaseModel):
     model_config = ConfigDict(frozen=True)
-    frontmatter: dict
+    frontmatter: dict[str, object]
     body: str
     mtime: float
 

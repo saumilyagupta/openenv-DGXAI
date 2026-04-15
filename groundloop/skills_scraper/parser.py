@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import frontmatter
+import frontmatter  # type: ignore[import-untyped]
 import yaml
 
 from groundloop.skills_scraper.models import ParsedSkill

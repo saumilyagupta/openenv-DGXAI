@@ -4,6 +4,7 @@ import hashlib
 import logging
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 from groundloop.skills_scraper.chunker import chunk_body
 from groundloop.skills_scraper.discovery import walk_sources
@@ -58,10 +59,15 @@ def run_scraper(*, sources: list[SourceRoot], output: Path) -> ScrapeResult:
             continue
 
         fm = parsed.frontmatter
-        skill_name = fm.get("name") or path.parent.name
-        skill_desc = fm.get("description", "")
-        skill_type = fm.get("type") if fm.get("type") in ("flexible", "rigid") else None
-        triggers = fm.get("description", "")
+        name_val = fm.get("name")
+        skill_name = str(name_val) if name_val else path.parent.name
+        desc_val = fm.get("description", "")
+        skill_desc = str(desc_val) if desc_val else ""
+        type_val = fm.get("type")
+        skill_type: Literal["flexible", "rigid"] | None = (
+            type_val if type_val in ("flexible", "rigid") else None
+        )
+        triggers = skill_desc
 
         chunks = chunk_body(body)
         if not chunks:
