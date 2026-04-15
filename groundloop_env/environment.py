@@ -136,6 +136,7 @@ class CodeForgeEnvironment(Environment):
         reward = compute_reward(
             sandbox_score=sandbox_score,
             groundedness=grounding_report.groundedness,
+            confidence=action.confidence,
         )
         self._last_reward = reward
         self._previous_score = reward
