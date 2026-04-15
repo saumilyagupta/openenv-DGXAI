@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from groundloop.kb_indexer.cluster import build_clusters, save_manifest
 from groundloop.kb_indexer.index import SkillsIndex
 
 _DEFAULT_CORPUS = Path("groundloop/kb/skills_corpus.jsonl")
@@ -109,11 +112,6 @@ def _cmd_cluster(args: argparse.Namespace) -> int:
     if not args.corpus.is_file():
         print(f"ERROR: corpus not found: {args.corpus}", file=sys.stderr)
         return 1
-    import hashlib
-    from datetime import datetime, timezone
-
-    from groundloop.kb_indexer.cluster import build_clusters, save_manifest
-
     nodes: list[dict[str, Any]] = []
     for lineno, raw in enumerate(
         args.corpus.read_text(encoding="utf-8").splitlines(), 1,
