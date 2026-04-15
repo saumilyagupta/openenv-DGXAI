@@ -1,22 +1,23 @@
-name: epistemic-nav
+name: code-forge
 version: 0.1.0
 description: >
-  RL environment for training agents to reason accurately under uncertainty.
-  Agents gather evidence via BM25 search, then commit a verdict with a confidence
-  score. Rewarded by Brier score — calibrated confidence matters as much as
-  getting the answer right.
+  RL environment for training agents to iteratively synthesize Python
+  codebases from natural-language briefs. Agents can query a knowledge
+  base of coding-practice skills and submit candidate files; rewards
+  combine a programmatic quality signal (ruff/mypy/pytest/imports) with
+  AST-level symbol grounding.
 author: krrishchoudhary109
 tasks:
-  - id: single_hop
-    description: Single-hop factual claim. One query sufficient.
+  - id: greet_single_file
+    description: Single-file greet function with type hints.
     difficulty: easy
-  - id: multi_hop
-    description: Multi-hop claim requiring evidence synthesis.
+  - id: greet_with_tests
+    description: Multi-file greet + pytest + error handling.
     difficulty: medium
-  - id: contradictory
-    description: Contradictory evidence. Correct answer is uncertain.
+  - id: multi_file_module
+    description: Three-file module (entry + core + tests), mypy strict.
     difficulty: hard
-max_budget: 8
+max_budget: 10
 reward_range: [0.0, 1.0]
-hf_space: krrishchoudhary109/epistemic-nav
-python_requires: ">=3.10"
+hf_space: krrishchoudhary109/code-forge
+python_requires: ">=3.11"
