@@ -258,7 +258,7 @@ Tick items as they land. Last 4 are submission-blocking.
 
 ### Code milestones
 
-- [ ] **M1** Graphify clustering shipped, tested, reviewed, NOTHING_FURTHER
+- [x] **M1** Graphify clustering shipped, tested, reviewed, NOTHING_FURTHER
 - [ ] **M2** Brier-calibrated reward shipped, tested, reviewed, NOTHING_FURTHER
 - [ ] **M3** `query_cluster` action shipped, tested, reviewed, NOTHING_FURTHER
 - [ ] **M4** `interrogate` action shipped, tested, reviewed, NOTHING_FURTHER
