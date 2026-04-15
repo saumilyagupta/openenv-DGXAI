@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from groundloop.skills_scraper.cli import main
+import pytest
+
+from groundloop.skills_scraper.cli import _load_sources_yaml, main
 
 
 def test_cli_with_yaml_sources(fixtures_dir: Path, tmp_path: Path) -> None:
@@ -31,6 +33,20 @@ def test_cli_sources_default(tmp_path: Path) -> None:
     ])
     assert exit_code == 0
     assert out.exists()
+
+
+def test_load_sources_yaml_bad_schema_raises_typeerror(tmp_path: Path) -> None:
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("not_a_sources_dict: true\n")
+    with pytest.raises(TypeError):
+        _load_sources_yaml(bad)
+
+
+def test_load_sources_yaml_non_list_raises_typeerror(tmp_path: Path) -> None:
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("sources: not-a-list\n")
+    with pytest.raises(TypeError):
+        _load_sources_yaml(bad)
 
 
 def test_cli_sources_missing_file_exits_1(tmp_path: Path) -> None:

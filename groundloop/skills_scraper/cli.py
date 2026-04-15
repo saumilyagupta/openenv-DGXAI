@@ -29,12 +29,12 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 def _load_sources_yaml(path: Path) -> list[SourceRoot]:
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict) or "sources" not in data:
-        raise ValueError(
+        raise TypeError(
             f"invalid sources file {path}: expected top-level 'sources' key"
         )
     entries = data["sources"]
     if not isinstance(entries, list):
-        raise ValueError(f"invalid sources file {path}: 'sources' must be a list")
+        raise TypeError(f"invalid sources file {path}: 'sources' must be a list")
     return [SourceRoot(**entry) for entry in entries]
 
 
@@ -55,7 +55,12 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         sources = _resolve_sources(args.sources)
-    except (FileNotFoundError, ValueError, yaml.YAMLError, ValidationError) as e:
+    except (
+        FileNotFoundError,
+        TypeError,
+        yaml.YAMLError,
+        ValidationError,
+    ) as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
 
