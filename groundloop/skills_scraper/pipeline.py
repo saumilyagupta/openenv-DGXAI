@@ -69,10 +69,19 @@ def run_scraper(*, sources: list[SourceRoot], output: Path) -> ScrapeResult:
         )
         triggers = skill_desc
 
-        chunks = chunk_body(body)
-        if not chunks:
+        raw_chunks = chunk_body(body)
+        if not raw_chunks:
             skipped += 1
             continue
+
+        # Spec §4.3: if no H2/H3 at all, emit a single chunk with
+        # section_path=(skill_name,) — chunker returns () in that case.
+        chunks = [
+            c.model_copy(update={"section_path": (skill_name,)})
+            if c.section_path == ()
+            else c
+            for c in raw_chunks
+        ]
 
         for chunk in chunks:
             tags = tuple(

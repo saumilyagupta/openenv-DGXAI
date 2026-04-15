@@ -16,6 +16,20 @@ def test_pipeline_end_to_end(fixtures_dir: Path, tmp_path: Path) -> None:
     assert (tmp_path / "corpus.manifest.json").exists()
 
 
+def test_pipeline_single_section_uses_skill_name(
+    fixtures_dir: Path, tmp_path: Path
+) -> None:
+    sources = [SourceRoot(label="fake", glob=str(fixtures_dir / "**" / "SKILL.md"))]
+    out = tmp_path / "corpus.jsonl"
+    run_scraper(sources=sources, output=out)
+    import json
+    nodes = [json.loads(ln) for ln in out.read_text().splitlines()]
+    flat = [n for n in nodes if n["skill_name"] == "flat-skill"]
+    assert len(flat) == 1
+    assert flat[0]["section_path"] == ["flat-skill"]
+    assert flat[0]["section_title"] == "flat-skill"
+
+
 def test_pipeline_deduplicates_identical_bodies(fixtures_dir: Path, tmp_path: Path) -> None:
     sources = [SourceRoot(label="fake", glob=str(fixtures_dir / "**" / "SKILL.md"))]
     out = tmp_path / "corpus.jsonl"
