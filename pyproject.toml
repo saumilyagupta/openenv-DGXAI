@@ -20,3 +20,9 @@ dependencies = [
 
 [project.scripts]
 server = "server.app:main"
+
+[tool.mypy]
+strict = true
+packages = ["groundloop"]
+explicit_package_bases = true
+mypy_path = "."
