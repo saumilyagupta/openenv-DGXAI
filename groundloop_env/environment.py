@@ -29,8 +29,8 @@ class CodeForgeEnvironment(Environment):
         self._budget_remaining: int = 0
         self._current_files: dict[str, str] = {}
         self._previous_score: float = 0.0
-        self._last_citations: tuple[dict, ...] = ()
-        self._last_grounding: dict | None = None
+        self._last_citations: tuple[dict[str, object], ...] = ()
+        self._last_grounding: dict[str, object] | None = None
         self._is_done: bool = False
         self._last_reward: float = 0.0
 

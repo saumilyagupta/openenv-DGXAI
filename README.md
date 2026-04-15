@@ -401,3 +401,66 @@ mypy --strict groundloop/
 ```
 
 Targets: 210+ tests pass, 85%+ overall coverage, zero lint or type errors.
+
+---
+
+## CodeForge OpenEnv (Round 2)
+
+**CodeForge** is the Round-2 OpenEnv-compliant RL environment (`groundloop_env/`) built on top of the shipped GroundLoop primitives (`python_sandbox`, `kb_indexer`, `lib_grounder`, `ralph_orchestrator`). Agents receive a natural-language brief and iteratively synthesize a small Python codebase. Rewards combine a programmatic quality signal (ruff / mypy / pytest / import resolution) with AST-level symbol grounding.
+
+> Round-1 EpistemicNav env still lives under `server/` and is unchanged.
+
+### Run the server locally
+
+```bash
+uvicorn groundloop_env.app:app --host 0.0.0.0 --port 7860
+```
+
+Endpoints:
+- `GET /` — health
+- `GET /tasks` — list tasks + action schema
+- `POST /reset` — `{ "task_level": "easy" | "medium" | "hard" }`
+- `POST /step` — `CodeForgeAction` (QUERY_KB or SUBMIT)
+- `GET /state` — current observation
+
+### Run the baseline agent
+
+```bash
+python3 inference.py
+```
+
+Drives all three tasks (easy / medium / hard) end-to-end against `API_BASE_URL` (default `http://localhost:7860`) using stub solutions.
+
+### Docker
+
+```bash
+docker build -t code-forge .
+docker run -p 7860:7860 code-forge
+```
+
+### Tasks
+
+| Level  | ID                   | Budget | Target score | Brief                                                 |
+|--------|----------------------|--------|--------------|-------------------------------------------------------|
+| easy   | greet_single_file    | 4      | 0.90         | Single-file `greet(name)` with type hints.            |
+| medium | greet_with_tests     | 6      | 0.80         | `greet` + pytest + `ValueError` on `None`.            |
+| hard   | multi_file_module    | 10     | 0.70         | Three-file module (entry + core + tests), mypy strict.|
+
+### Reward formula
+
+```
+reward = 0.6 * sandbox_composite_score + 0.4 * grounding_score
+```
+
+- **sandbox_composite_score** ∈ [0, 1] comes from `groundloop.python_sandbox.run_sandbox` — runs `ruff`, `mypy`, `pytest`, and static import resolution on submitted files in a temp dir.
+- **grounding_score** ∈ [0, 1] comes from `groundloop.lib_grounder.ground` — fraction of imported modules/attributes that resolve in the running interpreter.
+
+Reward is deterministic and clamped to `[0.0, 1.0]`. Query steps always return `0.0`.
+
+### Full verification
+
+```bash
+python3 -m pytest tests/ --cov=groundloop_env --cov-report=term -v
+ruff check groundloop_env/
+mypy --strict groundloop_env/
+```

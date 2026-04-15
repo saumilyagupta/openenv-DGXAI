@@ -11,8 +11,8 @@ def build_observation(
     current_files: dict[str, str],
     budget_remaining: int,
     previous_score: float,
-    last_citations: tuple[dict, ...] = (),
-    last_grounding: dict | None = None,
+    last_citations: tuple[dict[str, object], ...] = (),
+    last_grounding: dict[str, object] | None = None,
     is_done: bool = False,
     last_reward: float = 0.0,
 ) -> CodeForgeObservation:

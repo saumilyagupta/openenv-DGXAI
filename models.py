@@ -59,7 +59,7 @@ class CodeForgeObservation(Observation):
     current_files: dict[str, str]
     budget_remaining: int
     previous_score: float
-    last_citations: tuple[dict, ...] = ()
-    last_grounding: Optional[dict] = None
+    last_citations: tuple[dict[str, object], ...] = ()
+    last_grounding: Optional[dict[str, object]] = None
     is_done: bool = False
     last_reward: float = 0.0

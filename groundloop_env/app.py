@@ -21,7 +21,7 @@ app: FastAPI = create_app(lambda: _env_instance, CodeForgeAction, CodeForgeObser
 
 
 @app.get("/", summary="Health check")
-def root() -> dict:
+def root() -> dict[str, str]:
     return {"name": "code-forge", "status": "ok", "docs": "/docs"}
 
 
@@ -31,7 +31,7 @@ def favicon() -> Response:
 
 
 @app.get("/tasks", summary="List tasks + action schema")
-def list_tasks() -> dict:
+def list_tasks() -> dict[str, object]:
     return {
         "tasks": [
             {
