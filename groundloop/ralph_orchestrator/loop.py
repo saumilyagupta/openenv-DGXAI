@@ -127,9 +127,7 @@ def run_loop(
             terminated_by = "stuck"
             break
 
-    final_score = (
-        iterations[-1].sandbox_score_after if iterations else _score_files(current, cfg)
-    )
+    final_score = _score_files(current, cfg)
     result = RunResult(
         run_id=run_id, spec=spec, started_at=started_at,
         ended_at=datetime.now(UTC).isoformat(timespec="seconds"),
