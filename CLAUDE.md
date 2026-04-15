@@ -9,184 +9,244 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Active Project: GroundLoop MCP (Offline Hackathon, Round 2)
+## Active Project: CodeForge OpenEnv (Round 2, Offline Hackathon)
 
-**Status:** Design phase (as of 2026-04-15). Round 1 (EpistemicNav) shipped 2026-04-08 — see archive section below.
+**Status:** Shipped locally (2026-04-15). Round 1 (EpistemicNav) shipped 2026-04-08 — see archive. The MCP framing was pivoted to OpenEnv on 2026-04-15 because the hackathon mandates OpenEnv compliance (step/reset/state, openenv.yaml, Dockerfile, HF Space).
 
 ### One-Line Pitch
 
-An **stdio MCP server** that takes a product brief and autonomously ships a **grounded, audit-trailed, production-grade Python codebase** — zero human intervention between the brief and the finished repo.
+An **OpenEnv-compliant RL environment** where the agent iteratively builds a Python codebase from a natural-language brief. Rewards combine programmatic code quality (`ruff`/`mypy`/`pytest`/`imports`) with AST-level symbol grounding. Same philosophical thread as Karpathy's Autoresearch (iterate toward a metric) and round-1 EpistemicNav (grounded, calibrated reasoning).
 
-### Philosophical Lineage
+### Philosophical Lineage (4 pillars)
 
-GroundLoop fuses four ideas into one tool:
+All four ideas are now implemented and callable inside the env:
 
-1. **Karpathy's Autoresearch (Mar 2026, ~630 LoC)** — an autonomous agent that edits a training script, runs short experiments, checks a metric, keeps/discards, and repeats. GroundLoop applies the same loop to **codebase construction** instead of hyperparameter search.
-2. **EpistemicNav (Round 1)** — Brier-calibrated confidence. Every load-bearing generation step emits `{claim, confidence, evidence_ids}`; low-confidence outputs are blocked from advancing.
-3. **`/graphify`** — input → knowledge graph → clustered communities → audit report. The project brief + ingested docs become a graph; every generated artifact must cite a graph node.
-4. **Ralph loop** — persistent, self-driving iteration: plan → build → audit → patch → repeat, until exit criteria hit.
+1. **Karpathy's Autoresearch (Mar 2026, ~630 LoC)** — autonomous iterate-till-metric-converges loop. Implemented as `groundloop/ralph_orchestrator/run_loop`. Agent can opt into iteration via repeated `SUBMIT` actions; the env's internal score is the equivalent of Autoresearch's `val_bpb`.
+2. **EpistemicNav (Round 1)** — Brier-calibrated confidence + "uncertain" verdict as a first-class outcome. Round-1 grader lives in `server/grader.py`; CodeForge reward uses a related composite `0.6*sandbox + 0.4*grounding` with clamping to `[0.0, 1.0]`.
+3. **`/graphify`-inspired grounding** — input → knowledge base. CodeForge ships BM25-indexed section-level grounding over 1006 skill nodes (Layer B). Community clustering is deferred Phase 2.
+4. **Ralph loop** — persistent, self-driving iteration with checkpoint/resume. Lives in `groundloop/ralph_orchestrator/`; used by `inference.py` baseline agent.
 
-### Target MCP Tool Surface (draft)
+### Env Action/Observation Surface
 
-| Tool | Purpose |
+| Action type | Purpose |
 |---|---|
-| `interrogate(brief)` | Socratic question batch. Forces the LLM to ask, not assume, until spec ambiguity drops below threshold. |
-| `ingest_sources(urls, files)` | Builds graph KB + BM25/vector index over Python docs (Context7, readthedocs, repo READMEs). Returns `graph_id`. |
-| `ground_check(claim, graph_id)` | Returns `{verdict, brier_conf, citations[], uncertain_reason}`. Refuses ungrounded claims. |
-| `autonomous_build(spec, graph_id, exit_criteria)` | Runs the Ralph loop. Each iteration gated by `ground_check` before code is written/modified. |
-| `audit_report(run_id)` | Hallucination rate, ungrounded claims, calibration curve, graph coverage, test/coverage deltas per iteration. |
+| `query_kb` | Search the skill corpus. Returns citations (top-k section bodies with `skill_name`, `section_path`, score, tags). Reward 0.0, costs 1 budget. |
+| `submit` | Send `{files: {path: content}}`. Env runs `ruff`/`mypy`/`pytest`/`imports` via `groundloop.python_sandbox`, computes `groundedness` via `groundloop.lib_grounder`, emits reward = `0.6 * sandbox_composite_score + 0.4 * groundedness`. Costs 1 budget. |
+
+Observation fields: `{episode_id, task_id, task_level, task_brief, initial_files, current_files, budget_remaining, previous_score, last_citations, last_grounding, is_done, last_reward}`.
+
+### Three Tasks
+
+1. **easy / `greet_single_file`** (budget 4, target 0.90, tools `ruff+imports+mypy`) — implement `greet(name: str) -> str`. Baseline: **1.000**.
+2. **medium / `greet_with_tests`** (budget 6, target 0.80, tools `ruff+imports+mypy+pytest`) — add pytest + None-guard. Baseline: **0.920**.
+3. **hard / `multi_file_module`** (budget 10, target 0.70, tools `ruff+imports+mypy+pytest`) — split into `main.py + core.py + test_core.py`, mypy-strict clean. Baseline: **0.840**.
 
 ### Two-Layer Grounding Architecture
 
-GroundLoop grounds on **two independent knowledge bases**:
-
 **Layer A — Library/API Ground Truth ("does this symbol exist?")**
 
-Python-only constraint shrinks the hallucination surface. Every factual code claim is verifiable.
+Implemented in `groundloop/lib_grounder/`:
 
 | Check | Verification |
 |---|---|
-| **Import graph** | Every import resolves in a pinned `requirements.txt`; no phantom packages. |
-| **Symbol graph** | Every `lib.foo.bar()` call verified via AST + installed-package introspection. |
-| **Version graph** | Method signatures match the pinned version (catches version-drift hallucinations). |
-| **Doc citations** | Each non-trivial API usage cites a Context7/readthedocs node. |
-| **Test groundedness** | Tests assert against real behavior, not LLM-imagined behavior. |
+| Import graph | `importlib.util.find_spec` on every top-level `import x`. |
+| Symbol graph | `hasattr(module, attr)` on every `from x import y` and `x.attr` reference. |
+| AST-based | Pure `ast.parse` walk — no code execution. |
+| Output | `GroundingReport{total, grounded, ungrounded, groundedness ∈ [0,1]}`. |
+
+Context7 live-doc federation is deferred Phase 2.
 
 **Layer B — Reasoning Policy KB ("how should I think?")**
 
-The scraped Claude Code **skills corpus** becomes GroundLoop's distilled "how to reason" policy. 91 SKILL.md files already on disk (as of 2026-04-15), covering tdd-workflow, security-review, python-patterns, backend-patterns, api-design, verification-loop, systematic-debugging, etc. — every skill is a distilled decision scaffold.
+The scraped Claude Code skills corpus = 1006 section-level nodes extracted from 93 `SKILL.md` files on disk (as of 2026-04-15).
 
-**Scrape sources (priority order):**
+Pipeline (`groundloop/skills_scraper/`):
 
-1. `~/.claude/skills/` — 57 files, primary.
-2. `~/.claude/.agents/skills/` — 24 files, superpowers skills.
-3. `~/.claude/.cursor/skills/` — 6 files.
-4. `~/.claude/plugins/marketplaces/` — 4 files (startup-skill etc.).
+1. Walks 4 source roots: `~/.claude/skills/`, `~/.claude/.agents/skills/`, `~/.claude/.cursor/skills/`, `~/.claude/plugins/marketplaces/`.
+2. Parses YAML frontmatter + markdown body per SKILL.md.
+3. Chunks body on H2/H3 boundaries (H4+ folds into parent H3).
+4. Deterministic rule-based tags per node: `domain:{python,js,go,kotlin,security,frontend,backend,data,api,mcp,devops,general}`, `phase:{plan,build,test,review,deploy,debug,docs}`.
+5. Emits JSONL corpus + sha256-stable manifest.
 
-**Scrape pipeline:**
+Index (`groundloop/kb_indexer/`):
 
-- Walk each source, parse YAML frontmatter (`name`, `description`, `triggers`) + body.
-- Chunk body by markdown headers; embed each chunk as a graph node.
-- Tag nodes by domain (python, security, testing, api, frontend, etc.) and by phase (plan, build, review, verify).
-- Index with BM25 (reuse `server/retriever.py` from EpistemicNav) + optional vector index for semantic lookup.
+- BM25Okapi over section bodies, tokenized with word-boundary regex.
+- Cache invalidation via corpus sha256.
+- Query API: `search(query, top_k, required_tags) -> list[SearchResult]`.
+- Deterministic tie-breaking on `(-score, node_id)`.
 
-**Runtime use inside the Ralph loop:**
-
-Before each autonomous decision, GroundLoop queries the policy KB for the matching reasoning scaffold:
+Example decision-point → skill-node routing:
 
 | Decision point | KB query → policy node |
 |---|---|
 | "Start a new feature" | `tdd-workflow`, `plan`, `superpowers:writing-plans` |
 | "Design an API" | `api-design`, `backend-patterns` |
 | "Handle secrets" | `security-review`, `security-scan` |
-| "Write tests" | `python-testing`, `tdd-workflow`, `verification-loop` |
-| "Something broke" | `superpowers:systematic-debugging`, `build-fix` |
-| "About to claim done" | `superpowers:verification-before-completion` |
+| "Write tests" | `python-testing`, `tdd-workflow` |
+| "Something broke" | `superpowers:systematic-debugging` |
 
-This converts free-form LLM judgement into a **policy-grounded reasoning graph** — the loop's next action is selected against the best-matching skill node, and the audit report records which skill each decision cited. Hallucinated reasoning ("let me just skip tests here") is caught because the selected skill node contradicts it.
-
-### Exit Criteria for the Autonomous Loop
-
-1. All generated code compiles + typechecks (`ruff`, `mypy`).
-2. Test suite passes with ≥80% coverage (`pytest --cov`).
-3. Every architectural decision traces to a KB graph node (citations).
-4. Hallucination audit: 0 ungrounded imports, 0 invented methods, 0 fabricated params.
-5. Security scan clean (`pip-audit`, `bandit`, no secrets).
-6. Brier-calibrated confidence ≥ threshold on all load-bearing claims.
-
-### Composite Metric (Analogue to Autoresearch's `val_bpb`)
+### Reward Formula
 
 ```
-score = (groundedness × test_pass_rate × coverage) − (hallucination_count × penalty)
+reward = 0.6 * sandbox_composite_score + 0.4 * grounding_score
+# round to 3 dp; clamp to [0.0, 1.0]
 ```
 
-Goal: strictly increasing across iterations until exit criteria hit, OR iteration budget exhausted.
+Sandbox composite is defined by `groundloop.python_sandbox.metric.composite_score`:
 
-### Demo Showpiece
+```
+tool_pass_rate                       = (# tools with ok=True) / (# tools run)
+imports_penalty                      = min(1.0, len(unresolved) * 0.1)
+ruff_penalty                         = min(ruff.count, 20) / 40
+mypy_penalty                         = min(mypy.count, 20) / 40
+pytest_penalty                       = 0.5 if pytest exit != 0 else 0.0
+raw                                  = tool_pass_rate - imports_penalty - ruff_penalty - mypy_penalty - pytest_penalty
+composite_score                      = max(0.0, min(1.0, raw))
+```
 
-> Judge gives a one-line brief. User pastes it into Claude Code (which has GroundLoop MCP attached). GroundLoop runs overnight. Next morning: a working, tested, grounded Python service (e.g. FastAPI + Postgres + pytest + OpenTelemetry) with a full audit trail showing every decision cited to a KB doc node. **Zero human intervention between paste and result.**
+Deterministic: same inputs → same reward.
 
-### Hackathon Constraints (Unknown — TBD)
+### Exit Criteria (per task)
 
-Duration, team size, hardware (DGX access hinted by repo name `openenv-DGXAI`), judging rubric, demo format. Clarify before committing to scope caps.
+- Reward ≥ `task.target_score` → `is_done=True`.
+- Budget exhausted → `is_done=True`.
 
-### Review Workflow (post-implementation, per slice)
+Agent can also opt into cross-step iteration by repeating `submit` with revisions until target hit.
 
-Critic and verifier are spawned as a **team via `TeamCreate`** — never via plain `Agent`. Rules:
+### Package Map
 
-1. **Team name:** `groundloop-review`. Created once.
-2. **Fresh critic per round:** each round spawns a brand-new teammate (`fresh-critic-1`, `fresh-critic-2`, …). A critic is **never reused** — re-prompting the same teammate produces stale critique because they already own their prior conclusions. One teammate = one critique. Then archive and spawn a new one for the next round.
-3. **Persistent verifier:** one teammate named `verifier` (spawned once, reused across rounds via `SendMessage`). Its job: run the actual grounding checks, tests, and exit-criteria metrics on the current slice. Verifier carries context across rounds so it can measure deltas.
-4. **Loop:** build slice → fresh critic critiques → verifier measures → apply fixes → spawn next fresh critic → repeat until the latest critic returns "nothing to improve" AND verifier confirms all exit criteria pass.
-5. **No self-critique from the orchestrator.** The orchestrator never critiques its own design — that critique is stale by definition.
-6. **Shutdown:** graceful `shutdown_request` to each teammate when the slice is done, then `TeamDelete` only after all members are idle.
+```
+groundloop_env/                   # the OpenEnv env (NEW, active)
+  environment.py                  # CodeForgeEnvironment(Environment)
+  app.py                          # FastAPI via openenv.create_app
+  tasks.py                        # 3 task definitions
+  grader.py                       # reward = 0.6*sandbox + 0.4*grounding
+  observation_builder.py          # CodeForgeObservation assembly
+  requirements.txt
+models.py                         # CodeForgeAction + CodeForgeObservation (also keeps round-1 types)
+openenv.yaml                      # name: code-forge, 3 tasks, reward_range [0,1]
+Dockerfile                        # python:3.11-slim, uvicorn on :7860
+inference.py                      # baseline agent (HTTP client, hand-coded stub solutions)
 
-This workflow applies to **each implementation slice of GroundLoop itself**, not to the autonomous loop GroundLoop runs on user briefs (that loop is the product's own internal Ralph loop).
+groundloop/                       # utility primitives, all shipped
+  skills_scraper/                 # #2 — KB corpus builder
+  kb_indexer/                     # #3 — BM25 retriever
+  python_sandbox/                 # #6 — the grader; runs ruff/mypy/pytest/imports
+  lib_grounder/                   # #4 — Layer A symbol grounding
+  ralph_orchestrator/             # #7 — autonomous loop (StubSynthesizer + OpenAISynthesizer)
+  interrogator/                   # #5 — Socratic question generator (available, not yet wired into env)
+  audit_reporter/                 # #8 — RunResult → AuditReport (available, not yet wired into env)
 
-### Design-Phase Open Questions
+server/                           # round-1 EpistemicNav (UNTOUCHED for judge verification)
+data/                             # round-1 claims + evidence (UNTOUCHED)
+docs/superpowers/specs/*.md       # 6 design specs (skills-scraper, kb-indexer, mcp-shell [archived], python-sandbox, ralph-orchestrator, codeforge-env)
+docs/superpowers/plans/*.md       # corresponding implementation plans
+```
 
-- [ ] Loop concurrency model: single-agent sequential vs. Autoresearch-style parallel experiments with "keep best"?
-- [ ] KB ingestion: live Context7 MCP federation vs. pre-built offline snapshot for Layer A?
-- [ ] Sandbox: local venv, Docker, or `firecracker`/`e2b`-style microVM for safety?
-- [ ] Resume/checkpoint: can the loop survive a mid-run crash and continue?
-- [ ] Output repo scaffold: opinionated (FastAPI template) or synthesized per-brief?
-- [ ] Skills-KB refresh cadence: scrape once at install vs. watch `~/.claude/skills/` for changes?
-- [ ] Skill-node granularity: one node per SKILL.md vs. one node per markdown section?
-- [ ] Conflict resolution: when two skill nodes contradict (e.g., language-specific override of a common rule), which wins? (Prior memory: language-specific rules take precedence — carry that forward.)
+### Review Workflow (per sub-project slice)
+
+Critic and verifier spawned as a **team via `TeamCreate`** — never via plain `Agent`. Rules:
+
+1. **One team per sub-project.** Cleanup after convergence.
+2. **Fresh critic per round:** new teammate (`spec-reviewer-1`, `spec-reviewer-2`, `quality-reviewer-1`, ...) every round. Never reused — stale by definition.
+3. **Persistent implementer:** one teammate named `implementer`, reused across fix rounds via `SendMessage`.
+4. **Loop:** spec-review → fixes → quality-review → fixes → fresh critic again → until `NOTHING_FURTHER` + all acceptance criteria pass.
+5. **No self-critique from the orchestrator.**
+6. **Shutdown:** call `TeamDelete` directly when convergence hit (no need for handshake dance — the `shutdown_request` message is optional, `TeamDelete` is authoritative).
+
+### Development Guidelines (authoritative for CodeForge)
+
+- **OpenEnv Spec Strictness:** every env endpoint conforms to `openenv.core.env_server.http_server.create_app(factory, Action, Observation)`. `/reset`, `/step`, `/state` are SDK-wired; `/tasks` + `/` are custom.
+- **Anti-Reward Hacking:** reward in `[0.0, 1.0]`. `query_kb` returns 0.0. No negative rewards.
+- **Determinism:** same files → same reward. Sandbox, grounder, tokenizer all deterministic.
+- **Sandbox isolation:** `groundloop/python_sandbox/` uses `subprocess.run` with `shell=False`, path-traversal guard on `files` dict (`is_relative_to(tmp_root_resolved)`), `tempfile.mkdtemp` + `shutil.rmtree` in finally.
+- **Python-only generated code.** Shrinks hallucination surface; makes grounding verifiable.
+- **Containerization:** `python:3.11-slim`, binds `0.0.0.0:7860`. Corpus can be baked via `ENV GROUNDLOOP_CORPUS_PATH` or built at runtime.
+
+### Common Commands (CodeForge)
+
+- **Local server:** `uvicorn groundloop_env.app:app --host 0.0.0.0 --port 7860`
+- **Baseline agent:** `python3 inference.py` (starts local server first, or set `API_BASE_URL`)
+- **Docker:** `docker build -t code-forge . && docker run -p 7860:7860 code-forge`
+- **Build KB corpus:** `python3 -m groundloop.skills_scraper`
+- **Query KB from CLI:** `python3 -m groundloop.kb_indexer search "pytest fixtures" --top-k 3`
+- **Deploy to HF Space:** `git push space main` (requires `space` remote + HF write token)
+
+### What's Shipped vs Deferred
+
+| Component | Shipped? | Wired into env? |
+|---|---|---|
+| `groundloop_env/` OpenEnv env | ✅ | ✅ |
+| `skills_scraper` (KB Layer B) | ✅ | ✅ via `kb_indexer` |
+| `kb_indexer` BM25 search | ✅ | ✅ via `query_kb` action |
+| `python_sandbox` grader | ✅ | ✅ via `submit` action |
+| `lib_grounder` (Layer A AST) | ✅ | ✅ attached to `submit` reward |
+| `ralph_orchestrator` | ✅ | ⏳ available as standalone; baseline `inference.py` uses hand-coded stubs instead for predictable scores |
+| `interrogator` | ✅ | ⏳ not exposed as an env action (Phase 2 wire-in) |
+| `audit_reporter` | ✅ | ⏳ not emitted on `is_done` (Phase 2 wire-in) |
+| Graphify community clustering | ❌ | — (Phase 2) |
+| Context7 live doc federation | ❌ | — (Phase 2) |
+| Brier-calibrated confidence on reward | ❌ | — (Phase 2) |
+
+### Round-2 Submission Checklist
+
+- [x] `openenv.yaml` updated to `name: code-forge`, 3 tasks, reward_range [0,1]
+- [x] `groundloop_env/environment.py` implements reset/step/state
+- [x] `groundloop_env/grader.py` — reward 0.6*sandbox + 0.4*grounding, clamped
+- [x] `models.py` — `CodeForgeAction` + `CodeForgeObservation` Pydantic v2
+- [x] Dockerfile builds and runs (verified locally)
+- [x] `inference.py` in root — HTTP client, 3-task baseline
+- [x] README updated with Round-2 section, tasks table, baseline scores, reward formula
+- [x] 222/222 tests pass, 93% coverage on `groundloop_env/`, 91% overall
+- [x] `ruff check groundloop_env/` clean
+- [x] Two spec-review rounds + one quality-review round converged to PASS / NOTHING_FURTHER
+- [ ] **HF Space deployed** — requires `git push space main` (needs HF token); blocked on credentials.
+- [ ] `openenv validate` — not yet run; check if CLI is installed on target box.
+- [ ] Bake frozen skills corpus into Docker image so the Space has a non-empty KB (commit a snapshot of `groundloop/kb/skills_corpus.jsonl`).
+- [ ] **Offline hackathon brief** — unknown until event. Be ready to adapt.
 
 ---
 
 ## Archive: EpistemicNav (Round 1 — Shipped 2026-04-08)
 
-Round 1 deliverable for the Meta PyTorch OpenEnv Hackathon x Scaler SST 2026. An OpenEnv-compliant RL environment that trains LLM agents to reason accurately under uncertainty, rewarding calibrated confidence (Brier score) rather than just correct answers. **Submitted and cleared round 1.** Code lives in this repo — reused as the epistemic core for GroundLoop.
+Round 1 deliverable. OpenEnv RL environment training LLM agents to reason accurately under uncertainty, rewarding calibrated confidence via Brier score. **Submitted and cleared round 1.** `server/` + `data/` left untouched for judge reference.
 
-### Core Components (reusable for GroundLoop)
+### Core Components
 
 *   **`server/environment.py`** — `EpistemicNavEnvironment(Environment)`: claims, evidence gathering via BM25, budget tracking, step/reset/state loop.
 *   **`server/app.py`** — FastAPI app via `openenv.create_app()` exposing `/step`, `/reset`, `/state` on `0.0.0.0:7860`.
 *   **`server/grader.py`** — Brier score reward. Penalises overconfidence on wrong and underconfidence on right. `verdict="uncertain"` on genuinely uncertain claims → min 0.70 reward.
-*   **`server/retriever.py`** — BM25Okapi wrapper over `data/evidence.json`. Pure Python, <10ms/query, no GPU. **Reuse target for GroundLoop KB retrieval.**
-*   **`models.py`** — Pydantic v2: `EpistemicAction` (QUERY/COMMIT), `EpistemicObservation`, `EvidenceSnippet`.
+*   **`server/retriever.py`** — BM25Okapi wrapper over `data/evidence.json`. Pure Python, <10ms/query, no GPU.
+*   **`models.py` (round-1 portion)** — Pydantic v2: `EpistemicAction` (QUERY/COMMIT), `EpistemicObservation`, `EvidenceSnippet`. Coexists with new `CodeForgeAction`/`CodeForgeObservation`.
 *   **`client.py`** — `EpistemicEnv(GenericEnvClient)`: HTTP client.
-*   **`inference.py`** — Baseline LLM agent over OpenAI-compatible API. <20 min on 2vCPU/8GB.
+*   **Round-1 `inference.py`** — replaced by CodeForge's version; baseline logic archived in git history.
 
-### Data
+### Round-1 Data
 
 *   **`data/claims.json`** — 400 claims (200 easy, 150 medium, 50 hard).
 *   **`data/evidence.json`** — 2000 snippets across 15+ domains.
 
-### Three Tasks
+### Round-1 Tasks
 
 1. **easy (single_hop):** Single-hop factual claim. Reward ceiling ~0.98.
 2. **medium (multi_hop):** Multi-hop, 3–4 evidence pieces. Reward ceiling ~0.88.
 3. **hard (contradictory):** Contradictory evidence. Correct answer is `"uncertain"`. Reward floor 0.70.
 
-### Round 1 Development Guidelines (still authoritative for any EpistemicNav edits)
+### Round-1 Active Env
 
-*   **OpenEnv Spec Strictness:** All API endpoints strictly adhere to OpenEnv spec and `problem_statement_and_guidelines.md`.
-*   **Anti-Reward Hacking:** Rewards tied to Brier calibration. Query steps return 0.0 reward. No negative rewards ([0,1] range).
-*   **Determinism:** Grader returns reproducible scores in [0.0, 1.0].
-*   **No External Calls from Env:** All evidence pre-cached. No web requests from the server.
-*   **Containerization:** Docker on HF Spaces. `0.0.0.0:7860`. Image ~280MB (python:3.11-slim).
-
-### Round 1 Common Commands
-
-*   **Local Server:** `uvicorn server.app:app --host 0.0.0.0 --port 7860`
-*   **Docker Build:** `docker build -t epistemic-nav .` then `docker run -p 7860:7860 epistemic-nav`
-*   **Baseline Agent:** `python inference.py` (requires API keys in `.env`)
-*   **Deploy:** `git push space main`
+`server/` is code-complete but only one env is exposed via `openenv.yaml`. The active YAML points to `code-forge` (round 2). To temporarily re-expose round 1, swap `openenv.yaml` to the archived contents in git history `d252064:openenv.yaml`, or use a parallel YAML (not done).
 
 ---
 
 ## Skill Usage Guide
 
-Invoke via `/skill-name`. The guide applies to both GroundLoop (active) and any EpistemicNav maintenance work.
+Invoke via `/skill-name`. Applies to both CodeForge (active) and any EpistemicNav maintenance work.
 
 ### Phase 1: Planning
 
 | Skill | When to Use |
 |---|---|
-| `/superpowers:brainstorming` | **Next step for GroundLoop.** Before any creative/architectural decision. |
+| `/superpowers:brainstorming` | Before any creative/architectural decision. |
 | `/superpowers:writing-plans` | After brainstorming converges — lock the multi-step implementation spec before code. |
 | `/plan` | Before each implementation chunk — step-by-step plan, risks identified. |
 
@@ -194,29 +254,27 @@ Invoke via `/skill-name`. The guide applies to both GroundLoop (active) and any 
 
 | Skill | When to Use |
 |---|---|
-| `/deep-research` | Research MCP patterns, Autoresearch internals, graph-KB implementations, existing grounded-codegen tools. |
-| `/exa-search` | Broader web research when GitHub/docs are insufficient. |
-| `/graphify` | Convert research + docs into a knowledge graph (directly reused as GroundLoop's KB backbone). |
+| `/deep-research` | Research OpenEnv patterns, Autoresearch internals, existing grounded-codegen tools. |
+| `/exa-search` | Broader web research when GitHub/docs insufficient. |
+| `/graphify` | Convert research + docs into a knowledge graph; optional advanced Layer B enhancement. |
 
 ### Phase 3: Python Development
 
 | Skill | When to Use |
 |---|---|
-| `/python-patterns` | Writing Python — idiomatic patterns, type hints, Pydantic v2, dataclasses. |
+| `/python-patterns` | Idiomatic Python — type hints, Pydantic v2, dataclasses. |
 | `/coding-standards` | Code quality, naming, file organization. |
-| `/backend-patterns` | If GroundLoop exposes an HTTP MCP variant or the generated demo project is a backend. |
-| `/tdd` | Before implementing any new feature. RED → GREEN → IMPROVE. Target 80%+ coverage. |
+| `/backend-patterns` | FastAPI endpoint design, API response format. |
+| `/tdd` | Before implementing any new feature. RED → GREEN → IMPROVE. ≥85% coverage target. |
 | `/python-testing` | pytest strategies, fixtures, mocking, parametrization. |
-| `/superpowers:test-driven-development` | Before writing implementation code for any feature or bugfix. |
-| `/claude-api` | If GroundLoop's internal loop calls Claude API directly (prompt caching, tool use, batch). |
+| `/superpowers:test-driven-development` | Before writing implementation code. |
 
-### Phase 4: MCP-Specific (GroundLoop)
+### Phase 4: OpenEnv-Specific
 
 | Skill | When to Use |
 |---|---|
-| *(MCP builder skill TBD — check `/find-skills` for MCP server scaffolding)* | Bootstrapping the stdio MCP server, tool schemas, manifest. |
-| `/plugin:context7:context7__query-docs` | Live library-doc grounding during codegen. |
-| `/pinecone:quickstart` | Optional vector KB backend (BM25 is the default per EpistemicNav reuse). |
+| `/plugin:context7:context7__query-docs` | Optional live library-doc grounding (future Phase 2 Layer A enhancement). |
+| `/pinecone:quickstart` | Optional vector-KB backend (BM25 is the default, sufficient for Layer B). |
 
 ### Phase 5: Code Review & Quality
 
@@ -232,34 +290,35 @@ Invoke via `/skill-name`. The guide applies to both GroundLoop (active) and any 
 
 | Skill | When to Use |
 |---|---|
-| `/build-fix` | When build or MCP server startup fails. |
-| `/superpowers:verification-before-completion` | Before claiming any task done. Run verification, confirm output. |
-| `/superpowers:systematic-debugging` | Bugs, test failures, unexpected loop behavior. |
+| `/build-fix` | When build or env startup fails. |
+| `/superpowers:verification-before-completion` | Before claiming any task done. |
+| `/superpowers:systematic-debugging` | Bugs, test failures, unexpected behavior. |
 | `/verify` | Full verification loop before shipping. |
 
 ### Phase 7: Documentation & Finish
 
 | Skill | When to Use |
 |---|---|
-| `/update-docs` | Update README with MCP tool surface, setup, demo instructions. |
+| `/update-docs` | Update README with env description, action/obs spaces, baseline scores. |
 | `/superpowers:finishing-a-development-branch` | When implementation complete and tests pass. |
 | `/superpowers:requesting-code-review` | Before final submission. |
+| `/huggingface-skills:hf-cli` | HF Space push + token setup. |
 
 ### Utility Skills
 
 | Skill | When to Use |
 |---|---|
 | `/aside` | Quick side question without losing context. |
-| `/superpowers:dispatching-parallel-agents` | 2+ independent tasks (e.g., build grader + build retriever simultaneously). |
+| `/superpowers:dispatching-parallel-agents` | 2+ independent tasks. |
 | `/save-session` | Save state before ending work. |
 | `/resume-session` | Start of new session — load prior context. |
 
 ### Skills NOT Relevant
 
-- Vercel / deployment-platform skills (stdio MCP is local; hosted variant would target HF Space if ever).
-- Frontend/React/Next.js/Figma skills (no UI).
-- Django / Spring Boot / Go / Kotlin / Java skills (Python-only project).
-- Heavy database skills (KB is flat JSON + BM25, optional vector DB).
+- Vercel / other cloud deployment platforms (target is HF Space).
+- Frontend/React/Next.js/Figma (no UI).
+- Django / Spring Boot / Go / Kotlin / Java (Python-only).
+- Heavy database skills (no DB — flat JSONL + BM25).
 
 ---
 
@@ -278,17 +337,3 @@ Invoke via `/skill-name`. The guide applies to both GroundLoop (active) and any 
 - [x] `inference.py` runtime <20 min on 2vCPU / 8GB
 - [x] `README.md` — action space, observation space, setup, task descriptions
 - [x] Pre-submission validation script passed
-
-## Round 2 Submission Checklist (GroundLoop — TBD)
-
-- [ ] Brainstorm complete → spec locked
-- [ ] Written plan approved
-- [ ] MCP server scaffold (stdio transport, tool manifest)
-- [ ] `interrogate`, `ingest_sources`, `ground_check`, `autonomous_build`, `audit_report` tools implemented
-- [ ] KB graph builder (reuses EpistemicNav BM25 retriever + Context7 for live Python docs)
-- [ ] Composite metric tracker + audit-report generator
-- [ ] Ralph loop orchestrator with checkpoint/resume
-- [ ] Python sandbox (venv or Docker) for generated-code verification
-- [ ] Test suite ≥80% coverage on GroundLoop itself
-- [ ] Demo brief + recorded overnight run showing a working output repo
-- [ ] README + audit-report sample
