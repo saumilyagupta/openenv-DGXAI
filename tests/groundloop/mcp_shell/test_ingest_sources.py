@@ -33,3 +33,51 @@ def test_ingest_sources_invalid_params():
     out = handle_ingest_sources({"unexpected": 123}, s)
     assert out["status"] == "error"
     assert out["reason"] == "invalid_params"
+
+
+def test_ingest_sources_unreadable_glob_returns_structured_error():
+    s = SessionState()
+    out = handle_ingest_sources(
+        {"source_globs": ["/nonexistent/**/SKILL.md"]}, s
+    )
+    # Scraper walks nothing -> existing no_nodes_scraped branch still applies.
+    assert out["status"] == "error"
+    assert out["reason"] == "no_nodes_scraped"
+
+
+def test_ingest_sources_wraps_indexer_exception(monkeypatch):
+    from groundloop.mcp_shell import config as cfg
+    from groundloop.mcp_shell.tools import ingest_sources as mod
+
+    if not cfg.DEFAULT_CORPUS_PATH.exists():
+        pytest.skip("default corpus not present; indexer-exception path uses default corpus")
+
+    class _BoomIndex:
+        def __init__(self, *_: object, **__: object) -> None:
+            return None
+
+        def build(self) -> None:
+            raise RuntimeError("corpus corrupt")
+
+    monkeypatch.setattr(mod, "SkillsIndex", _BoomIndex)
+    s = SessionState()
+    out = handle_ingest_sources({"source_globs": None}, s)
+    assert out["status"] == "error"
+    assert out["reason"] == "ingest_failed"
+    assert "corpus corrupt" in out["detail"]
+
+
+def test_ingest_sources_wraps_scraper_exception(monkeypatch, fixtures_dir):
+    from groundloop.mcp_shell.tools import ingest_sources as mod
+
+    def _boom(**_: object) -> object:
+        raise RuntimeError("scraper exploded")
+
+    monkeypatch.setattr(mod, "run_scraper", _boom)
+    s = SessionState()
+    out = handle_ingest_sources(
+        {"source_globs": [str(fixtures_dir / "**" / "SKILL.md")]}, s
+    )
+    assert out["status"] == "error"
+    assert out["reason"] == "ingest_failed"
+    assert "scraper exploded" in out["detail"]
