@@ -13,12 +13,17 @@ _MYPY_ERROR_RE = re.compile(r"Found (\d+) errors?")
 
 
 def argv_for(name: str, project_dir: Path) -> list[str]:
+    # Spec §4.2: argv is cwd-relative. Runner sets cwd=project_dir; tools
+    # target "." (ruff/mypy) or rely on cwd (pytest). Prevents path double-
+    # expansion (which produced spurious ruff E902 when project_dir was
+    # also used as cwd).
+    del project_dir
     if name == "ruff":
-        return ["ruff", "check", "--output-format", "json", str(project_dir)]
+        return ["ruff", "check", "--output-format", "json", "."]
     if name == "mypy":
-        return ["mypy", "--no-incremental", "--strict", str(project_dir)]
+        return ["mypy", "--no-incremental", "--strict", "."]
     if name == "pytest":
-        return ["pytest", "-q", "--tb=line", "--no-header", str(project_dir)]
+        return ["pytest", "-q", "--tb=line", "--no-header"]
     if name == "pip-audit":
         return ["pip-audit", "--format", "json"]
     msg = f"unknown tool: {name}"

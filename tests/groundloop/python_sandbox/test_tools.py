@@ -18,11 +18,22 @@ def test_argv_for_ruff(tmp_path: Path) -> None:
     argv = argv_for("ruff", tmp_path)
     assert argv[0] == "ruff"
     assert "check" in argv
+    assert argv[-1] == "."
+    assert str(tmp_path) not in argv
 
 
 def test_argv_for_mypy(tmp_path: Path) -> None:
     argv = argv_for("mypy", tmp_path)
     assert argv[0] == "mypy"
+    assert argv[-1] == "."
+    assert str(tmp_path) not in argv
+
+
+def test_argv_for_pytest_no_path(tmp_path: Path) -> None:
+    argv = argv_for("pytest", tmp_path)
+    assert argv[0] == "pytest"
+    assert str(tmp_path) not in argv
+    assert argv == ["pytest", "-q", "--tb=line", "--no-header"]
 
 
 def test_argv_for_unknown_raises(tmp_path: Path) -> None:
