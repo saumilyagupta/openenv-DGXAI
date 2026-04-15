@@ -137,3 +137,17 @@ def test_cli_cluster_missing_corpus(tmp_path: Path) -> None:
         "--manifest", str(tmp_path / "m.json"),
     ])
     assert rc == 1
+
+
+def test_cli_cluster_malformed_corpus(tmp_path: Path, capsys) -> None:
+    bad_corpus = tmp_path / "bad.jsonl"
+    bad_corpus.write_text('{"id": "n1"}\nnot-json\n', encoding="utf-8")
+    rc = main([
+        "cluster",
+        "--corpus", str(bad_corpus),
+        "--manifest", str(tmp_path / "m.json"),
+    ])
+    assert rc == 1
+    err = capsys.readouterr().err
+    assert "malformed JSON" in err
+    assert ":2" in err

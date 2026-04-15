@@ -5,6 +5,7 @@ import json
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 from groundloop.kb_indexer.index import SkillsIndex
 
@@ -113,11 +114,21 @@ def _cmd_cluster(args: argparse.Namespace) -> int:
 
     from groundloop.kb_indexer.cluster import build_clusters, save_manifest
 
-    nodes = [
-        json.loads(ln)
-        for ln in args.corpus.read_text(encoding="utf-8").splitlines()
-        if ln.strip()
-    ]
+    nodes: list[dict[str, Any]] = []
+    for lineno, raw in enumerate(
+        args.corpus.read_text(encoding="utf-8").splitlines(), 1,
+    ):
+        stripped = raw.strip()
+        if not stripped:
+            continue
+        try:
+            nodes.append(json.loads(stripped))
+        except json.JSONDecodeError as e:
+            print(
+                f"ERROR: malformed JSON in corpus {args.corpus}:{lineno}: {e}",
+                file=sys.stderr,
+            )
+            return 1
     corpus_sha256 = hashlib.sha256(args.corpus.read_bytes()).hexdigest()
     corpus_mtime = args.corpus.stat().st_mtime
     generated_at = datetime.fromtimestamp(
