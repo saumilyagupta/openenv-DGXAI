@@ -5,7 +5,7 @@ import logging
 import os
 from collections.abc import Mapping, Sequence
 
-from openai import OpenAI  # type: ignore[import-not-found]
+from openai import OpenAI
 
 from groundloop.kb_indexer.models import SearchResult
 from groundloop.ralph_orchestrator.models import SynthesisResult

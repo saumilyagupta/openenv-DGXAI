@@ -298,3 +298,41 @@ result = run_sandbox(files={"main.py": "def f() -> int:\n    return 1\n"}, tools
 The composite score penalises unresolved imports, ruff violations, mypy errors, and pytest failures. Missing tool binaries degrade gracefully (reported as `unavailable`).
 
 See `docs/superpowers/specs/2026-04-15-groundloop-python-sandbox-design.md` for the full design.
+
+### Ralph Orchestrator (autonomous loop)
+
+The Ralph orchestrator runs a plan -> synthesize -> sandbox-score -> keep-or-revert loop over a skills KB, producing iteratively improved code files checkpointed to JSON.
+
+Two synthesizer backends:
+
+- **stub** (default): deterministic, no LLM; pulls fenced Python blocks from KB citations. Used in tests and offline runs.
+- **openai**: uses `openai` SDK. Requires `OPENAI_API_KEY`. Optional: `OPENAI_BASE_URL`, `OPENAI_MODEL_NAME` (defaults to `gpt-4o-mini`).
+
+Run via CLI:
+
+```bash
+python3 -m groundloop.ralph_orchestrator run path/to/spec.txt \
+  --corpus path/to/skills_corpus.jsonl \
+  --initial-file main.py=path/to/main.py \
+  --max-iters 5 --target-score 0.95 --synthesizer stub --format json
+```
+
+Programmatic use:
+
+```python
+from groundloop.kb_indexer.index import SkillsIndex
+from groundloop.ralph_orchestrator import LoopConfig, StubSynthesizer, run_loop
+
+idx = SkillsIndex(corpus_path="corpus.jsonl")
+idx.build()
+result = run_loop(
+    spec="Build a greet function",
+    initial_files={"main.py": "def greet(n): return 'hi'\n"},
+    index=idx,
+    synthesizer=StubSynthesizer(),
+    config=LoopConfig(max_iters=5),
+)
+print(result.terminated_by, result.final_score)
+```
+
+See `docs/superpowers/specs/2026-04-15-groundloop-ralph-orchestrator-design.md` for the full design.
