@@ -14,4 +14,5 @@ DEFAULT_SOURCES: list[SourceRoot] = [
 ]
 
 MIN_CHUNK_CHARS = 80
+MAX_HEADING_LEVEL = 3  # H1-H3 create their own chunks; H4+ folds into parent H3.
 DEFAULT_OUTPUT = "groundloop/kb/skills_corpus.jsonl"

@@ -3,7 +3,7 @@ from __future__ import annotations
 from markdown_it import MarkdownIt
 from markdown_it.token import Token
 
-from groundloop.skills_scraper.config import MIN_CHUNK_CHARS
+from groundloop.skills_scraper.config import MAX_HEADING_LEVEL, MIN_CHUNK_CHARS
 from groundloop.skills_scraper.models import SectionChunk
 
 _md = MarkdownIt()
@@ -26,7 +26,7 @@ def _segment_tokens(
         if tok.type == "heading_open":
             level = int(tok.tag[1])  # "h2" -> 2
             heading_text = tokens[i + 1].content.strip()
-            if level <= 3:
+            if level <= MAX_HEADING_LEVEL:
                 if current is not None:
                     segments.append(current)
                 current = (level, heading_text, [])

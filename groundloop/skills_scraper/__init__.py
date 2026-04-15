@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from groundloop.skills_scraper.models import (
     ParsedSkill,
     ScrapeError,
