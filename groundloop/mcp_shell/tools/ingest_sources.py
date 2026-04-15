@@ -1,3 +1,12 @@
+"""Handler for the `ingest_sources` MCP tool.
+
+Trust model: MCP callers are trusted (the server runs as the local user's
+process, receiving tool calls from their own Claude Code / Cursor / Codex
+client). `source_globs` is therefore NOT sandboxed against path traversal
+or absolute paths — any readable file on disk that matches is fair game.
+If GroundLoop is ever exposed over a network MCP transport, add a glob
+allowlist here before shipping.
+"""
 from __future__ import annotations
 
 import hashlib
