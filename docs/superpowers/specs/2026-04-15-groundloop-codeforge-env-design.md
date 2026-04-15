@@ -190,8 +190,8 @@ Coverage target: **85%**.
 1. `openenv.yaml` validates (name, tasks, reward_range).
 2. `uvicorn groundloop_env.app:app --host 0.0.0.0 --port 7860` starts cleanly.
 3. `POST /reset {"task_level": "easy"}` returns a valid `CodeForgeObservation`.
-4. `POST /step {"action_type": "query_kb", "claim": "greet function"}` returns citations in observation.
-5. `POST /step {"action_type": "submit", "files": {"main.py": "def greet(name: str) -> str:\n    return f'Hello, {name}!'\n"}}` returns reward > 0.8 for the easy task.
+4. `POST /step {"action": {"action_type": "query_kb", "claim": "greet function"}}` returns citations in observation.
+5. `POST /step {"action": {"action_type": "submit", "files": {"main.py": "def greet(name: str) -> str:\n    return f'Hello, {name}!'\n"}}}` returns reward > 0.8 for the easy task.
 6. `python inference.py` completes and prints a baseline score per task.
 7. `docker build -t code-forge .` succeeds; `docker run -p 7860:7860 code-forge` starts.
 8. `ruff check` + `mypy --strict` clean on `groundloop_env/`.
