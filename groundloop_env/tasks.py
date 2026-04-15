@@ -11,6 +11,7 @@ class Task:
     initial_files: dict[str, str]
     target_score: float
     max_budget: int
+    tools: tuple[str, ...]
 
 
 TASKS: tuple[Task, ...] = (
@@ -24,6 +25,7 @@ TASKS: tuple[Task, ...] = (
         initial_files={"main.py": "def greet(name):\n    pass\n"},
         target_score=0.90,
         max_budget=4,
+        tools=("ruff", "imports", "mypy"),
     ),
     Task(
         task_id="greet_with_tests",
@@ -43,6 +45,7 @@ TASKS: tuple[Task, ...] = (
         },
         target_score=0.80,
         max_budget=6,
+        tools=("ruff", "imports", "mypy", "pytest"),
     ),
     Task(
         task_id="multi_file_module",
@@ -63,6 +66,7 @@ TASKS: tuple[Task, ...] = (
         },
         target_score=0.70,
         max_budget=10,
+        tools=("ruff", "imports", "mypy", "pytest"),
     ),
 )
 

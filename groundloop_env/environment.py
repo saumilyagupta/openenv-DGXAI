@@ -118,10 +118,11 @@ class CodeForgeEnvironment(Environment):
             self._last_reward = 0.0
             return
         self._current_files = dict(action.files)
+        assert self._task is not None  # noqa: S101
         try:
             sandbox_result = run_sandbox(
                 files=dict(action.files),
-                tools=("ruff", "imports", "mypy", "pytest"),
+                tools=self._task.tools,
                 timeout_per_tool=30.0,
             )
             sandbox_score = sandbox_result.composite_score

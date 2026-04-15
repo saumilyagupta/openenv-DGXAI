@@ -52,6 +52,22 @@ def test_submit_missing_files(env: CodeForgeEnvironment):
     assert obs.last_reward == 0.0
 
 
+def test_submit_easy_task_with_correct_code_meets_target(tiny_corpus_path: Path):
+    env = CodeForgeEnvironment(corpus_path=tiny_corpus_path)
+    env.reset(task_level="easy")
+    good = {
+        "main.py": (
+            'from __future__ import annotations\n\n\n'
+            'def greet(name: str) -> str:\n'
+            '    return f"Hello, {name}!"\n'
+        ),
+    }
+    action = CodeForgeAction(action_type=CodeForgeActionType.SUBMIT, files=good)
+    obs = env.step(action)
+    assert obs.last_reward > 0.8, f"easy task reward={obs.last_reward}, expected >0.8"
+    assert obs.is_done is True
+
+
 def test_budget_exhaustion_marks_done(env: CodeForgeEnvironment):
     env.reset(task_level="easy")
     obs = None

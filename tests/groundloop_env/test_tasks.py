@@ -14,6 +14,7 @@ def test_get_task_by_level():
     assert t.brief
     assert t.initial_files
     assert 0.0 < t.target_score <= 1.0
+    assert t.tools
 
 
 def test_get_task_invalid_level_raises():
