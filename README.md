@@ -217,3 +217,25 @@ sources:
 ### Spec
 
 See `docs/superpowers/specs/2026-04-15-groundloop-skills-scraper-design.md` for the full design.
+
+### KB Indexer
+
+A BM25 search index layered over the scraper corpus. Deterministic, cached to disk, invalidated via corpus sha256.
+
+```bash
+# Build (or rebuild) the index; reads skills_corpus.jsonl, writes skills_index.pkl.
+python3 -m groundloop.kb_indexer build [--force]
+
+# Search; auto-builds the index if the cache is missing or stale.
+python3 -m groundloop.kb_indexer search "pytest fixtures" --top-k 5
+python3 -m groundloop.kb_indexer search "api design" --tag domain:backend --format json
+
+# Index statistics (node_count, vocab_size, avg_doc_len) as JSON.
+python3 -m groundloop.kb_indexer stats
+```
+
+- `search` accepts repeated `--tag` flags; results must match every required tag.
+- `--format json` emits a machine-readable array of `SearchResult` objects; default `text` is human-readable.
+- The cache (`groundloop/kb/skills_index.pkl`) is regenerated silently whenever the corpus sha256 changes.
+
+See `docs/superpowers/specs/2026-04-15-groundloop-kb-indexer-design.md` for the full design.
