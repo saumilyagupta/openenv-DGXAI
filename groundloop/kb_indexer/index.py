@@ -4,6 +4,7 @@ import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from rank_bm25 import BM25Okapi  # type: ignore[import-untyped]
 
@@ -16,7 +17,7 @@ class SkillsIndex:
     def __init__(self, *, corpus_path: Path, cache_path: Path | None = None) -> None:
         self._corpus_path = corpus_path
         self._cache_path = cache_path
-        self._nodes: list[dict] = []
+        self._nodes: list[dict[str, Any]] = []
         self._tokenized: list[list[str]] = []
         self._bm25: BM25Okapi | None = None
         self._corpus_sha256: str = ""
