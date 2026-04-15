@@ -36,10 +36,7 @@ class EpistemicObservation(Observation):
     last_reward: Optional[float] = None
 
 
-from enum import Enum as _Enum
-
-
-class CodeForgeActionType(str, _Enum):
+class CodeForgeActionType(str, Enum):
     QUERY_KB = "query_kb"
     SUBMIT = "submit"
 
