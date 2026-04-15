@@ -93,3 +93,58 @@ def test_save_and_load_manifest_roundtrip(tiny_corpus_path, tmp_path):
     loaded = load_manifest(out)
     assert loaded.total_clusters == manifest.total_clusters
     assert loaded.total_nodes_clustered == manifest.total_nodes_clustered
+
+
+def test_build_clusters_empty_nodes():
+    m = build_clusters(
+        [], jaccard_threshold=0.15, generated_at="t", corpus_sha256="",
+    )
+    assert m.total_clusters == 0
+    assert m.total_nodes_clustered == 0
+    assert m.singletons == 0
+    assert m.clusters == ()
+
+
+def test_build_clusters_single_node():
+    nodes = [{
+        "id": "n1", "skill_name": "solo", "section_path": ["x"],
+        "section_body": "alone body here with tokens for counting",
+        "tags": ["domain:python"], "source_path": "/s",
+    }]
+    m = build_clusters(
+        nodes, jaccard_threshold=0.15, generated_at="t", corpus_sha256="",
+    )
+    assert m.total_clusters == 1
+    assert m.singletons == 1
+
+
+def test_build_clusters_all_disjoint_at_threshold_one():
+    nodes = [
+        {
+            "id": f"n{i}", "skill_name": "s", "section_path": ["x"],
+            "section_body": f"alpha beta unique_word_{i}",
+            "tags": ["domain:python"], "source_path": "/s",
+        }
+        for i in range(5)
+    ]
+    m = build_clusters(
+        nodes, jaccard_threshold=1.0, generated_at="t", corpus_sha256="",
+    )
+    assert m.singletons == 5
+    assert m.total_clusters == 5
+
+
+def test_build_clusters_all_connected_at_zero_threshold():
+    nodes = [
+        {
+            "id": f"n{i}", "skill_name": "s", "section_path": ["x"],
+            "section_body": "alpha beta gamma delta",
+            "tags": ["domain:python"], "source_path": "/s",
+        }
+        for i in range(4)
+    ]
+    m = build_clusters(
+        nodes, jaccard_threshold=0.0, generated_at="t", corpus_sha256="",
+    )
+    assert m.total_clusters == 1
+    assert m.clusters[0].node_count == 4
