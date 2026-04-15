@@ -336,3 +336,68 @@ print(result.terminated_by, result.final_score)
 ```
 
 See `docs/superpowers/specs/2026-04-15-groundloop-ralph-orchestrator-design.md` for the full design.
+
+## End-to-End GroundLoop
+
+The five sub-projects (skills-scraper, kb-indexer, mcp-shell, python-sandbox,
+ralph-orchestrator) plus lib-grounder, interrogator, and audit-reporter
+compose into a single MCP-driven workflow.
+
+1. **Install deps.**
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. **Build the Layer B corpus** from your skill library.
+   ```bash
+   python3 -m groundloop.skills_scraper
+   ```
+   Writes `groundloop/kb/skills_corpus.jsonl`.
+3. **Start the MCP server.**
+   ```bash
+   python3 -m groundloop.mcp_shell
+   ```
+   The server exposes five tools over stdio: `interrogate`, `ingest_sources`,
+   `ground_check`, `autonomous_build`, `audit_report`.
+4. **From an MCP client (Claude Code, Cursor, Codex, or the in-process
+   `dispatch` function for testing)**, chain the tools:
+   - `interrogate(brief)` — Socratic questions grounded in the skill KB.
+   - `ingest_sources(source_globs=None)` — builds a graph from the default
+     corpus; returns `graph_id`.
+   - `ground_check(claim, graph_id)` — Layer-A (AST symbol grounding via
+     `lib_grounder`) plus Layer-B (BM25 over skills). Returns verdict,
+     citations, confidence, and when the claim contains code a `layer_a`
+     sub-dict.
+   - `autonomous_build(spec, graph_id)` — runs the ralph-orchestrator loop
+     against the graph; returns a `run_id` and final files.
+   - `audit_report(run_id)` — structured audit: iteration reasons, skill
+     citations, score trajectory, termination reason.
+
+### Quick in-process smoke test
+
+```python
+from groundloop.mcp_shell.server import dispatch
+from groundloop.mcp_shell.session import SessionState
+
+s = SessionState()
+print(dispatch("interrogate", {"brief": "build a REST API"}, s))
+r = dispatch("ingest_sources", {"source_globs": None}, s)
+gid = r["graph_id"]
+gc = dispatch("ground_check", {
+    "claim": "```python\nimport os\nos.getcwd()\n```",
+    "graph_id": gid,
+}, s)
+ab = dispatch("autonomous_build", {
+    "spec": "build greet(name)", "graph_id": gid, "max_iters": 1,
+}, s)
+ar = dispatch("audit_report", {"run_id": ab["run_id"]}, s)
+```
+
+### Full verification
+
+```bash
+python3 -m pytest tests/groundloop/ --cov=groundloop --cov-report=term -q
+ruff check groundloop/
+mypy --strict groundloop/
+```
+
+Targets: 210+ tests pass, 85%+ overall coverage, zero lint or type errors.
