@@ -35,6 +35,15 @@ def _parse(argv: list[str]) -> argparse.Namespace:
     stats = sub.add_parser("stats", help="Show index stats")
     _add_common(stats)
 
+    cluster = sub.add_parser("cluster", help="Build cluster manifest from corpus")
+    _add_common(cluster)
+    cluster.add_argument(
+        "--manifest",
+        type=Path,
+        default=Path("groundloop/kb/cluster_manifest.json"),
+    )
+    cluster.add_argument("--threshold", type=float, default=0.15)
+
     return p.parse_args(argv)
 
 
@@ -95,6 +104,35 @@ def _cmd_stats(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_cluster(args: argparse.Namespace) -> int:
+    if not args.corpus.is_file():
+        print(f"ERROR: corpus not found: {args.corpus}", file=sys.stderr)
+        return 1
+    import hashlib
+
+    from groundloop.kb_indexer.cluster import build_clusters, save_manifest
+
+    nodes = [
+        json.loads(ln)
+        for ln in args.corpus.read_text(encoding="utf-8").splitlines()
+        if ln.strip()
+    ]
+    corpus_sha256 = hashlib.sha256(args.corpus.read_bytes()).hexdigest()
+    manifest = build_clusters(
+        nodes,
+        jaccard_threshold=args.threshold,
+        corpus_sha256=corpus_sha256,
+    )
+    save_manifest(manifest, args.manifest)
+    print(
+        f"built: {manifest.total_clusters} clusters, "
+        f"{manifest.total_nodes_clustered} nodes, "
+        f"{manifest.singletons} singletons, "
+        f"threshold={args.threshold}",
+    )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.WARNING)
     args = _parse(argv or sys.argv[1:])
@@ -104,4 +142,6 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_search(args)
     if args.command == "stats":
         return _cmd_stats(args)
+    if args.command == "cluster":
+        return _cmd_cluster(args)
     return 1

@@ -113,3 +113,27 @@ def test_cli_build_force_rebuilds(tiny_corpus_path: Path, tmp_path: Path, capsys
     out = capsys.readouterr().out
     assert "cache hit" not in out
     assert "built:" in out
+
+
+def test_cli_cluster(tiny_corpus_path: Path, tmp_path: Path, capsys) -> None:
+    manifest_path = tmp_path / "cluster_manifest.json"
+    rc = main([
+        "cluster",
+        "--corpus", str(tiny_corpus_path),
+        "--manifest", str(manifest_path),
+        "--threshold", "0.1",
+    ])
+    assert rc == 0
+    assert manifest_path.exists()
+    m = json.loads(manifest_path.read_text())
+    assert m["total_nodes_clustered"] >= 1
+    assert m["corpus_sha256"]
+
+
+def test_cli_cluster_missing_corpus(tmp_path: Path) -> None:
+    rc = main([
+        "cluster",
+        "--corpus", str(tmp_path / "nope.jsonl"),
+        "--manifest", str(tmp_path / "m.json"),
+    ])
+    assert rc == 1
