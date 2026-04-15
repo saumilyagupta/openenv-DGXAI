@@ -8,8 +8,9 @@ from groundloop.python_sandbox.sandbox import run_sandbox
 
 
 def test_sandbox_clean_project_scores_high(clean_project: Path) -> None:
-    r = run_sandbox(project_dir=clean_project, tools=("ruff", "imports"))
-    assert r.composite_score >= 0.9
+    # Spec §7.1: clean fixture with DEFAULT_TOOLS must score >= 0.9.
+    r = run_sandbox(project_dir=clean_project)
+    assert r.composite_score >= 0.9, f"got {r.composite_score}, parsed={r.parsed}"
     assert r.imports.unresolved == ()
 
 
