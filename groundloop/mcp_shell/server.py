@@ -92,6 +92,7 @@ _TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
 def dispatch(name: str, args: dict[str, Any], session: SessionState) -> dict[str, Any]:
     handler = _HANDLERS.get(name)
     if handler is None:
+        _log.warning("dispatch: unknown tool %s", name)
         return {"status": "error", "reason": "unknown_tool", "detail": name}
     return handler(args, session)
 
