@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class InterrogateInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     brief: str = Field(min_length=1)
+    graph_id: str | None = None
 
 
 class IngestSourcesInput(BaseModel):

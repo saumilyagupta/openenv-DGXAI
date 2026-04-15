@@ -39,3 +39,16 @@ def test_session_state_creates_run_record():
 
 def test_session_state_missing_run_returns_none():
     assert SessionState().get_run("missing") is None
+
+
+def test_session_state_registers_and_retrieves_run_result():
+    from groundloop.ralph_orchestrator.models import RunResult
+
+    s = SessionState()
+    run = RunResult(
+        run_id="ralph_abc", spec="spec", started_at="t", ended_at="t",
+        final_score=0.5, final_files={}, iterations=(), terminated_by="max_iters",
+    )
+    s.register_run(run)
+    assert s.get_run_result("ralph_abc") is run
+    assert s.get_run_result("missing") is None

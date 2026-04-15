@@ -37,14 +37,17 @@ _TOOL_DESCRIPTIONS = {
     "interrogate": "Return Socratic clarifying questions about a project brief.",
     "ingest_sources": "Build a KB graph from skill sources. Returns a graph_id.",
     "ground_check": "Search a KB graph for evidence grounding a claim; returns verdict + citations.",
-    "autonomous_build": "Kick off the Ralph-loop codebase build. (Stub until #7 ships.)",
+    "autonomous_build": "Run the Ralph-orchestrator loop on a spec against a KB graph; returns final score + files.",
     "audit_report": "Return the structured audit report for a previously started run_id.",
 }
 
 _TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
     "interrogate": {
         "type": "object",
-        "properties": {"brief": {"type": "string", "minLength": 1}},
+        "properties": {
+            "brief": {"type": "string", "minLength": 1},
+            "graph_id": {"type": ["string", "null"], "default": None},
+        },
         "required": ["brief"],
         "additionalProperties": False,
     },

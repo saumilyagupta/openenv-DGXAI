@@ -16,22 +16,24 @@ def _prepare_session_with_index(tiny_corpus_path: Path) -> tuple[SessionState, s
     return s, graph_id
 
 
-def test_ground_check_grounded(tiny_corpus_path: Path):
+def test_ground_check_grounded(tiny_corpus_path: Path) -> None:
     s, gid = _prepare_session_with_index(tiny_corpus_path)
     out = handle_ground_check({"claim": "pytest fixtures", "graph_id": gid}, s)
     assert out["status"] == "ok"
     assert out["verdict"] in {"grounded", "uncertain"}
     assert len(out["citations"]) >= 1
+    # Plain-English claim: no layer_a
+    assert "layer_a" not in out
 
 
-def test_ground_check_unknown_graph():
+def test_ground_check_unknown_graph() -> None:
     s = SessionState()
     out = handle_ground_check({"claim": "x", "graph_id": "nope"}, s)
     assert out["status"] == "error"
     assert out["reason"] == "unknown_graph_id"
 
 
-def test_ground_check_with_tag_filter(tiny_corpus_path: Path):
+def test_ground_check_with_tag_filter(tiny_corpus_path: Path) -> None:
     s, gid = _prepare_session_with_index(tiny_corpus_path)
     out = handle_ground_check(
         {"claim": "security", "graph_id": gid, "required_tags": ["domain:security"]}, s
@@ -41,7 +43,7 @@ def test_ground_check_with_tag_filter(tiny_corpus_path: Path):
         assert "domain:security" in c["tags"]
 
 
-def test_ground_check_empty_result_is_ungrounded(tiny_corpus_path: Path):
+def test_ground_check_empty_result_is_ungrounded(tiny_corpus_path: Path) -> None:
     s, gid = _prepare_session_with_index(tiny_corpus_path)
     out = handle_ground_check({"claim": "!!!", "graph_id": gid}, s)
     assert out["status"] == "ok"
@@ -49,8 +51,27 @@ def test_ground_check_empty_result_is_ungrounded(tiny_corpus_path: Path):
     assert out["citations"] == []
 
 
-def test_ground_check_invalid_params():
+def test_ground_check_invalid_params() -> None:
     s = SessionState()
     out = handle_ground_check({"claim": "", "graph_id": "g"}, s)
     assert out["status"] == "error"
     assert out["reason"] == "invalid_params"
+
+
+def test_ground_check_code_claim_invokes_layer_a(tiny_corpus_path: Path) -> None:
+    s, gid = _prepare_session_with_index(tiny_corpus_path)
+    claim = "```python\nimport os\nos.getcwd()\n```"
+    out = handle_ground_check({"claim": claim, "graph_id": gid}, s)
+    assert out["status"] == "ok"
+    assert "layer_a" in out
+    assert out["layer_a"]["total_symbols"] >= 1
+    assert out["layer_a"]["groundedness"] == 1.0
+
+
+def test_ground_check_hallucinated_code_lowers_confidence(tiny_corpus_path: Path) -> None:
+    s, gid = _prepare_session_with_index(tiny_corpus_path)
+    claim = "import nonexistent_zzz_pkg\ndef broken(): pass"
+    out = handle_ground_check({"claim": claim, "graph_id": gid}, s)
+    assert out["status"] == "ok"
+    assert "layer_a" in out
+    assert out["layer_a"]["groundedness"] < 1.0

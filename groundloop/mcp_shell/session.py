@@ -4,6 +4,8 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+from groundloop.ralph_orchestrator.models import RunResult
+
 
 @dataclass
 class RunRecord:
@@ -19,6 +21,7 @@ class SessionState:
     def __init__(self) -> None:
         self._graphs: dict[str, Any] = {}
         self._runs: dict[str, RunRecord] = {}
+        self._run_results: dict[str, RunResult] = {}
         self._metrics: dict[str, int] = {
             "tool_calls": 0,
             "graphs_built": 0,
@@ -47,3 +50,9 @@ class SessionState:
 
     def get_run(self, run_id: str) -> RunRecord | None:
         return self._runs.get(run_id)
+
+    def register_run(self, result: RunResult) -> None:
+        self._run_results[result.run_id] = result
+
+    def get_run_result(self, run_id: str) -> RunResult | None:
+        return self._run_results.get(run_id)
