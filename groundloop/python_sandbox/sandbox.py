@@ -38,8 +38,12 @@ def run_sandbox(
     try:
         if files is not None:
             tmp_root = Path(tempfile.mkdtemp(prefix="groundloop_sandbox_"))
+            tmp_root_resolved = tmp_root.resolve()
             for name, content in files.items():
-                target = tmp_root / name
+                target = (tmp_root / name).resolve()
+                if not target.is_relative_to(tmp_root_resolved):
+                    msg = f"path escapes sandbox root: {name!r}"
+                    raise ValueError(msg)
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text(content, encoding="utf-8")
             project_dir = tmp_root

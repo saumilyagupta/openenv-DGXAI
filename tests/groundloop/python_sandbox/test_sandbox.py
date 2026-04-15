@@ -29,3 +29,8 @@ def test_sandbox_files_dict_creates_tmp(tmp_path: Path) -> None:
 def test_sandbox_requires_one_of_inputs() -> None:
     with pytest.raises(ValueError):
         run_sandbox()
+
+
+def test_sandbox_rejects_path_traversal() -> None:
+    with pytest.raises(ValueError):
+        run_sandbox(files={"../escape.py": "x"})
