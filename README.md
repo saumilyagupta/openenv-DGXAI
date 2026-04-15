@@ -188,3 +188,32 @@ python -m pytest tests/ -v
 ├── openenv.yaml           # OpenEnv metadata
 └── Dockerfile             # HF Spaces deployment
 ```
+
+## GroundLoop Skills Scraper
+
+A dependency-free Python module that walks installed `SKILL.md` files on disk and emits a deterministic, section-level JSONL corpus plus manifest for GroundLoop's Layer B reasoning-policy knowledge base.
+
+### Run
+
+```bash
+python3 -m groundloop.skills_scraper \
+  --sources default \
+  --output groundloop/kb/skills_corpus.jsonl
+```
+
+`--sources` accepts either the literal `default` (uses the built-in source globs in `groundloop/skills_scraper/config.py`) or a path to a YAML file:
+
+```yaml
+sources:
+  - label: my-skills
+    glob: ~/my/skills/**/SKILL.md
+```
+
+### Output
+
+- `skills_corpus.jsonl` — one `SkillNode` per line (sorted by id for byte-identical determinism).
+- `skills_corpus.manifest.json` — counts, per-source globs, `corpus_sha256`, any parse errors, UTC `generated_at`.
+
+### Spec
+
+See `docs/superpowers/specs/2026-04-15-groundloop-skills-scraper-design.md` for the full design.
