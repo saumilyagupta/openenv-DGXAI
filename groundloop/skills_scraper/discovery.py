@@ -12,7 +12,7 @@ _log = logging.getLogger(__name__)
 
 
 def walk_sources(sources: list[SourceRoot]) -> Iterator[tuple[Path, SourceRoot]]:
-    """Yield (path, source_root) for every readable SKILL.md matched by a source glob."""
+    """Yield (path, source_root) for every readable SKILL.md matched by a glob."""
     for root in sources:
         pattern = os.path.expanduser(root.glob)
         for match in glob_mod.glob(pattern, recursive=True):

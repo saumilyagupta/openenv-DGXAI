@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from groundloop.skills_scraper.models import (
@@ -40,7 +40,7 @@ def manifest_for(
 ) -> ScrapeManifest:
     digest = hashlib.sha256(corpus_path.read_bytes()).hexdigest()
     return ScrapeManifest(
-        generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        generated_at=datetime.now(UTC).isoformat(timespec="seconds"),
         sources=sources,
         scraped_files=scraped_files,
         skipped_files=skipped_files,

@@ -132,6 +132,6 @@ def _dedupe(nodes: list[SkillNode]) -> list[SkillNode]:
         if existing is None:
             index[key] = n
         else:
-            aliases = existing.alias_sources + (n.source_path,)
+            aliases = (*existing.alias_sources, n.source_path)
             index[key] = existing.model_copy(update={"alias_sources": aliases})
     return list(index.values())

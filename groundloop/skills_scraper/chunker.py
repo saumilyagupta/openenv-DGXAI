@@ -51,7 +51,12 @@ def chunk_body(body: str) -> list[SectionChunk]:
     chunks: list[SectionChunk] = []
     for level, title, body_parts in segments:
         if level == 0:
-            chunks.append(SectionChunk(section_path=(), section_body="\n\n".join(body_parts).strip()))
+            chunks.append(
+                SectionChunk(
+                    section_path=(),
+                    section_body="\n\n".join(body_parts).strip(),
+                )
+            )
             continue
         while len(stack) >= level:
             stack.pop()
