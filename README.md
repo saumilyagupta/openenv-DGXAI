@@ -35,37 +35,6 @@ The key insight: **"I don't know" is sometimes the right answer.** When evidence
 | **Multi-hop** | `multi_hop` | Medium | Claim requiring synthesis of 3-4 evidence pieces across related topics. | ~0.94 |
 | **Contradictory** | `contradictory` | Hard | Deliberately conflicting evidence. Ground truth is `uncertain`. Agent must recognize conflict. | ~0.85 |
 
-## Baseline Scores
-
-### Multi-Model Comparison
-
-| Model | Easy | Medium | Hard | Avg | Notes |
-|-------|------|--------|------|-----|-------|
-| **Claude Sonnet 4** | **0.99** | **0.97** | **0.55** | **0.84** | Best overall — varied queries, calibrated confidence |
-| **Qwen2.5-72B-Instruct** | 0.98 | 0.96 | 0.57 | 0.84 | Strong calibration, similar to Claude |
-| **GPT-4o-mini** | 0.99* | 0.98 | 0.36 | 0.78 | *Stuck in query loops on 1 easy claim (drops to 0.80 with it) |
-
-**Key findings:**
-- **Easy/Medium tasks**: All three models score 0.96-0.99 with 1-2 queries — reward correctly signals these are straightforward.
-- **Hard tasks genuinely challenge frontier models**: Scores range 0.36-0.57. Models either correctly identify uncertainty (0.80-0.89 reward) or overconfidently commit the wrong verdict (0.02-0.04 penalty). This variance is the signal judges want to see.
-- **Search strategy matters**: GPT-4o-mini sometimes repeats identical queries, burning budget with no new evidence. Claude and Qwen naturally vary their search terms. The environment exposes this capability gap — a real agent training signal.
-
-### Exploit-Resistance (Deterministic Strategy Baselines)
-
-| Strategy | Easy | Medium | Hard | Avg | Analysis |
-|----------|------|--------|------|-----|----------|
-| **Always "true"** (conf 1.0) | 0.43 | 0.67 | 0.00 | 0.37 | Overconfidence on wrong claims punished hard |
-| **Always "false"** (conf 1.0) | 0.33 | 0.40 | 0.00 | 0.24 | Wrong on most claims |
-| **Always "uncertain"** (conf 0.5) | 0.08 | 0.08 | 0.90 | 0.35 | Only works on hard, terrible on easy/medium |
-| **Always "uncertain"** (conf 0.0) | 0.30 | 0.30 | 0.80 | 0.47 | Best exploit — still 2x worse than calibrated |
-
-**Anti-exploit properties:**
-- Calibrated agents (0.84 avg) dominate ALL fixed strategies by 2x+ margin
-- Wrong answers capped at 0.10 reward regardless of confidence
-- No single fixed strategy exceeds 0.47 average across all tasks
-- Gaming the grader (always same verdict) produces suboptimal scores
-- Hard tasks specifically reward agents that can say "I don't know"
-
 ## Action Space
 
 | Action | Fields | Effect |
