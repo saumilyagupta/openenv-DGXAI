@@ -1,0 +1,9 @@
+{
+  "generated_at": "2026-04-15T00:00:00+00:00",
+  "sources": [{"label": "fake", "glob": "/fake/**/SKILL.md"}],
+  "scraped_files": 4,
+  "skipped_files": 0,
+  "total_nodes": 5,
+  "errors": [],
+  "corpus_sha256": "will_be_set_in_test"
+}
