@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pytest
 
+collect_ignore_glob = ["fixtures/*"]
+
 
 @pytest.fixture
 def clean_project(tmp_path: Path) -> Path:

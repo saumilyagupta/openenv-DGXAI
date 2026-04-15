@@ -266,3 +266,35 @@ The five tools registered:
 - `audit_report(run_id)` — returns structured run metadata and session metrics for the given `run_id`.
 
 See `docs/superpowers/specs/2026-04-15-groundloop-mcp-shell-design.md` for the full design.
+
+### Python Sandbox
+
+`groundloop.python_sandbox` runs `ruff`, `mypy`, `pytest`, and an AST-based import probe against a candidate Python project, returning a structured `SandboxResult` plus a composite score in `[0.0, 1.0]` used by the Ralph loop.
+
+```bash
+# Score a project on disk (runs all default tools).
+python3 -m groundloop.python_sandbox path/to/project
+
+# JSON output, imports-only — useful for fast iteration.
+python3 -m groundloop.python_sandbox path/to/project --format json --tool imports
+
+# Select specific tools.
+python3 -m groundloop.python_sandbox path/to/project --tool ruff --tool mypy --tool pytest
+```
+
+Programmatic use:
+
+```python
+from groundloop.python_sandbox import run_sandbox
+
+# From a project directory:
+result = run_sandbox(project_dir="./my_project")
+print(result.composite_score, result.imports.unresolved)
+
+# From an in-memory files dict:
+result = run_sandbox(files={"main.py": "def f() -> int:\n    return 1\n"}, tools=("imports",))
+```
+
+The composite score penalises unresolved imports, ruff violations, mypy errors, and pytest failures. Missing tool binaries degrade gracefully (reported as `unavailable`).
+
+See `docs/superpowers/specs/2026-04-15-groundloop-python-sandbox-design.md` for the full design.
