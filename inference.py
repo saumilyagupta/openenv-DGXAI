@@ -71,11 +71,11 @@ def _run_task(client: httpx.Client, level: str) -> dict[str, float | str | int |
     obs = reset_body.get("observation", reset_body)
 
     query = {"action_type": "query_kb", "claim": obs.get("task_brief", level), "top_k": 3}
-    q_resp = client.post(f"{API_BASE_URL}/step", json=query)
+    q_resp = client.post(f"{API_BASE_URL}/step", json={"action": query})
     q_resp.raise_for_status()
 
     submit = {"action_type": "submit", "files": _STUB_SOLUTIONS[level]}
-    s_resp = client.post(f"{API_BASE_URL}/step", json=submit)
+    s_resp = client.post(f"{API_BASE_URL}/step", json={"action": submit})
     s_resp.raise_for_status()
     final_body = s_resp.json()
     final = final_body.get("observation", final_body)

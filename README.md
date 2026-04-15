@@ -457,6 +457,18 @@ reward = 0.6 * sandbox_composite_score + 0.4 * grounding_score
 
 Reward is deterministic and clamped to `[0.0, 1.0]`. Query steps always return `0.0`.
 
+### Baseline Scores
+
+Run: `python3 inference.py` (stub synthesizer, no API key required).
+
+| Task | Difficulty | Baseline Reward |
+|---|---|---|
+| greet_single_file | easy | 1.000 |
+| greet_with_tests | medium | 0.920 |
+| multi_file_module | hard | 0.840 |
+
+Measured against `groundloop/kb/skills_corpus.jsonl` with `uvicorn groundloop_env.app:app` on port 17863. Per-task tool sets: easy uses `ruff`/`imports`/`mypy` (no pytest — single file); medium & hard add `pytest`.
+
 ### Full verification
 
 ```bash
