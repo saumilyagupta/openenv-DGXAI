@@ -10,3 +10,4 @@ data/claims_partial.json
 data/evidence_easy.json
 data/evidence_medium.json
 data/evidence_hard.json
+groundloop/kb/
