@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from markdown_it import MarkdownIt
+from markdown_it.token import Token
 
 from groundloop.skills_scraper.config import MIN_CHUNK_CHARS
 from groundloop.skills_scraper.models import SectionChunk
@@ -8,41 +9,47 @@ from groundloop.skills_scraper.models import SectionChunk
 _md = MarkdownIt()
 
 
-def chunk_body(body: str) -> list[SectionChunk]:
-    tokens = _md.parse(body)
-    # Walk tokens collecting (heading_level, heading_text, body_text) segments.
+def _segment_tokens(
+    tokens: list[Token],
+) -> list[tuple[int, str, list[str]]]:
+    """Walk the token stream once, returning heading-delimited segments.
+
+    Each segment is `(heading_level, heading_text, body_texts)`.
+    Level 0 is a sentinel: it captures body or H4+ content that appears
+    before the first H1-H3. Pipeline normalizes its section_path=() to
+    (skill_name,) per spec §4.3.
+    """
     segments: list[tuple[int, str, list[str]]] = []
     current: tuple[int, str, list[str]] | None = None
 
-    def flush(cur: tuple[int, str, list[str]] | None) -> None:
-        if cur is not None:
-            segments.append(cur)
-
-    for tok in tokens:
+    for i, tok in enumerate(tokens):
         if tok.type == "heading_open":
             level = int(tok.tag[1])  # "h2" -> 2
-            # Heading text is in the next inline token
-            inline = tokens[tokens.index(tok) + 1]
-            heading_text = inline.content.strip()
+            heading_text = tokens[i + 1].content.strip()
             if level <= 3:
-                flush(current)
+                if current is not None:
+                    segments.append(current)
                 current = (level, heading_text, [])
             else:
                 # H4+ → treat as body text under current section.
-                # Level-0 sentinel captures any body/H4 content that
-                # precedes the first H1-H3. Pipeline normalizes its
-                # section_path=() to (skill_name,) per spec §4.3.
                 if current is None:
                     current = (0, "", [])
                 current[2].append(heading_text)
-        elif tok.type == "paragraph_open" or tok.type.endswith("_open"):
+        elif tok.type.endswith("_open"):
             continue
         elif tok.type == "inline":
-            # See level-0 sentinel note above.
             if current is None:
                 current = (0, "", [])
             current[2].append(tok.content)
-    flush(current)
+
+    if current is not None:
+        segments.append(current)
+    return segments
+
+
+def chunk_body(body: str) -> list[SectionChunk]:
+    tokens = _md.parse(body)
+    segments = _segment_tokens(tokens)
 
     if not segments:
         text = body.strip()
@@ -50,7 +57,6 @@ def chunk_body(body: str) -> list[SectionChunk]:
             return [SectionChunk(section_path=(), section_body=text)]
         return []
 
-    # Build hierarchical section_path by tracking current stack.
     stack: list[str] = []
     chunks: list[SectionChunk] = []
     for level, title, body_parts in segments:
