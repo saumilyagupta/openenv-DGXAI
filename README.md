@@ -239,3 +239,30 @@ python3 -m groundloop.kb_indexer stats
 - The cache (`groundloop/kb/skills_index.pkl`) is regenerated silently whenever the corpus sha256 changes.
 
 See `docs/superpowers/specs/2026-04-15-groundloop-kb-indexer-design.md` for the full design.
+
+## MCP Shell (Server)
+
+`groundloop.mcp_shell` is a stdio MCP server that exposes the 5 GroundLoop tools to any MCP-compatible client (Claude Code, Cursor, Codex). Session state (graphs, runs, metrics) is held per-process in memory.
+
+To attach GroundLoop as an MCP server in Claude Code, add the following to your MCP config:
+
+```json
+{
+  "mcpServers": {
+    "groundloop": {
+      "command": "python3",
+      "args": ["-m", "groundloop.mcp_shell"]
+    }
+  }
+}
+```
+
+The five tools registered:
+
+- `interrogate(brief)` — returns 3 Socratic clarifying questions about a project brief (stub until #5).
+- `ingest_sources(source_globs)` — scrapes + indexes skill sources, returns a `graph_id` for subsequent `ground_check` calls. Pass `null` to load the default pre-built corpus at `groundloop/kb/skills_corpus.jsonl`.
+- `ground_check(claim, graph_id, top_k, required_tags)` — BM25 search over a built graph; returns `verdict` (`grounded` / `uncertain` / `ungrounded`), citations, and softmax `confidence`.
+- `autonomous_build(spec, graph_id, max_iters)` — registers a Ralph-loop run (stub until #7 ships); returns a `run_id`.
+- `audit_report(run_id)` — returns structured run metadata and session metrics for the given `run_id`.
+
+See `docs/superpowers/specs/2026-04-15-groundloop-mcp-shell-design.md` for the full design.

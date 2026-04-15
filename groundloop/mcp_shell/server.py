@@ -100,7 +100,7 @@ def build_server() -> tuple[Server, SessionState]:
     server: Server = Server("groundloop")
     session = SessionState()
 
-    @server.list_tools()
+    @server.list_tools()  # type: ignore[no-untyped-call,untyped-decorator]
     async def _list_tools() -> list[types.Tool]:
         return [
             types.Tool(
@@ -111,7 +111,7 @@ def build_server() -> tuple[Server, SessionState]:
             for name in TOOL_NAMES
         ]
 
-    @server.call_tool()
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def _call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
         result = dispatch(name, arguments, session)
         return [types.TextContent(type="text", text=json.dumps(result))]
