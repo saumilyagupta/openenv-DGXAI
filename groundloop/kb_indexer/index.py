@@ -9,7 +9,7 @@ from typing import Any
 from rank_bm25 import BM25Okapi  # type: ignore[import-untyped]
 
 from groundloop.kb_indexer.cache import load_cache, save_cache
-from groundloop.kb_indexer.models import SearchResult
+from groundloop.kb_indexer.models import Cluster, ClusterManifest, SearchResult
 from groundloop.kb_indexer.tokenizer import tokenize
 
 
@@ -21,6 +21,8 @@ class SkillsIndex:
         self._tokenized: list[list[str]] = []
         self._bm25: BM25Okapi | None = None
         self._corpus_sha256: str = ""
+        self._cluster_manifest: ClusterManifest | None = None
+        self._node_to_cluster: dict[str, Cluster] = {}
 
     def build(self) -> None:
         if not self._corpus_path.is_file():
@@ -92,6 +94,7 @@ class SkillsIndex:
         results: list[SearchResult] = []
         for rank, (i, score) in enumerate(top, start=1):
             node = self._nodes[i]
+            cluster = self._node_to_cluster.get(node["id"])
             results.append(
                 SearchResult(
                     node_id=node["id"],
@@ -102,8 +105,55 @@ class SkillsIndex:
                     source_path=node["source_path"],
                     score=score,
                     rank=rank,
+                    cluster_id=cluster.cluster_id if cluster else None,
                 )
             )
+        return results
+
+    def attach_cluster_manifest(self, manifest: ClusterManifest) -> None:
+        self._cluster_manifest = manifest
+        self._node_to_cluster = {
+            nid: cluster
+            for cluster in manifest.clusters
+            for nid in cluster.member_node_ids
+        }
+
+    def cluster_id_for(self, node_id: str) -> str | None:
+        c = self._node_to_cluster.get(node_id)
+        return c.cluster_id if c else None
+
+    def cluster_by_label(self, label: str) -> Cluster | None:
+        if self._cluster_manifest is None:
+            return None
+        for c in self._cluster_manifest.clusters:
+            if c.label == label:
+                return c
+        return None
+
+    def nodes_in_cluster(
+        self, cluster_label: str, top_k: int = 50,
+    ) -> list[SearchResult]:
+        cluster = self.cluster_by_label(cluster_label)
+        if cluster is None:
+            return []
+        member_ids = set(cluster.member_node_ids)
+        results: list[SearchResult] = []
+        for node in self._nodes:
+            if node["id"] not in member_ids:
+                continue
+            results.append(SearchResult(
+                node_id=node["id"],
+                skill_name=node["skill_name"],
+                section_path=tuple(node["section_path"]),
+                section_body=node["section_body"],
+                tags=tuple(node["tags"]),
+                source_path=node["source_path"],
+                score=0.0,
+                rank=len(results) + 1,
+                cluster_id=cluster.cluster_id,
+            ))
+            if len(results) >= top_k:
+                break
         return results
 
     def stats(self) -> dict[str, int | float]:

@@ -72,3 +72,71 @@ def test_load_returns_none_when_corpus_changed(tiny_corpus_path: Path, tmp_path:
 
 def test_tag_filter_no_matches_returns_empty(built_index: SkillsIndex) -> None:
     assert built_index.search("python", required_tags={"domain:nonexistent"}) == []
+
+
+def test_attach_cluster_manifest_and_lookup(tiny_corpus_path, tmp_path):
+    import json
+    from groundloop.kb_indexer.cluster import build_clusters
+
+    nodes = [
+        json.loads(ln)
+        for ln in tiny_corpus_path.read_text().splitlines()
+        if ln.strip()
+    ]
+    manifest = build_clusters(nodes, jaccard_threshold=0.1)
+
+    idx = SkillsIndex(corpus_path=tiny_corpus_path, cache_path=tmp_path / "c.pkl")
+    idx.build()
+    idx.attach_cluster_manifest(manifest)
+
+    for n in nodes:
+        assert idx.cluster_id_for(n["id"]) is not None
+
+
+def test_nodes_in_cluster_returns_search_results(tiny_corpus_path, tmp_path):
+    import json
+    from groundloop.kb_indexer.cluster import build_clusters
+
+    nodes = [
+        json.loads(ln)
+        for ln in tiny_corpus_path.read_text().splitlines()
+        if ln.strip()
+    ]
+    manifest = build_clusters(nodes, jaccard_threshold=0.1)
+
+    idx = SkillsIndex(corpus_path=tiny_corpus_path, cache_path=tmp_path / "c.pkl")
+    idx.build()
+    idx.attach_cluster_manifest(manifest)
+
+    label = manifest.clusters[0].label
+    results = idx.nodes_in_cluster(label, top_k=10)
+    assert len(results) >= 1
+    assert all(r.cluster_id == manifest.clusters[0].cluster_id for r in results)
+
+
+def test_search_results_include_cluster_id_when_attached(tiny_corpus_path, tmp_path):
+    import json
+    from groundloop.kb_indexer.cluster import build_clusters
+
+    nodes = [
+        json.loads(ln)
+        for ln in tiny_corpus_path.read_text().splitlines()
+        if ln.strip()
+    ]
+    manifest = build_clusters(nodes, jaccard_threshold=0.1)
+
+    idx = SkillsIndex(corpus_path=tiny_corpus_path, cache_path=tmp_path / "c.pkl")
+    idx.build()
+    idx.attach_cluster_manifest(manifest)
+
+    results = idx.search("pytest")
+    assert results
+    assert all(r.cluster_id is not None for r in results)
+
+
+def test_cluster_by_label_missing(tiny_corpus_path, tmp_path):
+    idx = SkillsIndex(corpus_path=tiny_corpus_path, cache_path=tmp_path / "c.pkl")
+    idx.build()
+    assert idx.cluster_by_label("nonexistent") is None
+    assert idx.nodes_in_cluster("nonexistent") == []
+    assert idx.cluster_id_for("any") is None
