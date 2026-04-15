@@ -33,11 +33,19 @@ def test_pipeline_single_section_uses_skill_name(
 def test_pipeline_deduplicates_identical_bodies(fixtures_dir: Path, tmp_path: Path) -> None:
     sources = [SourceRoot(label="fake", glob=str(fixtures_dir / "**" / "SKILL.md"))]
     out = tmp_path / "corpus.jsonl"
-    result = run_scraper(sources=sources, output=out)
+    run_scraper(sources=sources, output=out)
     import json
     nodes = [json.loads(ln) for ln in out.read_text().splitlines()]
     coding_standards = [n for n in nodes if n["skill_name"] == "coding-standards"]
-    # Each section from coding-standards should appear once, with alias_sources populated
-    for n in coding_standards:
-        if n["alias_sources"]:
-            assert len(n["alias_sources"]) >= 1
+
+    # dup_a and dup_b have identical bodies → each (skill, path, body_hash)
+    # key must collapse to a single node whose alias_sources records the
+    # second path. Collect one such node unconditionally — the assertion
+    # must fail if dedup regresses.
+    nodes_with_aliases = [n for n in coding_standards if n["alias_sources"]]
+    assert nodes_with_aliases, (
+        "dedup regression: expected at least one coding-standards node "
+        "with a populated alias_sources from dup_a/dup_b collapse"
+    )
+    for n in nodes_with_aliases:
+        assert len(n["alias_sources"]) >= 1
