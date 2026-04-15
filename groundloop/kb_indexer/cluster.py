@@ -94,6 +94,9 @@ def build_clusters(
         for n in nodes
     }
     adj: dict[str, set[str]] = {nid: set() for nid in node_ids}
+    # O(n²) pair scan over corpus.
+    # Acceptable up to ~5k nodes (~12M comparisons).
+    # For larger corpora switch to MinHash/LSH (datasketch) or semantic embeddings.
     for i, a in enumerate(node_ids):
         for b in node_ids[i + 1:]:
             sim = _jaccard(token_sets[a], token_sets[b])
