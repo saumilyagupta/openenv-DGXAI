@@ -32,3 +32,34 @@ class EpistemicObservation(Observation):
     episode_id: str
     is_done: bool = False
     last_reward: Optional[float] = None
+
+
+from enum import Enum as _Enum
+
+
+class CodeForgeActionType(str, _Enum):
+    QUERY_KB = "query_kb"
+    SUBMIT = "submit"
+
+
+class CodeForgeAction(Action):
+    action_type: CodeForgeActionType
+    claim: Optional[str] = None
+    top_k: int = 5
+    required_tags: tuple[str, ...] = ()
+    files: Optional[dict[str, str]] = None
+
+
+class CodeForgeObservation(Observation):
+    episode_id: str
+    task_id: str
+    task_level: str
+    task_brief: str
+    initial_files: dict[str, str]
+    current_files: dict[str, str]
+    budget_remaining: int
+    previous_score: float
+    last_citations: tuple[dict, ...] = ()
+    last_grounding: Optional[dict] = None
+    is_done: bool = False
+    last_reward: float = 0.0
