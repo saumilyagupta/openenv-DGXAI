@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field
@@ -48,6 +50,7 @@ class CodeForgeAction(Action):
     top_k: int = 5
     required_tags: tuple[str, ...] = ()
     files: Optional[dict[str, str]] = None
+    confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
 
 
 class CodeForgeObservation(Observation):
