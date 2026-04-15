@@ -116,7 +116,7 @@ def run_loop(
                         ended_at=datetime.now(UTC).isoformat(timespec="seconds"),
                         final_score=iterations[-1].sandbox_score_after,
                         final_files=current, iterations=tuple(iterations),
-                        terminated_by="max_iters",
+                        terminated_by="in_progress",
                     ),
                     checkpoint_dir,
                 )

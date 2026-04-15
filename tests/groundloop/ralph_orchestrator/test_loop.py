@@ -74,6 +74,16 @@ def test_loop_stuck_after_three_regressions(tiny_corpus_path: Path, initial_file
     assert all(it.kept is False for it in result.iterations)
 
 
+def test_loop_intra_iter_checkpoint_marks_in_progress() -> None:
+    from groundloop.ralph_orchestrator.models import RunResult
+    r = RunResult(
+        run_id="r", spec="s", started_at="t", ended_at="t",
+        final_score=0.0, final_files={}, iterations=(),
+        terminated_by="in_progress",
+    )
+    assert r.terminated_by == "in_progress"
+
+
 def test_loop_writes_checkpoint(tmp_path: Path, tiny_corpus_path: Path, initial_files: Mapping[str, str]) -> None:
     idx = SkillsIndex(corpus_path=tiny_corpus_path)
     idx.build()

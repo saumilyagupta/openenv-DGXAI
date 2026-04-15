@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-TerminationReason = Literal["target_hit", "max_iters", "stuck"]
+TerminationReason = Literal["target_hit", "max_iters", "stuck", "in_progress"]
 IterationReason = Literal[
     "score_improved",
     "score_regressed",
