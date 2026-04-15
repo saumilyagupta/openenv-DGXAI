@@ -29,4 +29,6 @@ def build_observation(
         last_grounding=last_grounding,
         is_done=is_done,
         last_reward=last_reward,
+        reward=last_reward,
+        done=is_done,
     )
