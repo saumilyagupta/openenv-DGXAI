@@ -28,13 +28,17 @@ def chunk_body(body: str) -> list[SectionChunk]:
                 flush(current)
                 current = (level, heading_text, [])
             else:
-                # H4+ → treat as body text under current section
+                # H4+ → treat as body text under current section.
+                # Level-0 sentinel captures any body/H4 content that
+                # precedes the first H1-H3. Pipeline normalizes its
+                # section_path=() to (skill_name,) per spec §4.3.
                 if current is None:
                     current = (0, "", [])
                 current[2].append(heading_text)
         elif tok.type == "paragraph_open" or tok.type.endswith("_open"):
             continue
         elif tok.type == "inline":
+            # See level-0 sentinel note above.
             if current is None:
                 current = (0, "", [])
             current[2].append(tok.content)
