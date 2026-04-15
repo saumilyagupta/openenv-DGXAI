@@ -20,13 +20,14 @@ _SYSTEM = (
 
 
 class OpenAISynthesizer:
-    def __init__(self, *, model: str | None = None) -> None:
+    def __init__(self, *, model: str | None = None, timeout: float = 60.0) -> None:
         api_key = os.environ.get("OPENAI_API_KEY")
         if not api_key:
             msg = "OPENAI_API_KEY env var not set"
             raise RuntimeError(msg)
         base_url = os.environ.get("OPENAI_BASE_URL")
         self._model = model or os.environ.get("OPENAI_MODEL_NAME", "gpt-4o-mini")
+        self._timeout = timeout
         self._client = OpenAI(api_key=api_key, base_url=base_url)
 
     def synthesize(
@@ -53,6 +54,7 @@ class OpenAISynthesizer:
                     {"role": "system", "content": _SYSTEM},
                     {"role": "user", "content": user},
                 ],
+                timeout=self._timeout,
             )
             content = resp.choices[0].message.content or ""
             payload = json.loads(content)

@@ -26,8 +26,10 @@ class _FakeClient:
     class _Completions:
         def __init__(self, content: str) -> None:
             self._content = content
+            self.last_kwargs: dict[str, object] = {}
 
-        def create(self, **_: object) -> object:
+        def create(self, **kwargs: object) -> object:
+            self.last_kwargs = kwargs
             class _Msg:
                 def __init__(self, c: str) -> None:
                     self.content = c
@@ -54,6 +56,26 @@ def test_openai_parses_valid_json(monkeypatch: pytest.MonkeyPatch) -> None:
     out = s.synthesize(spec="s", current_files={"main.py": "x = 1"}, citations=[_cit()], iteration=0)
     assert out.proposed_files == {"main.py": "x = 2"}
     assert out.cited_node_ids == ("n1",)
+
+
+def test_openai_forwards_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    content = '{"proposed_files": {"main.py": "x"}, "rationale": "", "cited_node_ids": []}'
+    fake = _FakeClient(content)
+    monkeypatch.setattr(mod, "OpenAI", lambda **kw: fake)
+    s = mod.OpenAISynthesizer(timeout=12.5)
+    s.synthesize(spec="s", current_files={"main.py": "x"}, citations=[_cit()], iteration=0)
+    assert fake.chat.completions.last_kwargs.get("timeout") == 12.5
+
+
+def test_openai_default_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    content = '{"proposed_files": {"main.py": "x"}, "rationale": "", "cited_node_ids": []}'
+    fake = _FakeClient(content)
+    monkeypatch.setattr(mod, "OpenAI", lambda **kw: fake)
+    s = mod.OpenAISynthesizer()
+    s.synthesize(spec="s", current_files={"main.py": "x"}, citations=[_cit()], iteration=0)
+    assert fake.chat.completions.last_kwargs.get("timeout") == 60.0
 
 
 def test_openai_parse_error_is_noop(monkeypatch: pytest.MonkeyPatch) -> None:
