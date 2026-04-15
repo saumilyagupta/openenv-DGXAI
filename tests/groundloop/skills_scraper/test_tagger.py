@@ -33,6 +33,29 @@ def test_general_domain_when_no_match():
     assert "domain:general" in tags
 
 
+def test_go_word_boundary_end_of_string():
+    # Regression: "go" must match at end-of-string (no trailing whitespace).
+    tags = infer_tags("somepkg", "builders", "we love go")
+    assert "domain:go" in tags
+
+
+def test_go_word_boundary_punctuation():
+    # Regression: "go" must match before punctuation ("go.", "go,", "go!").
+    tags = infer_tags("somepkg", "summary", "language: go.")
+    assert "domain:go" in tags
+
+
+def test_not_overmatch_substring():
+    # "go" must NOT match inside "argocd" or "google".
+    tags = infer_tags("argocd-ops", "deployment", "google cloud runbook")
+    assert "domain:go" not in tags
+
+
+def test_multiword_keyword_still_matches():
+    tags = infer_tags("mcp-server", "Intro", "model context protocol primer")
+    assert "domain:mcp" in tags
+
+
 def test_deterministic_order():
     a = infer_tags("python-testing", "X", "pytest")
     b = infer_tags("python-testing", "X", "pytest")
