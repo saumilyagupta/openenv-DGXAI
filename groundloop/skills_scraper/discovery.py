@@ -21,6 +21,10 @@ def walk_sources(sources: list[SourceRoot]) -> Iterator[tuple[Path, SourceRoot]]
                 _log.warning("discovery: skipping non-file %s", path)
                 continue
             try:
+                # Early readability probe: surface broken symlinks or
+                # permission errors with a WARN at discovery-time, rather
+                # than exploding inside the parser. The parser re-stats to
+                # capture mtime — cheap, and keeps signatures simple.
                 path.stat()
             except OSError as e:
                 _log.warning("discovery: unreadable %s: %s", path, e)
