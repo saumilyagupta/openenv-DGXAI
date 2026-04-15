@@ -47,6 +47,7 @@ def test_loop_terminates_on_max_iters(tiny_corpus_path: Path, initial_files: Map
     )
     assert result.terminated_by == "max_iters"
     assert len(result.iterations) == 3
+    assert all(it.reason == "score_plateau" for it in result.iterations)
 
 
 def test_loop_target_hit_early(tiny_corpus_path: Path) -> None:

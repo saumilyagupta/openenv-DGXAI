@@ -6,7 +6,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 TerminationReason = Literal["target_hit", "max_iters", "stuck"]
 IterationReason = Literal[
-    "score_improved", "score_regressed", "target_hit", "sandbox_error", "synthesizer_error"
+    "score_improved",
+    "score_regressed",
+    "score_plateau",
+    "target_hit",
+    "sandbox_error",
+    "synthesizer_error",
 ]
 
 

@@ -81,14 +81,19 @@ def run_loop(
             consecutive_regressions += 1
         else:
             score_after = _score_files(synth.proposed_files, cfg)
-            kept = score_after > score_before
-            reason: IterationReason = "score_improved" if kept else "score_regressed"
-            if kept:
-                current = dict(synth.proposed_files)
+            reason: IterationReason
+            if score_after > score_before:
+                kept = True
+                reason = "score_improved"
                 consecutive_regressions = 0
+                current = dict(synth.proposed_files)
             elif score_after < score_before:
+                kept = False
+                reason = "score_regressed"
                 consecutive_regressions += 1
             else:
+                kept = False
+                reason = "score_plateau"
                 consecutive_regressions = 0
             iterations.append(
                 Iteration(
