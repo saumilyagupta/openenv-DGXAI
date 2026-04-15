@@ -49,7 +49,8 @@ def _load_initial(pairs: list[str]) -> dict[str, str] | None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    logging.basicConfig(level=logging.WARNING)
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.WARNING)
     args = _parse(argv or sys.argv[1:])
     if not args.corpus.is_file():
         print(f"ERROR: corpus not found: {args.corpus}", file=sys.stderr)
