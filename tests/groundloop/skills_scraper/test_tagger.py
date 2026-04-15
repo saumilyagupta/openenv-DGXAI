@@ -8,6 +8,11 @@ def test_python_domain():
     assert "domain:python" in tags
 
 
+def test_api_domain():
+    tags = infer_tags("api-design", "Endpoints", "rest endpoints and openapi")
+    assert "domain:api" in tags
+
+
 def test_security_domain():
     tags = infer_tags("security-review", "Authentication", "check auth flows for bypass")
     assert "domain:security" in tags
