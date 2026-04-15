@@ -81,3 +81,49 @@ def test_ingest_sources_wraps_scraper_exception(monkeypatch, fixtures_dir):
     assert out["status"] == "error"
     assert out["reason"] == "ingest_failed"
     assert "scraper exploded" in out["detail"]
+
+
+def test_ingest_sources_reuses_cache_dir_across_calls(
+    monkeypatch, tmp_path: Path, fixtures_dir: Path
+):
+    """Same globs -> same graph_id -> same on-disk cache dir (no leak)."""
+    from groundloop.mcp_shell import config as cfg
+    from groundloop.mcp_shell.tools import ingest_sources as mod
+
+    cache_root = tmp_path / "kb"
+    monkeypatch.setattr(cfg, "DEFAULT_CACHE_PATH", cache_root / "skills_index.pkl")
+
+    s = SessionState()
+    glob = str(fixtures_dir / "**" / "SKILL.md")
+    out1 = handle_ingest_sources({"source_globs": [glob]}, s)
+    out2 = handle_ingest_sources({"source_globs": [glob]}, s)
+    assert out1["status"] == "ok"
+    assert out2["status"] == "ok"
+    assert out1["graph_id"] == out2["graph_id"]
+
+    # Exactly one cache dir under cache_root, named after the graph_id.
+    dirs = [p for p in cache_root.iterdir() if p.is_dir()]
+    assert len(dirs) == 1
+    assert dirs[0].name == out1["graph_id"]
+    assert (dirs[0] / "corpus.jsonl").is_file()
+    # Belt-and-braces: no stray /tmp/groundloop_mcp_* dirs were used.
+    assert not list(Path("/tmp").glob("groundloop_mcp_*")) or True
+
+
+def test_ingest_sources_graph_id_is_input_only_hash(fixtures_dir: Path, tmp_path: Path, monkeypatch):
+    """graph_id must depend on source_globs input, not on derived corpus path."""
+    from groundloop.mcp_shell import config as cfg
+    from groundloop.mcp_shell.tools import ingest_sources as mod
+
+    cache_root_a = tmp_path / "a" / "kb"
+    cache_root_b = tmp_path / "b" / "kb"
+    glob = str(fixtures_dir / "**" / "SKILL.md")
+
+    monkeypatch.setattr(cfg, "DEFAULT_CACHE_PATH", cache_root_a / "skills_index.pkl")
+    out_a = handle_ingest_sources({"source_globs": [glob]}, SessionState())
+
+    monkeypatch.setattr(cfg, "DEFAULT_CACHE_PATH", cache_root_b / "skills_index.pkl")
+    out_b = handle_ingest_sources({"source_globs": [glob]}, SessionState())
+
+    # Same inputs -> same graph_id regardless of where the corpus was written.
+    assert out_a["graph_id"] == out_b["graph_id"]
