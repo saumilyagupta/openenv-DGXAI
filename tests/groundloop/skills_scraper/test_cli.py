@@ -23,6 +23,10 @@ def test_cli_with_yaml_sources(fixtures_dir: Path, tmp_path: Path) -> None:
     assert out.exists()
 
 
+@pytest.mark.skipif(
+    not Path("~/.claude/skills").expanduser().exists(),
+    reason="requires installed Claude Code skills",
+)
 def test_cli_sources_default(tmp_path: Path) -> None:
     # Smoke test: --sources default runs against the real system; exit 0 iff
     # the user has any installed SKILL.md (expected on this dev machine).
