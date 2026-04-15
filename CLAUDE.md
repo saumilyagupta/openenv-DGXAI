@@ -113,6 +113,232 @@ Deterministic: same inputs → same reward.
 
 Agent can also opt into cross-step iteration by repeating `submit` with revisions until target hit.
 
+### Target Architecture — Fully-Wired CodeForge (Design Vision)
+
+This section is the **architectural blueprint** for the fully-integrated CodeForge. The current env ships the MVP (KB + grounding); this design wires in the remaining pillars so every claim in the philosophical lineage is operationally live.
+
+#### The One-Sentence Invariant
+
+> **Every reward-earning action in CodeForge must trace to (a) a sandbox-verified programmatic signal, (b) a Layer-A grounded symbol, and (c) a Layer-B skill citation — recorded in the audit trail as a `(reward, evidence, policy)` triple.**
+
+Without (a) you have hallucination. Without (b) you have version-drift. Without (c) you have unprincipled code. All three are enforced by construction.
+
+#### Four Pillars, Four Integrations
+
+```
+┌────────────────────── CodeForgeEnvironment.step(action) ───────────────────────┐
+│                                                                                │
+│   Pillar 1: Autoresearch  ───►  run_ralph action                               │
+│   ─────────────────────         • Agent requests N autonomous iterations       │
+│   (iterate-till-metric)         • Each iter: re-query KB → synthesize →        │
+│                                   sandbox-score → keep-if-better → log         │
+│                                 • Returns best iteration's files + trajectory  │
+│                                                                                │
+│   Pillar 2: EpistemicNav  ───►  Brier-calibrated reward on submit              │
+│   ──────────────────────        • Agent declares `confidence ∈ [0,1]` on       │
+│   (calibrated confidence)         submission — "how sure am I this builds?"    │
+│                                 • Reward = quality × (1 − BrierPenalty)        │
+│                                 • Overconfident bad code punished harder than  │
+│                                   honestly-uncertain bad code (round-1 rule)   │
+│                                                                                │
+│   Pillar 3: Graphify      ───►  query_cluster action + cluster-aware KB        │
+│   ───────────────────           • 1006 skill nodes → graph communities via     │
+│   (graph + communities)           token-overlap clustering at build time       │
+│                                 • Agent can query "give me everything in the   │
+│                                   testing community" not just flat BM25        │
+│                                 • Audit tracks graph_coverage = unique         │
+│                                   clusters visited / total clusters            │
+│                                                                                │
+│   Pillar 4: Ralph Loop    ───►  Persistent run_id + checkpoint/resume          │
+│   ─────────────────────         • Each submit writes a Ralph checkpoint        │
+│   (self-driving + resume)       • Agent can `get_audit` on any past run_id     │
+│                                 • Survives env restart (checkpoint on disk)    │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Expanded Action Surface
+
+The agent gets **6 action types**, each with a clear reward contract:
+
+| Action | Cost | Reward | Wires pillar |
+|---|---|---|---|
+| `query_kb` | 1 budget | 0.0 | Layer B flat search |
+| `query_cluster` | 1 budget | 0.0 | **Pillar 3** — graph community retrieval |
+| `interrogate` | 1 budget | 0.0 | **Deferred wiring**: Socratic front-loading — agent gets 3-5 clarifying questions about the task brief, answering them guides synthesis. Anti-premature-submission signal. |
+| `run_ralph` | N budget (N = requested iters) | Best iteration's calibrated reward | **Pillar 1 + 4** — autonomous iterate-till-converge, with checkpoint |
+| `submit` | 1 budget | `calibrated_reward` | **Pillar 2** — agent declares `confidence`, Brier penalty applied |
+| `get_audit` | 0 budget (read-only) | 0.0 | **Pillar 4** — returns full `(reward, evidence, policy)` trail for the episode |
+
+#### Calibrated Reward Formula (Pillar 2 + everything)
+
+```
+quality  = 0.6 * sandbox_composite_score + 0.4 * grounding_score         # current formula
+brier    = (confidence - actual_quality)^2                               # EpistemicNav round-1 calibration
+penalty  = min(brier, 0.5)                                               # cap at 50%, no negative
+final    = quality * (1 - penalty)
+final    = round(max(0.0, min(1.0, final)), 3)                           # clamp + determinism
+```
+
+Special case (round-1 rule): if `confidence < 0.3` AND `quality < 0.5`, reward floor = 0.70 — "I don't know" is a valid, rewarded answer.
+
+#### Layer-B KB: Skills as Operational Policy
+
+The 1006 skill nodes are not just retrievable — they're **the authoritative source of correct-thinking patterns**. Every skill is a distilled decision scaffold.
+
+**Graph construction (build time, one-shot):**
+
+1. `skills_corpus.jsonl` → embedding tokenization per section body.
+2. Pairwise Jaccard similarity on token sets — threshold 0.2 → edge.
+3. Connected-component clustering → `cluster_id` per node (typically 30-80 communities).
+4. Label each cluster by its top-3 tokens + most-cited `domain` tag (e.g., cluster `test_pytest_coverage`, `security_input_validation`, `backend_api_design`).
+5. Persist `cluster_manifest.json` alongside `skills_corpus.jsonl` with `{cluster_id: {label, node_count, member_node_ids}}`.
+
+**Runtime use:**
+
+- `query_kb(claim)` → flat BM25 as today.
+- `query_cluster(cluster_label)` → returns all nodes in that cluster (bounded by top-k).
+- Audit records `graph_coverage = visited_clusters / total_clusters` per episode — diverse-coverage agents score higher in post-hoc analysis (not in reward, but reported).
+
+**Example cluster labels (derived from 1006 nodes):**
+
+- `python_testing_pytest` (pytest patterns, fixtures, parametrization, coverage)
+- `security_authz_secrets` (auth flows, secret handling, OWASP)
+- `backend_api_rest_fastapi` (endpoint design, error handling, envelopes)
+- `tdd_workflow_red_green` (tdd cycle, test-first discipline)
+- `debugging_systematic` (bisect, logs, minimal repros)
+- `docs_readme_spec` (documentation patterns)
+- `mcp_server_stdio` (MCP protocol, tool manifest)
+- `claude_api_prompt_caching` (Claude/Anthropic API patterns)
+- `deployment_docker_hf_space` (containerization, HF deploy)
+- `golang_patterns`, `kotlin_patterns`, `django_patterns`, … (language-specific pods)
+
+Cluster labels are **emergent, not hand-coded** — the graph discovers coherent domains from the skill corpus automatically.
+
+#### Layer-A KB: Symbol Ground Truth
+
+Already shipped via `lib_grounder`. Target extension:
+
+- Attach `GroundingReport` to every submit.
+- Introduce **negative grounding**: every `hasattr(mod, "fabricated_method")` miss → contributes to `hallucination_count` in audit.
+- Future Phase 3: Context7 live-doc integration — currently deferred; AST-only grounding is already discriminative (catches invented imports, invented method names).
+
+#### Ralph Loop as a Step Action (Pillar 1 + 4)
+
+When the agent issues `run_ralph(spec=obs.task_brief, max_iters=5)`:
+
+1. Env calls `ralph_orchestrator.run_loop(spec, current_files, index, synthesizer, config)`.
+2. Inside the loop, each iteration:
+   - Calls KB (cited nodes logged).
+   - Synthesizes new files (StubSynthesizer by default; OpenAISynthesizer if `OPENAI_API_KEY` set).
+   - Runs sandbox for the score.
+   - Keeps if better, reverts if worse.
+3. Returns `RunResult` to the env.
+4. Env sets `current_files = result.final_files` and surfaces per-iteration deltas in `last_iterations` field of observation.
+5. Reward for the `run_ralph` action = `calibrated_reward(final_score, implicit_confidence=0.75)` minus 0.05 per wasted iteration (anti-thrash).
+6. Checkpoint written to disk keyed by `run_id`; survives env restart.
+
+This makes CodeForge's env **its own Autoresearch**: the agent can request autonomous sub-iteration and be rewarded by the result quality, not just a single submit's luck.
+
+#### Skill-Cited Audit Trail (Pillar 4)
+
+Every action is appended to an `AuditLedger` in the episode:
+
+```python
+@dataclass(frozen=True)
+class AuditEntry:
+    step_index: int                    # which env step
+    action_type: str                   # query_kb / submit / run_ralph / ...
+    cited_skill_ids: tuple[str, ...]   # which KB nodes were consulted
+    cited_clusters: tuple[str, ...]    # which graph communities touched
+    grounding_report: dict | None      # Layer A symbol check on any code change
+    reward: float
+    brier_penalty: float | None        # if submit
+    confidence_declared: float | None  # if submit
+    quality: float                     # raw quality before calibration
+```
+
+`get_audit` returns the ledger. This is the literal materialization of the invariant: every row is a `(reward, evidence, policy)` triple.
+
+Post-episode analytics (baseline scoring, judging metrics):
+
+- **Grounded-submit rate**: `sum(1 for e in ledger if e.action=='submit' and e.grounding.groundedness >= 0.95) / total_submits`
+- **Skill-citation diversity**: unique skill_ids cited / total available
+- **Cluster coverage**: unique cluster_ids visited / total clusters
+- **Calibration error**: mean Brier penalty across submits (lower = better-calibrated agent)
+- **Iteration efficiency**: `final_score / actions_spent`
+
+#### Target Observation Schema (Post-Integration)
+
+```python
+class CodeForgeObservation(Observation):
+    # existing
+    episode_id: str
+    task_id: str
+    task_level: str
+    task_brief: str
+    initial_files: dict[str, str]
+    current_files: dict[str, str]
+    budget_remaining: int
+    previous_score: float
+    last_citations: tuple[dict, ...]
+    last_grounding: dict | None
+    is_done: bool
+    last_reward: float
+    # new — full wiring
+    last_cluster_hits: tuple[str, ...]          # from query_cluster
+    last_interrogation_questions: tuple[str, ...]  # from interrogate
+    last_ralph_run_id: str | None                # from run_ralph
+    last_ralph_iterations: tuple[dict, ...]      # per-iter trajectory
+    cumulative_audit_summary: dict               # running totals
+```
+
+#### Target Action Schema (Post-Integration)
+
+```python
+class CodeForgeAction(Action):
+    action_type: Literal[
+        "query_kb", "query_cluster", "interrogate",
+        "run_ralph", "submit", "get_audit",
+    ]
+    # existing
+    claim: str | None = None
+    top_k: int = 5
+    required_tags: tuple[str, ...] = ()
+    files: dict[str, str] | None = None
+    # new
+    cluster_label: str | None = None             # query_cluster
+    max_iters: int = 3                           # run_ralph
+    confidence: float | None = None              # submit (triggers Brier calibration)
+    target_run_id: str | None = None             # get_audit (defaults to current episode)
+```
+
+#### Implementation Order (when we build this)
+
+1. **Graphify clustering** (~1-2h): add `groundloop/kb_indexer/cluster.py`, emit `cluster_manifest.json` alongside corpus. Extend `SearchResult` with `cluster_id`.
+2. **Brier calibration** (~30m): add `confidence` field to `CodeForgeAction`; extend `grader.compute_reward` with Brier penalty; preserve round-1 "uncertain-is-ok" floor.
+3. **`run_ralph` action** (~1-2h): env wraps `ralph_orchestrator.run_loop`; checkpoint via existing `save_checkpoint`; reward plumbed through calibrated formula.
+4. **`interrogate` action** (~30m): thin wrapper over `groundloop.interrogator.Interrogator.generate`.
+5. **`query_cluster` action** (~30m): lookup by cluster_label in manifest; return SearchResult subset.
+6. **`get_audit` + AuditLedger** (~1h): accumulate entries per-step; serialize on demand; integrate `groundloop.audit_reporter.AuditReporter` for summaries.
+7. **Observation schema update** (~20m): add new fields; default them when action doesn't touch them.
+8. **Test coverage** (~1h): each new action gets ≥3 tests; end-to-end integration test runs all 6 actions in one episode.
+
+Total: **~6-7 hours** to fully-wired CodeForge.
+
+#### Why This Design Matters
+
+Each pillar alone is table stakes:
+
+- Autoresearch alone = fancy iteration, no epistemic honesty.
+- Brier alone = calibrated but blind to code.
+- Graphify alone = organized KB, no action.
+- Ralph alone = loops, no grounding.
+
+**Together they form a defensible architecture**: the agent must cite, commit, admit uncertainty, and iterate — each gated by the others. That's what round 1's EpistemicNav proved for simple factual claims; CodeForge scales the same contract to full Python codebases.
+
+---
+
 ### Package Map
 
 ```
@@ -174,19 +400,21 @@ Critic and verifier spawned as a **team via `TeamCreate`** — never via plain `
 
 ### What's Shipped vs Deferred
 
-| Component | Shipped? | Wired into env? |
-|---|---|---|
-| `groundloop_env/` OpenEnv env | ✅ | ✅ |
-| `skills_scraper` (KB Layer B) | ✅ | ✅ via `kb_indexer` |
-| `kb_indexer` BM25 search | ✅ | ✅ via `query_kb` action |
-| `python_sandbox` grader | ✅ | ✅ via `submit` action |
-| `lib_grounder` (Layer A AST) | ✅ | ✅ attached to `submit` reward |
-| `ralph_orchestrator` | ✅ | ⏳ available as standalone; baseline `inference.py` uses hand-coded stubs instead for predictable scores |
-| `interrogator` | ✅ | ⏳ not exposed as an env action (Phase 2 wire-in) |
-| `audit_reporter` | ✅ | ⏳ not emitted on `is_done` (Phase 2 wire-in) |
-| Graphify community clustering | ❌ | — (Phase 2) |
-| Context7 live doc federation | ❌ | — (Phase 2) |
-| Brier-calibrated confidence on reward | ❌ | — (Phase 2) |
+| Component | Shipped? | Wired into env? | Phase |
+|---|---|---|---|
+| `groundloop_env/` OpenEnv env | ✅ | ✅ | 1 |
+| `skills_scraper` (KB Layer B) | ✅ | ✅ via `kb_indexer` | 1 |
+| `kb_indexer` BM25 search | ✅ | ✅ via `query_kb` action | 1 |
+| `python_sandbox` grader | ✅ | ✅ via `submit` action | 1 |
+| `lib_grounder` (Layer A AST) | ✅ | ✅ attached to `submit` reward | 1 |
+| `ralph_orchestrator` | ✅ | ⏳ standalone only; wire as `run_ralph` action | **2** |
+| `interrogator` | ✅ | ⏳ wire as `interrogate` action | **2** |
+| `audit_reporter` | ✅ | ⏳ wire as `get_audit` + `AuditLedger` per-step | **2** |
+| Graphify community clustering | ❌ | — (build in `kb_indexer/cluster.py`) | **2** |
+| Brier-calibrated confidence on reward | ❌ | — (extend `grader.compute_reward`) | **2** |
+| Context7 live doc federation | ❌ | — | 3 |
+| Multi-language generated code | ❌ | — | 3 |
+| Policy-gradient RL baseline | ❌ | — | 3 |
 
 ### Round-2 Submission Checklist
 
