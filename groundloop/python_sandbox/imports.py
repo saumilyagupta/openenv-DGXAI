@@ -3,15 +3,18 @@ from __future__ import annotations
 import ast
 import importlib.util
 import logging
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from groundloop.python_sandbox.models import ImportReport
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _log = logging.getLogger(__name__)
 
 
 def _top_level(name: str) -> str:
-    return name.split(".")[0]
+    return name.split(".", maxsplit=1)[0]
 
 
 def _extract_imports(tree: ast.AST) -> set[str]:

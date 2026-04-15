@@ -3,9 +3,12 @@ from __future__ import annotations
 import os
 import subprocess
 import time
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from groundloop.python_sandbox.models import ToolResult
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def run_tool(
@@ -23,7 +26,7 @@ def run_tool(
     exit_code = -1
 
     try:
-        proc = subprocess.run(  # noqa: S603
+        proc = subprocess.run(
             argv,
             cwd=str(cwd),
             capture_output=True,

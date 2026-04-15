@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import shutil
 import tempfile
-from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from groundloop.python_sandbox.imports import scan_imports
 from groundloop.python_sandbox.metric import composite_score
@@ -21,6 +21,9 @@ from groundloop.python_sandbox.tools import (
     is_available,
     parse,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def run_sandbox(
@@ -48,7 +51,7 @@ def run_sandbox(
                 target.write_text(content, encoding="utf-8")
             project_dir = tmp_root
 
-        assert project_dir is not None  # noqa: S101
+        assert project_dir is not None
         tool_list = tuple(tools)
         tool_results: dict[str, ToolResult] = {}
         parsed_results: dict[str, ParsedResult] = {}
@@ -88,7 +91,7 @@ def run_sandbox(
             parsed=parsed_results,
             imports=imports_report,
             composite_score=0.0,
-            generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            generated_at=datetime.now(UTC).isoformat(timespec="seconds"),
         )
         score = composite_score(result)
         return result.model_copy(update={"composite_score": score})

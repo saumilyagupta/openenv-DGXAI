@@ -3,9 +3,12 @@ from __future__ import annotations
 import json
 import re
 import shutil
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from groundloop.python_sandbox.models import ParsedResult, ToolResult
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 DEFAULT_TOOLS: tuple[str, ...] = ("ruff", "mypy", "pytest", "imports")
 

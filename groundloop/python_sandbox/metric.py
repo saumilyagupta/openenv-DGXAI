@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from groundloop.python_sandbox.models import SandboxResult
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from groundloop.python_sandbox.models import SandboxResult
 
 
 def composite_score(result: SandboxResult) -> float:
