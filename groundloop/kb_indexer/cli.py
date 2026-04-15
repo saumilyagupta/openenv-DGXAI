@@ -109,6 +109,7 @@ def _cmd_cluster(args: argparse.Namespace) -> int:
         print(f"ERROR: corpus not found: {args.corpus}", file=sys.stderr)
         return 1
     import hashlib
+    from datetime import datetime, timezone
 
     from groundloop.kb_indexer.cluster import build_clusters, save_manifest
 
@@ -118,10 +119,15 @@ def _cmd_cluster(args: argparse.Namespace) -> int:
         if ln.strip()
     ]
     corpus_sha256 = hashlib.sha256(args.corpus.read_bytes()).hexdigest()
+    corpus_mtime = args.corpus.stat().st_mtime
+    generated_at = datetime.fromtimestamp(
+        corpus_mtime, tz=timezone.utc,
+    ).isoformat(timespec="seconds")
     manifest = build_clusters(
         nodes,
         jaccard_threshold=args.threshold,
         corpus_sha256=corpus_sha256,
+        generated_at=generated_at,
     )
     save_manifest(manifest, args.manifest)
     print(

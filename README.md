@@ -209,6 +209,19 @@ python3 -m groundloop.kb_indexer stats
 
 See `docs/superpowers/specs/2026-04-15-groundloop-kb-indexer-design.md` for the full design.
 
+### Cluster Manifest
+
+The cluster manifest groups semantically related corpus nodes into connected components via Jaccard similarity over tokenized section bodies. It feeds CodeForge's Graphify milestone by letting agents navigate skill neighborhoods instead of raw BM25 hits.
+
+```bash
+# Build cluster_manifest.json (default: groundloop/kb/cluster_manifest.json).
+python3 -m groundloop.kb_indexer cluster [--threshold 0.15] [--manifest PATH]
+```
+
+On the current 1006-node corpus (threshold `0.15`) this produces **550 clusters** (451 singletons) in under 1s. The manifest is byte-identical across runs while the corpus is unchanged — `generated_at` is derived from the corpus mtime and `cluster_id` is `sha256(sorted(member_node_ids))[:12]`.
+
+`SkillsIndex.attach_cluster_manifest(manifest)` wires cluster IDs onto every `SearchResult` and unlocks `nodes_in_cluster(label)` / `cluster_id_for(node_id)` lookups.
+
 ## MCP Shell (Server)
 
 `groundloop.mcp_shell` is a stdio MCP server that exposes the 5 GroundLoop tools to any MCP-compatible client (Claude Code, Cursor, Codex). Session state (graphs, runs, metrics) is held per-process in memory.

@@ -84,6 +84,7 @@ def build_clusters(
     jaccard_threshold: float = 0.15,
     min_token_length: int = 3,
     corpus_sha256: str = "",
+    generated_at: str | None = None,
 ) -> ClusterManifest:
     node_ids = [n["id"] for n in nodes]
     token_sets: dict[str, set[str]] = {
@@ -133,8 +134,13 @@ def build_clusters(
         ))
     clusters.sort(key=lambda c: (-c.node_count, c.cluster_id))
 
+    stamp = (
+        generated_at
+        if generated_at is not None
+        else datetime.now(timezone.utc).isoformat(timespec="seconds")
+    )
     return ClusterManifest(
-        generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        generated_at=stamp,
         corpus_sha256=corpus_sha256,
         jaccard_threshold=jaccard_threshold,
         total_clusters=len(clusters),
