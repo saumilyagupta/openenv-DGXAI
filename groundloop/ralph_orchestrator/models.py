@@ -13,7 +13,7 @@ IterationReason = Literal[
 class LoopConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     max_iters: int = Field(default=5, gt=0, le=100)
-    target_score: float = Field(default=0.95, gt=0.0, le=1.0)
+    target_score: float = Field(default=0.95, gt=0.0, le=2.0)
     tools: tuple[str, ...] = ("ruff", "imports")
     timeout_per_tool: float = 60.0
     top_k_citations: int = Field(default=5, gt=0, le=50)
