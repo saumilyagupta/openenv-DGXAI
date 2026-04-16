@@ -24,7 +24,7 @@ from codeforge.shaping import citation_shaping_bonus
 from codeforge.tasks import Task, get_task
 
 _log = logging.getLogger(__name__)
-_DEFAULT_CORPUS = Path("CODEFORGE/codeforge/kb/skills_corpus.jsonl")
+_DEFAULT_CORPUS = Path(__file__).resolve().parent / "kb" / "skills_corpus.jsonl"
 
 # ---------------------------------------------------------------------------
 # Filename validation (SYSTEM_DESIGN §14.2, §14.3)
