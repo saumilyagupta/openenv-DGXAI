@@ -20,6 +20,9 @@ dependencies = [
     "mcp>=1.0.0",
 ]
 
+[project.scripts]
+server = "server.app:main"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.0",

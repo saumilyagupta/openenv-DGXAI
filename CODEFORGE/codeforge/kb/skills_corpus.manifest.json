@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-04-16T06:11:15+00:00",
+  "sources": [
+    {
+      "label": "ecc",
+      "glob": "CODEFORGE/everything-claude-code/skills/*/SKILL.md"
+    },
+    {
+      "label": "local",
+      "glob": "/home/krrish/.claude/skills/*/SKILL.md"
+    }
+  ],
+  "scraped_files": 242,
+  "skipped_files": 1,
+  "total_nodes": 2648,
+  "errors": [
+    {
+      "path": "/home/krrish/.claude/skills/build123d/SKILL.md",
+      "stage": "parse",
+      "reason": "malformed yaml in /home/krrish/.claude/skills/build123d/SKILL.md: mapping values are not allowed in this context\n  in \"<unicode string>\", line 3, column 188"
+    }
+  ],
+  "corpus_sha256": "e5b87b560358f93b483fc50a2eeb76760029c0f2b2edfffb776782b2bcb657eb"
+}
