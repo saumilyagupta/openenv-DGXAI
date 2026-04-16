@@ -1,0 +1,14 @@
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+tests/
+*.egg-info
+.git
+graphify/
+ralph/
+everything-claude-code/
+LAUNCH_PROMPT.md
+SYSTEM_DESIGN.md
