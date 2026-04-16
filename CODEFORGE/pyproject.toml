@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codeforge"
+version = "0.2.0"
+description = "MCP-exposed RL environment that forces LLMs to write real, verified, grounded Python code."
+requires-python = ">=3.11"
+dependencies = [
+    "openenv-core==0.2.1",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.0.0",
+    "rank_bm25==0.2.2",
+    "numpy>=1.24.0",
+    "httpx>=0.25.0",
+    "networkx>=3.0",
+    "python-frontmatter>=1.0.0",
+    "mcp>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["codeforge*"]
+
+[tool.mypy]
+strict = true
+packages = ["codeforge"]
+explicit_package_bases = true
+mypy_path = "."
+
+[tool.ruff]
+target-version = "py311"
+line-length = 99
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "SIM", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
