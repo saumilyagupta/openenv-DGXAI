@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from codeforge.environment import CodeForgeEnvironment
 from codeforge.models import CodeForgeAction, CodeForgeActionType
+from codeforge.ralph.synthesizer import Synthesizer
 from codeforge.tasks import TASKS
 
 _log = logging.getLogger(__name__)
@@ -406,6 +407,28 @@ class CodeForgeMCPServer:
 
     Embedded mode: imports CodeForgeEnvironment directly.
     Each tool call is routed to a session-keyed environment.
+
+    **Universal LLM support:** The Ralph loop's synthesizer is configurable.
+    Whichever LLM connects to this MCP server can provide its own config::
+
+        # Ollama (local, free)
+        server = CodeForgeMCPServer(llm_provider="ollama", llm_model="llama3")
+
+        # OpenAI
+        server = CodeForgeMCPServer(llm_provider="openai", llm_model="gpt-4o")
+
+        # Anthropic
+        server = CodeForgeMCPServer(llm_provider="anthropic", llm_model="claude-sonnet-4-20250514")
+
+        # Any OpenAI-compatible (vLLM, LM Studio, Together, Groq)
+        server = CodeForgeMCPServer(
+            llm_provider="openai",
+            llm_base_url="http://localhost:8000/v1",
+            llm_model="my-model",
+        )
+
+    When no LLM config is provided, Ralph uses the deterministic
+    StubSynthesizer (no API calls needed).
     """
 
     def __init__(
@@ -413,10 +436,18 @@ class CodeForgeMCPServer:
         *,
         corpus_path: Path | None = None,
         max_sessions: int = 10,
+        llm_provider: str | None = None,
+        llm_api_key: str | None = None,
+        llm_base_url: str | None = None,
+        llm_model: str | None = None,
     ) -> None:
         self._corpus_path = corpus_path
         self._sessions: dict[str, CodeForgeEnvironment] = {}
         self._max_sessions = max_sessions
+        self._llm_provider = llm_provider
+        self._llm_api_key = llm_api_key
+        self._llm_base_url = llm_base_url
+        self._llm_model = llm_model
 
     # -- Session management ------------------------------------------
 
@@ -430,7 +461,22 @@ class CodeForgeMCPServer:
         self,
     ) -> tuple[str, CodeForgeEnvironment]:
         sid = uuid4().hex[:16]
-        env = CodeForgeEnvironment(corpus_path=self._corpus_path)
+        # Build synthesizer from LLM config (if provided)
+        synth: Synthesizer | None = None
+        if self._llm_provider:
+            from codeforge.ralph.synthesizer import LLMSynthesizer
+
+            synth = LLMSynthesizer(
+                provider=self._llm_provider,
+                api_key=self._llm_api_key,
+                base_url=self._llm_base_url,
+                model=self._llm_model,
+            )
+
+        env = CodeForgeEnvironment(
+            corpus_path=self._corpus_path,
+            synthesizer=synth,
+        )
         if len(self._sessions) >= self._max_sessions:
             oldest = next(iter(self._sessions))
             del self._sessions[oldest]

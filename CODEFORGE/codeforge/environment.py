@@ -18,7 +18,7 @@ from codeforge.models import AuditEntry, CodeForgeAction, CodeForgeActionType, C
 from codeforge.observation import build_observation
 from codeforge.ralph.loop import run_loop
 from codeforge.ralph.models import LoopConfig
-from codeforge.ralph.synthesizer import StubSynthesizer
+from codeforge.ralph.synthesizer import StubSynthesizer, Synthesizer
 from codeforge.sandbox.sandbox import run_sandbox
 from codeforge.shaping import citation_shaping_bonus
 from codeforge.tasks import Task, get_task
@@ -78,9 +78,15 @@ class CodeForgeEnvironment(Environment):  # type: ignore[type-arg]
 
     SUPPORTS_CONCURRENT_SESSIONS = True
 
-    def __init__(self, *, corpus_path: Path | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        corpus_path: Path | None = None,
+        synthesizer: Synthesizer | None = None,
+    ) -> None:
         super().__init__()
         self._corpus_path = corpus_path or _DEFAULT_CORPUS
+        self._synthesizer = synthesizer
         self._index: SkillsIndex | None = None
         self._task: Task | None = None
         self._episode_id: str = ""
@@ -426,7 +432,7 @@ class CodeForgeEnvironment(Environment):  # type: ignore[type-arg]
             target_score=self._task.target_score,
             tools=self._task.tools,
         )
-        synthesizer = StubSynthesizer()
+        synthesizer = self._synthesizer or StubSynthesizer()
         result = run_loop(
             spec=self._task.brief,
             initial_files=self._current_files,

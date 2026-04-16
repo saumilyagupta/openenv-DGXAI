@@ -90,24 +90,59 @@ class StubSynthesizer:
 
 
 class LLMSynthesizer:
-    """Calls an LLM to produce improved code given spec + current files + citations.
+    """Calls any LLM to produce improved code given spec + current files + citations.
 
-    Uses the Anthropic Python SDK (``anthropic``) or falls back to ``httpx``
-    for raw API calls when the SDK is unavailable.
+    Provider-agnostic: works with Ollama, OpenAI, Anthropic, or any
+    OpenAI-compatible API. Set *provider* to choose the backend:
+
+    - ``"openai"`` — OpenAI / OpenAI-compatible (default). Works with Ollama,
+      LM Studio, vLLM, Together, Groq, etc. Set *base_url* for local models.
+    - ``"anthropic"`` — Anthropic Claude API.
+    - ``"ollama"`` — Shortcut for Ollama (sets base_url to localhost:11434).
+
+    Examples::
+
+        # Ollama (local, no API key needed)
+        LLMSynthesizer(provider="ollama", model="llama3")
+
+        # OpenAI
+        LLMSynthesizer(provider="openai", model="gpt-4o")
+
+        # Anthropic
+        LLMSynthesizer(provider="anthropic", model="claude-sonnet-4-20250514")
+
+        # Any OpenAI-compatible endpoint (vLLM, LM Studio, Together, etc.)
+        LLMSynthesizer(
+            provider="openai",
+            base_url="http://localhost:8000/v1",
+            model="my-local-model",
+        )
     """
 
     def __init__(
         self,
         *,
+        provider: str = "openai",
         api_key: str | None = None,
-        model: str = "claude-sonnet-4-20250514",
+        base_url: str | None = None,
+        model: str | None = None,
         max_tokens: int = 4096,
     ) -> None:
-        self._api_key: str = api_key if api_key is not None else os.environ.get(
-            "ANTHROPIC_API_KEY", "",
-        )
-        self._model: str = model
+        self._provider: str = provider.lower()
         self._max_tokens: int = max_tokens
+
+        if self._provider == "ollama":
+            self._base_url = base_url or "http://localhost:11434/v1"
+            self._api_key = api_key or "ollama"  # Ollama ignores this
+            self._model = model or "llama3"
+        elif self._provider == "anthropic":
+            self._base_url = base_url or "https://api.anthropic.com"
+            self._api_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
+            self._model = model or "claude-sonnet-4-20250514"
+        else:  # openai or any compatible
+            self._base_url = base_url or "https://api.openai.com/v1"
+            self._api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
+            self._model = model or "gpt-4o"
 
     # ------------------------------------------------------------------
     # Public API (satisfies Synthesizer protocol)
@@ -183,13 +218,51 @@ class LLMSynthesizer:
         return "\n".join(parts)
 
     # ------------------------------------------------------------------
-    # LLM API call
+    # LLM API call (provider-agnostic)
     # ------------------------------------------------------------------
 
     def _call_llm(self, prompt: str) -> str:
-        """Call the Claude API.  Falls back to *httpx* if the SDK is absent."""
+        """Call the configured LLM provider.
+
+        Supports three backends:
+        - **openai / ollama**: OpenAI-compatible ``/chat/completions`` endpoint.
+          Works with Ollama, LM Studio, vLLM, Together, Groq, OpenAI, etc.
+        - **anthropic**: Anthropic ``/v1/messages`` endpoint.
+        """
+        if self._provider == "anthropic":
+            return self._call_anthropic(prompt)
+        return self._call_openai_compatible(prompt)
+
+    def _call_openai_compatible(self, prompt: str) -> str:
+        """OpenAI-compatible API (works with Ollama, LM Studio, vLLM, etc.)."""
+        import httpx
+
+        url = f"{self._base_url.rstrip('/')}/chat/completions"
+        headers: dict[str, str] = {"content-type": "application/json"}
+        if self._api_key and self._api_key != "ollama":
+            headers["Authorization"] = f"Bearer {self._api_key}"
+
+        resp = httpx.post(
+            url,
+            headers=headers,
+            json={
+                "model": self._model,
+                "max_tokens": self._max_tokens,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=120.0,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return str(data["choices"][0]["message"]["content"])
+
+    def _call_anthropic(self, prompt: str) -> str:
+        """Anthropic Claude API."""
         if not self._api_key:
-            msg = "ANTHROPIC_API_KEY not set — LLMSynthesizer requires an API key"
+            msg = (
+                "ANTHROPIC_API_KEY not set. For local models, use "
+                "provider='ollama' or provider='openai' with base_url."
+            )
             raise ValueError(msg)
 
         try:
@@ -207,7 +280,7 @@ class LLMSynthesizer:
             import httpx
 
             resp = httpx.post(
-                "https://api.anthropic.com/v1/messages",
+                f"{self._base_url.rstrip('/')}/v1/messages",
                 headers={
                     "x-api-key": self._api_key,
                     "anthropic-version": "2023-06-01",

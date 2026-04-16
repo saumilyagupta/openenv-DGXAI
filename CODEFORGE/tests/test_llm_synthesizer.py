@@ -198,29 +198,40 @@ class TestParseResponse:
 # ---------------------------------------------------------------------------
 
 class TestCallLLM:
-    def test_raises_without_api_key(self) -> None:
-        synth = LLMSynthesizer(api_key="")
+    def test_anthropic_raises_without_api_key(self) -> None:
+        synth = LLMSynthesizer(provider="anthropic", api_key="")
         with pytest.raises(ValueError, match="ANTHROPIC_API_KEY"):
             synth._call_llm("hello")
 
-    def test_no_api_key_default(self) -> None:
-        """Constructor with no key and no env var results in empty key."""
-        with patch.dict("os.environ", {}, clear=True):
-            synth = LLMSynthesizer()
-            assert synth._api_key == ""
+    def test_ollama_defaults(self) -> None:
+        synth = LLMSynthesizer(provider="ollama")
+        assert synth._base_url == "http://localhost:11434/v1"
+        assert synth._model == "llama3"
+        assert synth._api_key == "ollama"
 
-    def test_api_key_from_env(self) -> None:
+    def test_openai_defaults(self) -> None:
+        with patch.dict("os.environ", {}, clear=True):
+            synth = LLMSynthesizer(provider="openai")
+            assert synth._base_url == "https://api.openai.com/v1"
+            assert synth._model == "gpt-4o"
+
+    def test_anthropic_defaults(self) -> None:
         with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "env-key-123"}):
-            synth = LLMSynthesizer()
+            synth = LLMSynthesizer(provider="anthropic")
             assert synth._api_key == "env-key-123"
+            assert synth._model == "claude-sonnet-4-20250514"
 
     def test_explicit_api_key_overrides_env(self) -> None:
-        with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "env-key"}):
-            synth = LLMSynthesizer(api_key="explicit-key")
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "env-key"}):
+            synth = LLMSynthesizer(provider="openai", api_key="explicit-key")
             assert synth._api_key == "explicit-key"
 
-    def test_call_llm_uses_anthropic_sdk(self) -> None:
-        synth = LLMSynthesizer(api_key="test-key", model="claude-test")
+    def test_custom_base_url(self) -> None:
+        synth = LLMSynthesizer(provider="openai", base_url="http://my-server:8080/v1")
+        assert synth._base_url == "http://my-server:8080/v1"
+
+    def test_call_anthropic_uses_sdk(self) -> None:
+        synth = LLMSynthesizer(provider="anthropic", api_key="test-key", model="claude-test")
         mock_client = MagicMock()
         mock_message = MagicMock()
         mock_message.content = [MagicMock(text="response text")]
@@ -239,20 +250,19 @@ class TestCallLLM:
             messages=[{"role": "user", "content": "test prompt"}],
         )
 
-    def test_call_llm_falls_back_to_httpx(self) -> None:
-        synth = LLMSynthesizer(api_key="test-key", model="claude-test")
+    def test_call_openai_compatible(self) -> None:
+        synth = LLMSynthesizer(provider="ollama", model="llama3")
 
         mock_resp = MagicMock()
         mock_resp.json.return_value = {
-            "content": [{"text": "httpx response"}],
+            "choices": [{"message": {"content": "ollama response"}}],
         }
         mock_resp.raise_for_status = MagicMock()
 
-        with patch.dict("sys.modules", {"anthropic": None}):
-            with patch("httpx.post", return_value=mock_resp) as mock_post:
-                result = synth._call_llm("test prompt")
+        with patch("httpx.post", return_value=mock_resp) as mock_post:
+            result = synth._call_llm("test prompt")
 
-        assert result == "httpx response"
+        assert result == "ollama response"
         mock_post.assert_called_once()
 
 
@@ -261,8 +271,8 @@ class TestCallLLM:
 # ---------------------------------------------------------------------------
 
 class TestSynthesize:
-    def test_synthesize_raises_without_key(self) -> None:
-        synth = LLMSynthesizer(api_key="")
+    def test_synthesize_raises_without_key_anthropic(self) -> None:
+        synth = LLMSynthesizer(provider="anthropic", api_key="")
         with pytest.raises(ValueError, match="ANTHROPIC_API_KEY"):
             synth.synthesize(
                 spec="test",
@@ -272,7 +282,7 @@ class TestSynthesize:
             )
 
     def test_synthesize_with_mocked_api(self) -> None:
-        synth = LLMSynthesizer(api_key="test-key")
+        synth = LLMSynthesizer(provider="openai", api_key="test-key")
         mock_response = (
             "Here's improved code:\n"
             "# filename: main.py\n"
@@ -393,9 +403,17 @@ class TestStubSynthesizerCitations:
 # ---------------------------------------------------------------------------
 
 class TestConfiguration:
-    def test_default_model(self) -> None:
-        synth = LLMSynthesizer(api_key="k")
+    def test_default_model_openai(self) -> None:
+        synth = LLMSynthesizer(provider="openai", api_key="k")
+        assert synth._model == "gpt-4o"
+
+    def test_default_model_anthropic(self) -> None:
+        synth = LLMSynthesizer(provider="anthropic", api_key="k")
         assert synth._model == "claude-sonnet-4-20250514"
+
+    def test_default_model_ollama(self) -> None:
+        synth = LLMSynthesizer(provider="ollama")
+        assert synth._model == "llama3"
 
     def test_custom_model(self) -> None:
         synth = LLMSynthesizer(api_key="k", model="gpt-4")
