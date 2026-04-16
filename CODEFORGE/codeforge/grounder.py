@@ -69,13 +69,21 @@ def _has_attr(module_name: str, attr: str) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def ground(source: str) -> GroundingReport:
+def ground(
+    source: str,
+    *,
+    local_modules: frozenset[str] = frozenset(),
+) -> GroundingReport:
     """AST-parse *source*, check every import and attribute access resolves.
 
     Three fixes baked in from day one (SYSTEM_DESIGN §4.8.3):
     1. SyntaxError → groundedness=0.0  (was 1.0)
     2. Zero symbols → groundedness=0.5 (was 1.0)
     3. Attribute resolution against full module path (was top-level only)
+
+    *local_modules*: set of module names (e.g. ``{"core", "main"}``) that are
+    local to the agent's project and should be treated as grounded even though
+    ``importlib.util.find_spec`` cannot resolve them from the grader process.
     """
     # ----- parse --------------------------------------------------------
     try:
@@ -97,7 +105,10 @@ def ground(source: str) -> GroundingReport:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 pkg = alias.name.split(".")[0]
-                resolved = _module_spec(alias.name)
+                # Local modules are always treated as grounded
+                resolved = (
+                    pkg in local_modules or _module_spec(alias.name)
+                )
                 symbols.append(
                     Symbol(
                         module=alias.name,
@@ -112,9 +123,13 @@ def ground(source: str) -> GroundingReport:
         elif isinstance(node, ast.ImportFrom):
             if node.level != 0 or node.module is None:
                 continue
-            resolved_mod = _module_spec(node.module)
+            mod_top = node.module.split(".")[0]
+            is_local = mod_top in local_modules
+            resolved_mod = is_local or _module_spec(node.module)
             for alias in (node.names or []):
-                attr_resolved = resolved_mod and _has_attr(node.module, alias.name)
+                attr_resolved = resolved_mod if is_local else (
+                    resolved_mod and _has_attr(node.module, alias.name)
+                )
                 symbols.append(
                     Symbol(
                         module=node.module,

@@ -54,7 +54,8 @@ class TestTaskFields:
         assert task.brief
         assert "greet" in task.brief.lower()
         assert "main.py" in task.initial_files
-        assert task.tools == ("ruff", "imports", "mypy")
+        assert task.tools == ("ruff", "imports", "mypy", "pytest")
+        assert task.hidden_tests  # easy task now has hidden correctness tests
 
     def test_medium_task_fields(self) -> None:
         task = get_task("medium")

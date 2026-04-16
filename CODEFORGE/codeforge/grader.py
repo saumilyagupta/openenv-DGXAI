@@ -22,9 +22,10 @@ def compute_reward(
     """
     quality = _SANDBOX_WEIGHT * sandbox_score + _GROUNDING_WEIGHT * groundedness
 
-    brier_penalty = 0.0
-    if confidence is not None:
-        brier_penalty = min((confidence - quality) ** 2, _BRIER_CAP)
+    # Brier calibration: confidence=None treated as 0.5 (mediocre calibration)
+    # so agents cannot bypass Brier entirely by omitting confidence.
+    effective_confidence = confidence if confidence is not None else 0.5
+    brier_penalty = min((effective_confidence - quality) ** 2, _BRIER_CAP)
 
     reward = quality * (1.0 - brier_penalty)
 

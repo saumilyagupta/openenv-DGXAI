@@ -12,6 +12,61 @@ class Task:
     target_score: float
     max_budget: int
     tools: tuple[str, ...]
+    hidden_tests: dict[str, str] = ()  # type: ignore[assignment]
+    """Hidden correctness tests injected by the environment during grading.
+
+    The agent never sees these. They are written into the sandbox temp dir
+    alongside the agent's submitted files so pytest runs them automatically.
+    This prevents "clean garbage" exploits where syntactically valid but
+    semantically wrong code scores perfectly.
+    """
+
+
+# -- Hidden test suites (agent never sees these) ----------------------------
+
+_HIDDEN_EASY = {
+    "test_hidden_greet.py": (
+        "from __future__ import annotations\n"
+        "from main import greet\n\n"
+        "def test_greet_alice() -> None:\n"
+        '    assert greet("Alice") == "Hello, Alice!"\n\n'
+        "def test_greet_bob() -> None:\n"
+        '    assert greet("Bob") == "Hello, Bob!"\n\n'
+        "def test_greet_empty() -> None:\n"
+        '    assert greet("") == "Hello, !"\n'
+    ),
+}
+
+_HIDDEN_MEDIUM = {
+    "test_hidden_greet.py": (
+        "from __future__ import annotations\n"
+        "import pytest\n"
+        "from main import greet\n\n"
+        "def test_greet_alice() -> None:\n"
+        '    assert greet("Alice") == "Hello, Alice!"\n\n'
+        "def test_greet_none_raises() -> None:\n"
+        "    with pytest.raises(ValueError):\n"
+        "        greet(None)  # type: ignore[arg-type]\n\n"
+        "def test_greet_returns_str() -> None:\n"
+        '    assert isinstance(greet("X"), str)\n'
+    ),
+}
+
+_HIDDEN_HARD = {
+    "test_hidden_core.py": (
+        "from __future__ import annotations\n"
+        "import pytest\n"
+        "from core import greet\n\n"
+        "def test_greet_alice() -> None:\n"
+        '    assert greet("Alice") == "Hello, Alice!"\n\n'
+        "def test_greet_bob() -> None:\n"
+        '    assert greet("Bob") == "Hello, Bob!"\n\n'
+        "def test_greet_returns_str() -> None:\n"
+        '    assert isinstance(greet("X"), str)\n\n'
+        "def test_greet_empty() -> None:\n"
+        '    assert greet("") == "Hello, !"\n'
+    ),
+}
 
 
 TASKS: tuple[Task, ...] = (
@@ -25,7 +80,8 @@ TASKS: tuple[Task, ...] = (
         initial_files={"main.py": "def greet(name):\n    pass\n"},
         target_score=0.90,
         max_budget=4,
-        tools=("ruff", "imports", "mypy"),
+        tools=("ruff", "imports", "mypy", "pytest"),
+        hidden_tests=_HIDDEN_EASY,
     ),
     Task(
         task_id="greet_with_tests",
@@ -46,6 +102,7 @@ TASKS: tuple[Task, ...] = (
         target_score=0.80,
         max_budget=6,
         tools=("ruff", "imports", "mypy", "pytest"),
+        hidden_tests=_HIDDEN_MEDIUM,
     ),
     Task(
         task_id="multi_file_module",
@@ -67,6 +124,7 @@ TASKS: tuple[Task, ...] = (
         target_score=0.70,
         max_budget=10,
         tools=("ruff", "imports", "mypy", "pytest"),
+        hidden_tests=_HIDDEN_HARD,
     ),
 )
 

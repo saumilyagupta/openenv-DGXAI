@@ -357,10 +357,16 @@ class CodeForgeEnvironment(Environment):  # type: ignore[type-arg]
 
         self._current_files = dict(action.files)
         assert self._task is not None
+
+        # Merge hidden correctness tests into sandbox files (agent cannot see these)
+        sandbox_files = dict(action.files)
+        if self._task.hidden_tests:
+            sandbox_files.update(self._task.hidden_tests)
+
         # Run sandbox
         try:
             sandbox_result = run_sandbox(
-                files=dict(action.files),
+                files=sandbox_files,
                 tools=self._task.tools,
                 timeout_per_tool=30.0,
             )
@@ -369,16 +375,18 @@ class CodeForgeEnvironment(Environment):  # type: ignore[type-arg]
             _log.exception("sandbox error: %s", e)
             sandbox_score = 0.0
 
-        # Run grounder
+        # Run grounder (pass local module names so they're not penalized)
+        local_modules = frozenset(
+            f.removesuffix(".py") for f in action.files if f.endswith(".py")
+        )
         concatenated = "\n".join(action.files.values())
-        grounding_report = ground(concatenated)
+        grounding_report = ground(concatenated, local_modules=local_modules)
         self._last_grounding = grounding_report.model_dump()
 
         # Compute reward with Brier calibration
         quality = 0.6 * sandbox_score + 0.4 * grounding_report.groundedness
-        brier_penalty: float | None = None
-        if action.confidence is not None:
-            brier_penalty = min((action.confidence - quality) ** 2, 0.5)
+        effective_conf = action.confidence if action.confidence is not None else 0.5
+        brier_penalty: float | None = min((effective_conf - quality) ** 2, 0.5)
         self._last_brier_penalty = brier_penalty
         self._last_quality = quality
 

@@ -122,16 +122,17 @@ class TestCitationShapingBonus:
         )
         assert bonus == 0.0
 
-    def test_bonus_computed_when_skill_in_code(self) -> None:
+    def test_bonus_computed_when_skill_cited_in_comment(self) -> None:
         bonus = citation_shaping_bonus(
-            submit_files={"main.py": "import skill_1\nskill_1.do()"},
+            submit_files={"main.py": "# cited: skill-1\nimport os"},
             prior_citations=[{"skill_name": "skill-1"}],
             prior_cluster_hits=[],
         )
         assert bonus == pytest.approx(0.01)
 
     def test_bonus_capped_at_005(self) -> None:
-        files = {"main.py": " ".join(f"skill_{i}" for i in range(10))}
+        citations_comments = "\n".join(f"# cited: skill-{i}" for i in range(10))
+        files = {"main.py": citations_comments}
         citations = [{"skill_name": f"skill-{i}"} for i in range(10)]
         bonus = citation_shaping_bonus(
             submit_files=files,

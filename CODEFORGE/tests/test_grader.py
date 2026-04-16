@@ -6,29 +6,32 @@ from codeforge.grader import compute_reward
 
 
 class TestQualityCalculation:
-    """Test the basic quality = 0.6*sandbox + 0.4*ground formula."""
+    """Test quality formula with explicit confidence to isolate Brier effects."""
 
-    def test_perfect_scores(self) -> None:
-        reward = compute_reward(sandbox_score=1.0, groundedness=1.0)
+    def test_perfect_scores_perfect_calibration(self) -> None:
+        # quality=1.0, confidence=1.0, brier=(1.0-1.0)²=0.0
+        reward = compute_reward(sandbox_score=1.0, groundedness=1.0, confidence=1.0)
         assert reward == 1.0
 
     def test_zero_scores(self) -> None:
+        # quality=0.0, effective_conf=0.5, brier=(0.5-0.0)²=0.25
+        # reward = 0.0 * (1-0.25) = 0.0
         reward = compute_reward(sandbox_score=0.0, groundedness=0.0)
         assert reward == 0.0
 
     def test_weighted_combination(self) -> None:
-        # quality = 0.6 * 0.5 + 0.4 * 1.0 = 0.30 + 0.40 = 0.70
-        reward = compute_reward(sandbox_score=0.5, groundedness=1.0)
+        # quality = 0.6 * 0.5 + 0.4 * 1.0 = 0.70, confidence=0.70 → brier=0
+        reward = compute_reward(sandbox_score=0.5, groundedness=1.0, confidence=0.70)
         assert reward == 0.7
 
     def test_sandbox_only(self) -> None:
-        # quality = 0.6 * 1.0 + 0.4 * 0.0 = 0.6
-        reward = compute_reward(sandbox_score=1.0, groundedness=0.0)
+        # quality = 0.6, confidence=0.6 → brier=0
+        reward = compute_reward(sandbox_score=1.0, groundedness=0.0, confidence=0.6)
         assert reward == 0.6
 
     def test_grounding_only(self) -> None:
-        # quality = 0.6 * 0.0 + 0.4 * 1.0 = 0.4
-        reward = compute_reward(sandbox_score=0.0, groundedness=1.0)
+        # quality = 0.4, confidence=0.4 → brier=0
+        reward = compute_reward(sandbox_score=0.0, groundedness=1.0, confidence=0.4)
         assert reward == 0.4
 
 
@@ -108,23 +111,34 @@ class TestUncertainFloor:
 
 
 class TestConfidenceNone:
-    """Test the confidence=None path (no Brier penalty)."""
+    """confidence=None is treated as 0.5 (mediocre calibration) — not a free pass."""
 
-    def test_no_confidence_no_brier(self) -> None:
-        # quality = 0.6*0.8 + 0.4*0.8 = 0.8
-        # No Brier penalty, no floor check
+    def test_none_treated_as_half(self) -> None:
+        # quality = 0.8, effective_conf = 0.5, brier = (0.5 - 0.8)² = 0.09
+        # reward = 0.8 * (1 - 0.09) = 0.728
         reward = compute_reward(sandbox_score=0.8, groundedness=0.8)
-        assert reward == 0.8
+        assert reward == 0.728
 
-    def test_no_confidence_no_floor(self) -> None:
-        # quality = 0.6*0.2 + 0.4*0.2 = 0.2
-        # No Brier, no floor (floor requires confidence != None)
-        reward = compute_reward(sandbox_score=0.2, groundedness=0.2)
-        assert reward == 0.2
-
-    def test_none_explicit(self) -> None:
+    def test_none_with_quality_half_no_brier(self) -> None:
+        # quality = 0.5, effective_conf = 0.5, brier = (0.5 - 0.5)² = 0.0
+        # reward = 0.5 * (1 - 0.0) = 0.5
         reward = compute_reward(sandbox_score=0.5, groundedness=0.5, confidence=None)
         assert reward == 0.5
+
+    def test_none_no_floor_trigger(self) -> None:
+        # quality = 0.2, effective_conf = 0.5, brier = (0.5 - 0.2)² = 0.09
+        # reward = 0.2 * (1 - 0.09) = 0.182
+        # floor requires confidence is not None → not triggered
+        reward = compute_reward(sandbox_score=0.2, groundedness=0.2)
+        assert reward == 0.182
+
+    def test_explicit_confidence_better_than_none(self) -> None:
+        # Providing accurate confidence always beats omitting it
+        # quality = 0.8, conf=0.8 → brier=(0.8-0.8)²=0 → reward=0.8
+        # quality = 0.8, conf=None → brier=(0.5-0.8)²=0.09 → reward=0.728
+        with_conf = compute_reward(sandbox_score=0.8, groundedness=0.8, confidence=0.8)
+        without_conf = compute_reward(sandbox_score=0.8, groundedness=0.8)
+        assert with_conf > without_conf
 
 
 class TestClamping:
@@ -172,7 +186,7 @@ class TestEdgeCases:
         ("sandbox", "ground", "conf", "expected_min", "expected_max"),
         [
             (0.0, 0.0, None, 0.0, 0.0),
-            (1.0, 1.0, None, 1.0, 1.0),
+            (1.0, 1.0, None, 0.7, 0.8),  # conf=None→0.5, brier=(0.5-1.0)²=0.25
             (0.5, 0.5, 0.5, 0.0, 1.0),
             (0.0, 0.0, 0.05, 0.5, 0.5),  # floor
         ],
