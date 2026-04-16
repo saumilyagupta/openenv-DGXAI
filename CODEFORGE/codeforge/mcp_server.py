@@ -51,6 +51,7 @@ _TOOL_DEFS: tuple[dict[str, Any], ...] = (
                     ),
                 },
             },
+            "required": ["task_level"],
         },
     },
     {
@@ -294,10 +295,26 @@ _RESOURCE_DEFS: tuple[dict[str, str], ...] = (
         "mimeType": "application/json",
     },
     {
+        "uri": "codeforge://corpus/node/{node_id}",
+        "name": "Skill Node",
+        "description": (
+            "Full content of a specific skill node (free, no budget)"
+        ),
+        "mimeType": "application/json",
+    },
+    {
         "uri": "codeforge://tasks",
         "name": "Task Definitions",
         "description": (
             "Task definitions with briefs, budgets, targets, tools"
+        ),
+        "mimeType": "application/json",
+    },
+    {
+        "uri": "codeforge://audit/{episode_id}",
+        "name": "Audit Ledger",
+        "description": (
+            "Serialized audit ledger for a completed episode"
         ),
         "mimeType": "application/json",
     },
@@ -487,10 +504,13 @@ class CodeForgeMCPServer:
         """Read an MCP resource by URI."""
         if uri == "codeforge://corpus/stats":
             if session_id is None:
-                return {"error": "session_id required for corpus stats"}
+                return {
+                    "_codeforge_version": _VERSION,
+                    "error": "session_id required for corpus stats",
+                }
             env = self._get_session(session_id)
             if env is None:
-                return {"error": "Invalid session_id"}
+                return {"_codeforge_version": _VERSION, "error": "Invalid session_id"}
             idx = env._ensure_index()
             stats = idx.stats()
             cluster_count = len(idx.all_cluster_labels())
@@ -500,8 +520,24 @@ class CodeForgeMCPServer:
                 "avg_doc_len": stats["avg_doc_len"],
                 "cluster_count": cluster_count,
             }
+        if uri.startswith("codeforge://corpus/node/"):
+            node_id = uri.removeprefix("codeforge://corpus/node/")
+            if session_id is None:
+                return {
+                    "_codeforge_version": _VERSION,
+                    "error": "session_id required for node lookup",
+                }
+            env = self._get_session(session_id)
+            if env is None:
+                return {"_codeforge_version": _VERSION, "error": "Invalid session_id"}
+            idx = env._ensure_index()
+            for node in idx._nodes:
+                if node.get("id") == node_id:
+                    return {"_codeforge_version": _VERSION, "node": node}
+            return {"_codeforge_version": _VERSION, "error": f"Node {node_id!r} not found"}
         if uri == "codeforge://tasks":
             return {
+                "_codeforge_version": _VERSION,
                 "tasks": [
                     {
                         "id": t.task_id,
@@ -514,7 +550,27 @@ class CodeForgeMCPServer:
                     for t in TASKS
                 ],
             }
-        return {"error": f"Unknown resource URI: {uri!r}"}
+        if uri.startswith("codeforge://audit/"):
+            episode_id = uri.removeprefix("codeforge://audit/")
+            if session_id is None:
+                return {
+                    "_codeforge_version": _VERSION,
+                    "error": "session_id required for audit lookup",
+                }
+            env = self._get_session(session_id)
+            if env is None:
+                return {"_codeforge_version": _VERSION, "error": "Invalid session_id"}
+            if env._ledger is not None:
+                return {
+                    "_codeforge_version": _VERSION,
+                    "episode_id": episode_id,
+                    "audit": env._ledger.serialize(),
+                }
+            return {
+                "_codeforge_version": _VERSION,
+                "error": "No audit data for this session",
+            }
+        return {"_codeforge_version": _VERSION, "error": f"Unknown resource URI: {uri!r}"}
 
     # -- Public: prompts ---------------------------------------------
 
@@ -549,12 +605,14 @@ class CodeForgeMCPServer:
                     },
                 ]
             obs = env.state
+            task = env._task
+            target = task.target_score if task is not None else 0.0
             content = (
                 f"## Task: {obs.task_id}\n"
                 f"**Level:** {obs.task_level}\n"
                 f"**Brief:** {obs.task_brief}\n"
                 f"**Budget:** {obs.budget_remaining}\n"
-                f"**Target score:** {obs.previous_score}\n\n"
+                f"**Target score:** {target}\n\n"
                 "### Initial files\n"
             )
             for fname, body in obs.initial_files.items():

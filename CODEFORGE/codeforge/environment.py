@@ -98,6 +98,10 @@ class CodeForgeEnvironment(Environment):  # type: ignore[type-arg]
         self._last_ralph_run_id: str | None = None
         self._last_ralph_iterations: tuple[dict[str, object], ...] = ()
 
+        # Brier/quality tracking for audit entries
+        self._last_brier_penalty: float | None = None
+        self._last_quality: float = 0.0
+
         # Episode-level accumulators
         self._all_episode_citations: list[dict[str, object]] = []
         self._all_episode_cluster_hits: list[str] = []
@@ -243,13 +247,21 @@ class CodeForgeEnvironment(Environment):  # type: ignore[type-arg]
                     self._last_grounding if self._last_grounding else None
                 ),
                 reward=self._last_reward,
-                brier_penalty=None,
+                brier_penalty=(
+                    self._last_brier_penalty
+                    if action_type_str == CodeForgeActionType.SUBMIT
+                    else None
+                ),
                 confidence_declared=(
                     action.confidence
                     if action_type_str == CodeForgeActionType.SUBMIT
                     else None
                 ),
-                quality=self._previous_score,
+                quality=(
+                    self._last_quality
+                    if action_type_str == CodeForgeActionType.SUBMIT
+                    else self._previous_score
+                ),
             ),
         )
         self._step_index += 1
@@ -262,6 +274,8 @@ class CodeForgeEnvironment(Environment):  # type: ignore[type-arg]
 
     @property
     def state(self) -> CodeForgeObservation:
+        if self._task is None:
+            return self._error_obs("No active episode — call reset() first")
         return self._build_obs()
 
     # ------------------------------------------------------------------
@@ -361,19 +375,27 @@ class CodeForgeEnvironment(Environment):  # type: ignore[type-arg]
         self._last_grounding = grounding_report.model_dump()
 
         # Compute reward with Brier calibration
+        quality = 0.6 * sandbox_score + 0.4 * grounding_report.groundedness
+        brier_penalty: float | None = None
+        if action.confidence is not None:
+            brier_penalty = min((action.confidence - quality) ** 2, 0.5)
+        self._last_brier_penalty = brier_penalty
+        self._last_quality = quality
+
         reward = compute_reward(
             sandbox_score=sandbox_score,
             groundedness=grounding_report.groundedness,
             confidence=action.confidence,
         )
 
-        # Apply citation shaping bonus (SYSTEM_DESIGN §4.8.4)
-        shaping = citation_shaping_bonus(
-            submit_files=action.files,
-            prior_citations=self._all_episode_citations,
-            prior_cluster_hits=self._all_episode_cluster_hits,
-        )
-        reward = round(min(1.0, reward + shaping), 3)
+        # Apply citation shaping bonus only on successful submits (§4.8.4)
+        if reward > 0:
+            shaping = citation_shaping_bonus(
+                submit_files=action.files,
+                prior_citations=self._all_episode_citations,
+                prior_cluster_hits=self._all_episode_cluster_hits,
+            )
+            reward = round(min(1.0, reward + shaping), 3)
 
         self._last_reward = reward
         self._previous_score = reward

@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import threading
+import time
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -25,6 +26,7 @@ _corpus_path = Path(_corpus_path_str) if _corpus_path_str else None
 # ---------------------------------------------------------------------------
 _lock = threading.Lock()
 _sessions: dict[str, CodeForgeEnvironment] = {}
+_session_access: dict[str, float] = {}  # session_id → last access timestamp
 _MAX_SESSIONS = int(os.environ.get("CODEFORGE_MAX_SESSIONS", "10"))
 _SESSION_TTL_S = int(os.environ.get("CODEFORGE_SESSION_TTL", "3600"))
 
@@ -32,26 +34,47 @@ _SESSION_TTL_S = int(os.environ.get("CODEFORGE_SESSION_TTL", "3600"))
 def _get_or_create_env() -> CodeForgeEnvironment:
     """For OpenEnv compliance — creates a single-session env.
 
-    The session pool is used by the MCP server layer (Phase 2).
+    The session pool below is used by the MCP server layer.
     """
     return CodeForgeEnvironment(corpus_path=_corpus_path)
 
 
+def _expire_stale_sessions() -> None:
+    """Remove sessions older than TTL. Must hold _lock."""
+    now = time.monotonic()
+    expired = [
+        sid for sid, ts in _session_access.items()
+        if now - ts > _SESSION_TTL_S
+    ]
+    for sid in expired:
+        _sessions.pop(sid, None)
+        _session_access.pop(sid, None)
+
+
 def get_session(session_id: str) -> CodeForgeEnvironment | None:
-    """Retrieve an existing session by ID."""
+    """Retrieve an existing session by ID. Returns None if expired or missing."""
     with _lock:
-        return _sessions.get(session_id)
+        _expire_stale_sessions()
+        env = _sessions.get(session_id)
+        if env is not None:
+            _session_access[session_id] = time.monotonic()
+        return env
 
 
 def create_session() -> tuple[str, CodeForgeEnvironment]:
-    """Create a new session with a unique ID, evicting oldest if at capacity."""
+    """Create a new session. Evicts LRU session if at capacity."""
     sid = uuid4().hex[:16]
     env = CodeForgeEnvironment(corpus_path=_corpus_path)
+    now = time.monotonic()
     with _lock:
+        _expire_stale_sessions()
         if len(_sessions) >= _MAX_SESSIONS:
-            oldest_key = next(iter(_sessions))
-            del _sessions[oldest_key]
+            # Evict least-recently-used session
+            lru_sid = min(_session_access, key=_session_access.get)  # type: ignore[arg-type]
+            _sessions.pop(lru_sid, None)
+            _session_access.pop(lru_sid, None)
         _sessions[sid] = env
+        _session_access[sid] = now
     return sid, env
 
 
