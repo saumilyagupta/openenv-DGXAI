@@ -169,7 +169,7 @@ s_{\text{gr}}(f) \;=\;
 \begin{cases}
 0.0 & f \text{ raises SyntaxError} \\
 0.5 & |\Sigma(f)| = 0 \quad \text{(neutral, not a free pass)} \\[4pt]
-\dfrac{1}{|\Sigma(f)|}\displaystyle\sum_{\sigma \in \Sigma(f)} \rho(\sigma) & \text{otherwise}
+\dfrac{1}{|\Sigma(f)|} \displaystyle\sum_{\sigma \in \Sigma(f)} \rho(\sigma) & \text{otherwise}
 \end{cases}
 $$
 
