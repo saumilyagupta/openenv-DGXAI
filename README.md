@@ -89,13 +89,13 @@ The agent has **zero control** over any node below `Env`. It emits actions; the 
 
 CodeForge is a finite-horizon, partially observable MDP $\langle \mathcal{S}, \mathcal{A}, \mathcal{O}, P, R, B \rangle$:
 
-- **State** $s \in \mathcal{S}$: $(\text{task\_id},\, \text{current\_files},\, \text{budget},\, \text{audit\_ledger})$
-- **Action** $a \in \mathcal{A}$: one of 6 discrete action types (§ 6)
-- **Observation** $o \in \mathcal{O}$: redacted state — no hidden tests, no grader internals
-- **Budget** $B \in \{4, 6, 10\}$ depending on task level; each action costs $c(a) \in \{0, 1, N\}$
-- **Termination:** $B_t \le 0 \;\lor\; q_t \ge \tau_{\text{target}}$
+- **State** $s \in \mathcal{S}$: the tuple `(task_id, current_files, budget, audit_ledger)`.
+- **Action** $a \in \mathcal{A}$: one of 6 discrete action types (§ 6).
+- **Observation** $o \in \mathcal{O}$: a redacted view of the state — no hidden tests, no grader internals.
+- **Budget** $B \in \{4, 6, 10\}$ depending on task level; each action costs $c(a) \in \{0, 1, N\}$.
+- **Termination:** $B_t \le 0 \;\lor\; q_t \ge \tau^\star$.
 
-A task $\mathcal{T} = (\text{brief},\, \text{initial\_files},\, B,\, \tau_{\text{target}},\, T_{\text{hidden}})$ where $T_{\text{hidden}}$ is a pytest suite the agent _never sees_, injected into the sandbox at grading time. This is the server-side defense against **P2**.
+A task is the 5-tuple $\mathcal{T} = (\mathrm{brief},\ \mathcal{F}_0,\ B,\ \tau^\star,\ T_H)$ where $\mathcal{F}_0$ is the initial file set, $\tau^\star$ the target quality, and $T_H$ a pytest suite the agent *never sees*, injected into the sandbox at grading time. $T_H$ is the server-side defense against **P2**.
 
 ---
 
@@ -150,15 +150,17 @@ Penalty-only, no double-counting. Missing tool binaries report `unavailable` and
 
 #### 4.3 Layer 2 — AST Groundedness $s_{\text{gr}}$
 
-Let $\Sigma(f)$ be the set of imported modules and accessed attributes extracted from $f$ via `ast.parse`. Define the per-symbol resolution predicate
+Let $\Sigma(f)$ be the set of imported modules and accessed attributes extracted from $f$ via `ast.parse`. For a symbol $\sigma$ with module $\sigma_m$ and attribute $\sigma_a$, define the resolution predicate
 
 $$
 \rho(\sigma) \;=\;
 \begin{cases}
-1 & \text{if } \texttt{find\_spec}(\sigma.\text{module})\ne\bot \text{ and } \texttt{hasattr}(\sigma.\text{module},\,\sigma.\text{attr}) \\
+1 & \text{if module } \sigma_m \text{ resolves and attribute } \sigma_a \text{ exists on it} \\
 0 & \text{otherwise}
 \end{cases}
 $$
+
+Concretely, $\rho(\sigma) = 1$ iff `importlib.util.find_spec(σ_m)` is not `None` **and** `hasattr(σ_m, σ_a)`.
 
 Then
 
@@ -212,7 +214,7 @@ No amount of calibration recovers bad code ($R \le q$); no overconfidence beats 
 
 ### 5. Task Design
 
-| Level  | ID                  | $B$ | $\tau_{\text{target}}$ | Construction                                        | Hidden tests $T_{\text{hidden}}$              |
+| Level  | ID                  | $B$ | $\tau^\star$ | Construction                                        | Hidden tests $T_H$                          |
 | ------ | ------------------- | --: | ---------------------: | --------------------------------------------------- | --------------------------------------------- |
 | easy   | `greet_single_file` |   4 |                   0.90 | One file, `greet(name: str) -> str`                 | `assert greet("Alice") == "Hello, Alice!"`    |
 | medium | `greet_with_tests`  |   6 |                   0.80 | `greet` + pytest + `ValueError` on `None`           | Raises on `None`, correct on normal input     |
@@ -261,7 +263,7 @@ No amount of calibration recovers bad code ($R \le q$); no overconfidence beats 
 | Omit `confidence`                      | None → 0.5                     | Still incurs $\beta = (0.5 - q)^2$                          |
 | `conftest.py` injection                | Filename allowlist             | Regex `^[a-z][a-z0-9_]*\.py$`                               |
 | File-count / size DoS                  | Hard limits                    | ≤ 10 files, ≤ 50 KB each, ≤ 200 KB total                    |
-| Clean code + trivial tests             | Hidden test injection          | $T_{\text{hidden}}$ ⊂ pytest run, invisible to agent        |
+| Clean code + trivial tests             | Hidden test injection          | $T_H$ ⊂ pytest run, invisible to agent                      |
 | Zero-import "free groundedness"        | Neutral default                | $\lvert\Sigma(f)\rvert = 0 \Rightarrow s_{\text{gr}} = 0.5$ |
 | Unparseable code for free groundedness | SyntaxError trap               | $s_{\text{gr}} = 0.0$                                       |
 
