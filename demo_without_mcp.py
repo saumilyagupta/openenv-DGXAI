@@ -12,6 +12,10 @@ import json
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Ensure CODEFORGE is on the path
 sys.path.insert(0, "CODEFORGE")
 

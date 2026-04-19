@@ -7,7 +7,9 @@ import sys
 import time
 
 import httpx
+from dotenv import load_dotenv
 
+load_dotenv()
 
 _LOG = logging.getLogger(__name__)
 

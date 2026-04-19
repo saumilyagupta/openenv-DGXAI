@@ -1,460 +1,479 @@
 ---
-title: EpistemicNav
-emoji: 🧭
+title: CodeForge
+emoji: 🔨
 colorFrom: blue
 colorTo: indigo
 sdk: docker
 pinned: false
 tags:
   - openenv
+  - mcp
+  - rl
+  - code-generation
 ---
 
-# EpistemicNav — Calibrated Reasoning Under Uncertainty
+# CodeForge
 
-**The problem:** LLMs are dangerously miscalibrated. They express 95% confidence when wrong and hedge when right. Existing benchmarks measure *accuracy* — whether the model got the answer right. None measure *calibration* — whether the model's confidence matched its actual likelihood of being correct.
+**A reinforcement-learning environment in which the environment — not the LLM — grades every line of code.**
 
-**EpistemicNav** is an OpenEnv-compliant RL environment that trains and evaluates LLM agents on **epistemic calibration**. Agents must gather evidence, assess its quality, and commit a verdict with a confidence score. The reward function uses the **Brier score** — a proper scoring rule from forecasting that penalizes both overconfidence on wrong answers *and* underconfidence on right ones.
+An agent receives a natural-language coding task ("implement `greet(name)`") and must produce working Python through a budgeted sequence of actions. Every scalar in the reward is derived from real tool output (`ruff`, `mypy`, `pytest`), real AST grounding against `importlib`, and real skill-corpus citations. The LLM cannot grade itself, cannot hallucinate APIs, cannot skip verification.
 
-The key insight: **"I don't know" is sometimes the right answer.** When evidence is contradictory, agents that correctly identify uncertainty are rewarded (min 0.70), while agents that guess confidently are punished.
-
-## Why This Matters
-
-| Problem | How EpistemicNav Addresses It |
-|---------|------------------------------|
-| LLMs hallucinate with high confidence | Brier score penalizes overconfidence on wrong answers |
-| LLMs hedge on clear facts | Brier score penalizes underconfidence on right answers |
-| No benchmark for calibration | First OpenEnv environment specifically targeting epistemic calibration |
-| Binary correct/incorrect rewards | Continuous reward signal [0.0, 1.0] based on confidence-accuracy alignment |
-| Agents can't say "I don't know" | `uncertain` is a first-class verdict with explicit reward floor |
-
-## Tasks
-
-| Task | ID | Difficulty | Description | Reward Ceiling |
-|------|----|-----------|-------------|----------------|
-| **Single-hop** | `single_hop` | Easy | Single factual claim. One BM25 query sufficient to find supporting/refuting evidence. | ~0.97 |
-| **Multi-hop** | `multi_hop` | Medium | Claim requiring synthesis of 3-4 evidence pieces across related topics. | ~0.94 |
-| **Contradictory** | `contradictory` | Hard | Deliberately conflicting evidence. Ground truth is `uncertain`. Agent must recognize conflict. | ~0.85 |
-
-## Action Space
-
-| Action | Fields | Effect |
-|--------|--------|--------|
-| `QUERY` | `query_text: str` | Searches evidence corpus via BM25. Costs 1 budget point. Returns top-3 snippets. Reward: 0.00-0.05 (based on evidence relevance and novelty) |
-| `COMMIT` | `verdict: "true"\|"false"\|"uncertain"`, `confidence: float [0,1]` | Ends episode. Computes Brier-score reward in [0.0, 1.0] |
-
-## Observation Space
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `claim` | `str` | The factual statement to evaluate |
-| `evidence_gathered` | `list[EvidenceSnippet]` | Evidence retrieved so far (id, text, relevance_score) |
-| `budget_remaining` | `int` | Queries remaining (starts at 8) |
-| `task_level` | `str` | `"easy"` / `"medium"` / `"hard"` |
-| `episode_id` | `str` | Unique episode identifier |
-| `is_done` | `bool` | Whether episode has ended |
-| `last_reward` | `float \| null` | Reward from last action |
-
-## Reward Function
-
-The reward uses an **asymmetric calibration score** inspired by Brier scores from probabilistic forecasting:
-
-**When correct:**
-```
-reward = 0.9 * (1 - (1 - confidence)^2) + efficiency_bonus
-```
-
-**When wrong:**
-```
-reward = 0.3 * (1 - confidence)^2
-```
-
-Where:
-- `efficiency_bonus` = 0.1 * (budget_remaining / max_budget), only when correct
-- **Special case:** `verdict="uncertain"` AND `ground_truth="uncertain"` gives minimum reward 0.70, with a bonus for confidence in [0.4, 0.7]
-- **Query steps:** Small reward (0.00-0.05) based on evidence relevance and information gain
-- **Range:** Always [0.0, 1.0]
-
-**Properties:**
-- Correct + high confidence (0.85) = high reward (~0.93)
-- Correct + low confidence (0.25) = moderate reward (~0.44) — underconfidence penalty
-- Wrong + high confidence (0.95) = near-zero reward (~0.001) — overconfidence penalty
-- Wrong + low confidence (0.0) = capped at 0.30 — wrong is always bad
-- Correctly uncertain = guaranteed reward (min 0.70)
-- **Asymmetry is intentional:** being right rewards up to 1.0, being wrong caps at 0.30. This prevents exploit strategies from averaging above 0.47.
-
-## Data
-
-- **400 claims** across 15 domains: astronomy, biology, economics, engineering, geography, history, law, linguistics, mathematics, medicine, nutrition, politics, science, sports, technology
-- **2000 evidence snippets** with relevance tags for BM25 retrieval
-- **Distribution:** 200 easy (single-hop), 150 medium (multi-hop), 50 hard (contradictory)
-
-## Setup Instructions
-
-### Docker (Recommended)
-
-```bash
-docker build -t epistemic-nav .
-docker run -p 7860:7860 epistemic-nav
-```
-
-### Local
-
-```bash
-pip install -e .
-uvicorn server.app:app --host 0.0.0.0 --port 7860
-```
-
-### Run Inference
-
-```bash
-export API_BASE_URL="https://router.huggingface.co/v1"
-export MODEL_NAME="Qwen/Qwen2.5-72B-Instruct"
-export HF_TOKEN="your-token"
-export HF_SPACE="http://localhost:7860"
-python inference.py
-```
-
-## API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/reset` | POST | Reset environment. Body: `{"task_level": "easy\|medium\|hard"}` |
-| `/step` | POST | Take action. Body: EpistemicAction JSON |
-| `/state` | GET | Get current observation |
-| `/tasks` | GET | List tasks and action schema |
-| `/grader` | GET | Get grader score for current/completed episode |
-| `/baseline` | POST | Trigger inference script and return baseline scores |
-| `/` | GET | Health check |
-
-## Validation
-
-```bash
-# Run local validation (starts server automatically)
-python scripts/validate.py
-
-# Run tests
-python -m pytest tests/ -v
-```
-
-## Project Structure
-
-```
-├── server/
-│   ├── app.py            # FastAPI app with all endpoints
-│   ├── environment.py     # EpistemicNavEnvironment (step/reset/state)
-│   ├── grader.py          # Brier score reward function
-│   └── retriever.py       # BM25 evidence search
-├── models.py              # Pydantic v2 Action/Observation models
-├── client.py              # HTTP client for remote env
-├── inference.py           # Baseline LLM agent
-├── data/
-│   ├── claims.json        # 400 claims (200 easy, 150 medium, 50 hard)
-│   └── evidence.json      # 2000 evidence snippets
-├── tests/                 # pytest suite (grader, retriever, environment)
-├── scripts/
-│   ├── validate.py        # Pre-submission validation
-│   └── generate_data.py   # Data generation script
-├── openenv.yaml           # OpenEnv metadata
-└── Dockerfile             # HF Spaces deployment
-```
-
-## GroundLoop Skills Scraper
-
-A dependency-free Python module that walks installed `SKILL.md` files on disk and emits a deterministic, section-level JSONL corpus plus manifest for GroundLoop's Layer B reasoning-policy knowledge base.
-
-### Run
-
-```bash
-python3 -m groundloop.skills_scraper \
-  --sources default \
-  --output groundloop/kb/skills_corpus.jsonl
-```
-
-`--sources` accepts either the literal `default` (uses the built-in source globs in `groundloop/skills_scraper/config.py`) or a path to a YAML file:
-
-```yaml
-sources:
-  - label: my-skills
-    glob: ~/my/skills/**/SKILL.md
-```
-
-### Output
-
-- `skills_corpus.jsonl` — one `SkillNode` per line (sorted by id for byte-identical determinism).
-- `skills_corpus.manifest.json` — counts, per-source globs, `corpus_sha256`, any parse errors, UTC `generated_at`.
-
-### Spec
-
-See `docs/superpowers/specs/2026-04-15-groundloop-skills-scraper-design.md` for the full design.
-
-### KB Indexer
-
-A BM25 search index layered over the scraper corpus. Deterministic, cached to disk, invalidated via corpus sha256.
-
-```bash
-# Build (or rebuild) the index; reads skills_corpus.jsonl, writes skills_index.pkl.
-python3 -m groundloop.kb_indexer build [--force]
-
-# Search; auto-builds the index if the cache is missing or stale.
-python3 -m groundloop.kb_indexer search "pytest fixtures" --top-k 5
-python3 -m groundloop.kb_indexer search "api design" --tag domain:backend --format json
-
-# Index statistics (node_count, vocab_size, avg_doc_len) as JSON.
-python3 -m groundloop.kb_indexer stats
-```
-
-- `search` accepts repeated `--tag` flags; results must match every required tag.
-- `--format json` emits a machine-readable array of `SearchResult` objects; default `text` is human-readable.
-- The cache (`groundloop/kb/skills_index.pkl`) is regenerated silently whenever the corpus sha256 changes.
-
-See `docs/superpowers/specs/2026-04-15-groundloop-kb-indexer-design.md` for the full design.
-
-### Cluster Manifest
-
-The cluster manifest groups semantically related corpus nodes into connected components via Jaccard similarity over tokenized section bodies. It feeds CodeForge's Graphify milestone by letting agents navigate skill neighborhoods instead of raw BM25 hits.
-
-```bash
-# Build cluster_manifest.json (default: groundloop/kb/cluster_manifest.json).
-python3 -m groundloop.kb_indexer cluster [--threshold 0.15] [--manifest PATH]
-```
-
-On the current 1006-node corpus (threshold `0.15`) this produces **550 clusters** (451 singletons) in under 1s. The manifest is byte-identical across runs while the corpus is unchanged — `generated_at` is derived from the corpus mtime and `cluster_id` is `sha256(sorted(member_node_ids))[:12]`.
-
-`SkillsIndex.attach_cluster_manifest(manifest)` wires cluster IDs onto every `SearchResult` and unlocks `nodes_in_cluster(label)` / `cluster_id_for(node_id)` lookups.
-
-## MCP Shell (Server)
-
-`groundloop.mcp_shell` is a stdio MCP server that exposes the 5 GroundLoop tools to any MCP-compatible client (Claude Code, Cursor, Codex). Session state (graphs, runs, metrics) is held per-process in memory.
-
-To attach GroundLoop as an MCP server in Claude Code, add the following to your MCP config:
-
-```json
-{
-  "mcpServers": {
-    "groundloop": {
-      "command": "python3",
-      "args": ["-m", "groundloop.mcp_shell"]
-    }
-  }
-}
-```
-
-The five tools registered:
-
-- `interrogate(brief)` — returns 3 Socratic clarifying questions about a project brief (stub until #5).
-- `ingest_sources(source_globs)` — scrapes + indexes skill sources, returns a `graph_id` for subsequent `ground_check` calls. Pass `null` to load the default pre-built corpus at `groundloop/kb/skills_corpus.jsonl`.
-- `ground_check(claim, graph_id, top_k, required_tags)` — BM25 search over a built graph; returns `verdict` (`grounded` / `uncertain` / `ungrounded`), citations, and softmax `confidence`.
-- `autonomous_build(spec, graph_id, max_iters)` — registers a Ralph-loop run (stub until #7 ships); returns a `run_id`.
-- `audit_report(run_id)` — returns structured run metadata and session metrics for the given `run_id`.
-
-See `docs/superpowers/specs/2026-04-15-groundloop-mcp-shell-design.md` for the full design.
-
-### Python Sandbox
-
-`groundloop.python_sandbox` runs `ruff`, `mypy`, `pytest`, and an AST-based import probe against a candidate Python project, returning a structured `SandboxResult` plus a composite score in `[0.0, 1.0]` used by the Ralph loop.
-
-```bash
-# Score a project on disk (runs all default tools).
-python3 -m groundloop.python_sandbox path/to/project
-
-# JSON output, imports-only — useful for fast iteration.
-python3 -m groundloop.python_sandbox path/to/project --format json --tool imports
-
-# Select specific tools.
-python3 -m groundloop.python_sandbox path/to/project --tool ruff --tool mypy --tool pytest
-```
-
-Programmatic use:
-
-```python
-from groundloop.python_sandbox import run_sandbox
-
-# From a project directory:
-result = run_sandbox(project_dir="./my_project")
-print(result.composite_score, result.imports.unresolved)
-
-# From an in-memory files dict:
-result = run_sandbox(files={"main.py": "def f() -> int:\n    return 1\n"}, tools=("imports",))
-```
-
-The composite score penalises unresolved imports, ruff violations, mypy errors, and pytest failures. Missing tool binaries degrade gracefully (reported as `unavailable`).
-
-See `docs/superpowers/specs/2026-04-15-groundloop-python-sandbox-design.md` for the full design.
-
-### Ralph Orchestrator (autonomous loop)
-
-The Ralph orchestrator runs a plan -> synthesize -> sandbox-score -> keep-or-revert loop over a skills KB, producing iteratively improved code files checkpointed to JSON.
-
-Two synthesizer backends:
-
-- **stub** (default): deterministic, no LLM; pulls fenced Python blocks from KB citations. Used in tests and offline runs.
-- **openai**: uses `openai` SDK. Requires `OPENAI_API_KEY`. Optional: `OPENAI_BASE_URL`, `OPENAI_MODEL_NAME` (defaults to `gpt-4o-mini`).
-
-Run via CLI:
-
-```bash
-python3 -m groundloop.ralph_orchestrator run path/to/spec.txt \
-  --corpus path/to/skills_corpus.jsonl \
-  --initial-file main.py=path/to/main.py \
-  --max-iters 5 --target-score 0.95 --synthesizer stub --format json
-```
-
-Programmatic use:
-
-```python
-from groundloop.kb_indexer.index import SkillsIndex
-from groundloop.ralph_orchestrator import LoopConfig, StubSynthesizer, run_loop
-
-idx = SkillsIndex(corpus_path="corpus.jsonl")
-idx.build()
-result = run_loop(
-    spec="Build a greet function",
-    initial_files={"main.py": "def greet(n): return 'hi'\n"},
-    index=idx,
-    synthesizer=StubSynthesizer(),
-    config=LoopConfig(max_iters=5),
-)
-print(result.terminated_by, result.final_score)
-```
-
-See `docs/superpowers/specs/2026-04-15-groundloop-ralph-orchestrator-design.md` for the full design.
-
-## End-to-End GroundLoop
-
-The five sub-projects (skills-scraper, kb-indexer, mcp-shell, python-sandbox,
-ralph-orchestrator) plus lib-grounder, interrogator, and audit-reporter
-compose into a single MCP-driven workflow.
-
-1. **Install deps.**
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. **Build the Layer B corpus** from your skill library.
-   ```bash
-   python3 -m groundloop.skills_scraper
-   ```
-   Writes `groundloop/kb/skills_corpus.jsonl`.
-3. **Start the MCP server.**
-   ```bash
-   python3 -m groundloop.mcp_shell
-   ```
-   The server exposes five tools over stdio: `interrogate`, `ingest_sources`,
-   `ground_check`, `autonomous_build`, `audit_report`.
-4. **From an MCP client (Claude Code, Cursor, Codex, or the in-process
-   `dispatch` function for testing)**, chain the tools:
-   - `interrogate(brief)` — Socratic questions grounded in the skill KB.
-   - `ingest_sources(source_globs=None)` — builds a graph from the default
-     corpus; returns `graph_id`.
-   - `ground_check(claim, graph_id)` — Layer-A (AST symbol grounding via
-     `lib_grounder`) plus Layer-B (BM25 over skills). Returns verdict,
-     citations, confidence, and when the claim contains code a `layer_a`
-     sub-dict.
-   - `autonomous_build(spec, graph_id)` — runs the ralph-orchestrator loop
-     against the graph; returns a `run_id` and final files.
-   - `audit_report(run_id)` — structured audit: iteration reasons, skill
-     citations, score trajectory, termination reason.
-
-### Quick in-process smoke test
-
-```python
-from groundloop.mcp_shell.server import dispatch
-from groundloop.mcp_shell.session import SessionState
-
-s = SessionState()
-print(dispatch("interrogate", {"brief": "build a REST API"}, s))
-r = dispatch("ingest_sources", {"source_globs": None}, s)
-gid = r["graph_id"]
-gc = dispatch("ground_check", {
-    "claim": "```python\nimport os\nos.getcwd()\n```",
-    "graph_id": gid,
-}, s)
-ab = dispatch("autonomous_build", {
-    "spec": "build greet(name)", "graph_id": gid, "max_iters": 1,
-}, s)
-ar = dispatch("audit_report", {"run_id": ab["run_id"]}, s)
-```
-
-### Full verification
-
-```bash
-python3 -m pytest tests/groundloop/ --cov=groundloop --cov-report=term -q
-ruff check groundloop/
-mypy --strict groundloop/
-```
-
-Targets: 210+ tests pass, 85%+ overall coverage, zero lint or type errors.
+[OpenEnv](https://github.com/meta-pytorch/OpenEnv)-compliant. Ships with a FastAPI server, an MCP server (10 tools), and two head-to-head demo scripts at the repo root: [demo_agent_with_mcp.py](demo_agent_with_mcp.py), [demo_without_mcp.py](demo_without_mcp.py). Full package under [CODEFORGE/](CODEFORGE/).
 
 ---
 
-## CodeForge OpenEnv (Round 2)
+## Part I — Theoretical Overview
 
-**CodeForge** is the Round-2 OpenEnv-compliant RL environment (`groundloop_env/`) built on top of the shipped GroundLoop primitives (`python_sandbox`, `kb_indexer`, `lib_grounder`, `ralph_orchestrator`). Agents receive a natural-language brief and iteratively synthesize a small Python codebase. Rewards combine a programmatic quality signal (ruff / mypy / pytest / import resolution) with AST-level symbol grounding.
+### 1. Core Problem
 
-> Round-1 EpistemicNav env still lives under `server/` and is unchanged.
+Modern code-generating LLMs fail along four orthogonal axes. Existing benchmarks measure at most one at a time.
 
-### Run the server locally
+|        | Failure mode                   | Concrete example                                                        | Why benchmarks miss it                                                             |
+| ------ | ------------------------------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **P1** | **API hallucination**          | `from magic_ai import solve`, `os.path.joiiin(...)`                     | Pass/fail benchmarks only check output text, never whether imported symbols exist. |
+| **P2** | **Self-grading contamination** | LLM writes code _and_ its own tests; both pass because of `assert True` | Semantic bugs hide behind tautological assertions.                                 |
+| **P3** | **Confidence miscalibration**  | 99 % confidence on wrong code; hedging on correct code                  | Scalar metrics (accuracy, pass@k) ignore the posterior.                            |
+| **P4** | **Groundless synthesis**       | Code written without consulting docs, patterns, or prior art            | No benchmark rewards research-before-coding; none logs the audit trail.            |
 
-```bash
-uvicorn groundloop_env.app:app --host 0.0.0.0 --port 7860
+**Claim.** These four failure modes must be penalized _jointly, server-side, inside a single proper scoring rule_, or the agent routes around any one of them.
+
+Let $\mathcal{A}$ be an agent producing a code artifact $f$ and a declared confidence $c \in [0, 1]$. CodeForge defines a reward $R(f, c)$ such that:
+
+$$
+\arg\max_{f,\,c} \; \mathbb{E}[R(f, c)] \;=\; (f^\star,\; c^\star)
+\qquad\text{with}\qquad c^\star \approx \Pr[f \text{ correct} \mid \text{agent evidence}]
+$$
+
+i.e. reward is maximized only when the code is correct _and_ the agent's self-reported confidence is well-calibrated to actual quality.
+
+---
+
+### 2. System Architecture
+
+```mermaid
+flowchart TD
+    Agent["LLM Agent"]
+    MCP["MCP Server\n10 tools"]
+    API["FastAPI\n/reset /step /state"]
+    Env["CodeForgeEnvironment"]
+    KB["KB Indexer\nBM25 + Jaccard clusters"]
+    Sandbox["Python Sandbox\nruff mypy pytest imports"]
+    Grounder["AST Grounder\nimportlib.find_spec + hasattr"]
+    Grader["Grader\nquality + Brier"]
+    Ralph["Ralph Loop\nsynthesize / score / keep"]
+    Audit["Audit Ledger\nappend-only"]
+    Corpus[("skills_corpus.jsonl\n2648 nodes")]
+
+    Agent -->|tool call| MCP
+    MCP --> API
+    API --> Env
+    Env -->|submit| Sandbox
+    Env -->|submit| Grounder
+    Env -->|query_kb / query_cluster| KB
+    KB --> Corpus
+    Sandbox --> Grader
+    Grounder --> Grader
+    Grader -->|reward| Env
+    Env -->|run_ralph| Ralph
+    Ralph --> Sandbox
+    Ralph --> Grounder
+    Env -->|every step| Audit
+    Audit -->|get_audit| Agent
 ```
 
-Endpoints:
-- `GET /` — health
-- `GET /tasks` — list tasks + action schema
-- `POST /reset` — `{ "task_level": "easy" | "medium" | "hard" }`
-- `POST /step` — `CodeForgeAction` (QUERY_KB or SUBMIT)
-- `GET /state` — current observation
+The agent has **zero control** over any node below `Env`. It emits actions; the server writes files to a temp dir, invokes subprocess tools with timeouts, parses AST, and returns a scalar reward.
 
-### Run the baseline agent
+---
 
-```bash
-python3 inference.py
+### 3. MDP Formulation
+
+CodeForge is a finite-horizon, partially observable MDP $\langle \mathcal{S}, \mathcal{A}, \mathcal{O}, P, R, B \rangle$:
+
+- **State** $s \in \mathcal{S}$: $(\text{task\_id},\, \text{current\_files},\, \text{budget},\, \text{audit\_ledger})$
+- **Action** $a \in \mathcal{A}$: one of 6 discrete action types (§ 6)
+- **Observation** $o \in \mathcal{O}$: redacted state — no hidden tests, no grader internals
+- **Budget** $B \in \{4, 6, 10\}$ depending on task level; each action costs $c(a) \in \{0, 1, N\}$
+- **Termination:** $B_t \le 0 \;\lor\; q_t \ge \tau_{\text{target}}$
+
+A task $\mathcal{T} = (\text{brief},\, \text{initial\_files},\, B,\, \tau_{\text{target}},\, T_{\text{hidden}})$ where $T_{\text{hidden}}$ is a pytest suite the agent _never sees_, injected into the sandbox at grading time. This is the server-side defense against **P2**.
+
+---
+
+### 4. Reward Model
+
+#### 4.1 Pipeline
+
+```mermaid
+flowchart LR
+    Submit["submit(files, confidence c)"]
+    FW["Filename Allowlist\n^[a-z][a-z0-9_]*.py$"]
+    SZ["Size Guards\n<=10 files, <=50KB each, <=200KB total"]
+    Tools["Sandbox Tools\nruff mypy pytest imports"]
+    Hidden["Hidden tests T_hidden\ninjected at grading"]
+    Ground["AST Grounder\nast.parse + find_spec + hasattr"]
+    Metric["Sandbox score s_sb"]
+    G["Groundedness s_gr"]
+    Q["Quality q = 0.6*s_sb + 0.4*s_gr"]
+    Br["Brier penalty\nbeta = min((c-q)^2, 0.5)"]
+    Rew["Reward R = q * (1 - beta)"]
+
+    Submit --> FW --> SZ --> Tools
+    SZ --> Ground
+    Tools --> Hidden
+    Hidden --> Metric
+    Ground --> G
+    Metric --> Q
+    G --> Q
+    Q --> Br
+    Q --> Rew
+    Br --> Rew
 ```
 
-Drives all three tasks (easy / medium / hard) end-to-end against `API_BASE_URL` (default `http://localhost:7860`) using stub solutions.
+#### 4.2 Layer 1 — Sandbox Composite $s_{\text{sb}}$
 
-### Docker
+Let $n_r, n_m, n_u$ be ruff errors, mypy errors, unresolved imports; let $\mathbb{1}_p \in \{0, 1\}$ be the pytest-fail indicator. Then
+
+$$
+s_{\text{sb}} \;=\; \max\!\Bigl(0,\; 1 - \pi_{\text{imp}} - \pi_{\text{ruff}} - \pi_{\text{mypy}} - \pi_{\text{pytest}}\Bigr)
+$$
+
+with
+
+$$
+\pi_{\text{imp}} = \min(1,\, 0.1\,n_u),\quad
+\pi_{\text{ruff}} = \frac{\min(n_r, 20)}{40},\quad
+\pi_{\text{mypy}} = \frac{\min(n_m, 20)}{40},\quad
+\pi_{\text{pytest}} = 0.5\,\mathbb{1}_p
+$$
+
+Penalty-only, no double-counting. Missing tool binaries report `unavailable` and contribute $0$ penalty (graceful degradation).
+
+#### 4.3 Layer 2 — AST Groundedness $s_{\text{gr}}$
+
+Let $\Sigma(f)$ be the set of imported modules and accessed attributes extracted from $f$ via `ast.parse`. Define the per-symbol resolution predicate
+
+$$
+\rho(\sigma) \;=\;
+\begin{cases}
+1 & \text{if } \texttt{find\_spec}(\sigma.\text{module})\ne\bot \text{ and } \texttt{hasattr}(\sigma.\text{module},\,\sigma.\text{attr}) \\
+0 & \text{otherwise}
+\end{cases}
+$$
+
+Then
+
+$$
+s_{\text{gr}}(f) \;=\;
+\begin{cases}
+0.0 & f \text{ raises SyntaxError} \\
+0.5 & |\Sigma(f)| = 0 \quad \text{(neutral, not a free pass)} \\[4pt]
+\dfrac{1}{|\Sigma(f)|}\displaystyle\sum_{\sigma \in \Sigma(f)} \rho(\sigma) & \text{otherwise}
+\end{cases}
+$$
+
+This directly attacks **P1**: hallucinated symbols have $\rho = 0$.
+
+#### 4.4 Layer 3 — Quality and Brier-Calibrated Reward
+
+Composite quality:
+
+$$
+q(f) \;=\; 0.6 \cdot s_{\text{sb}}(f) \;+\; 0.4 \cdot s_{\text{gr}}(f) \;\in\; [0, 1]
+$$
+
+Brier penalty (clipped quadratic, a _proper_ scoring rule):
+
+$$
+\beta(c, q) \;=\; \min\!\bigl((c - q)^2,\; 0.5\bigr)
+$$
+
+Final reward:
+
+$$
+\boxed{\;R(f, c) \;=\; q(f) \cdot \bigl(1 - \beta(c,\, q(f))\bigr)\;} \;\in\; [0, 1]
+$$
+
+Convention: $c \leftarrow 0.5$ when $c = \texttt{None}$ (attacks **P3** — no free pass for omitted confidence).
+
+#### 4.5 Incentive Analysis
+
+Because $\beta$ is a proper scoring rule, for any fixed $q$ the reward is strictly maximized at $c = q$. Combined with the ceiling $R \le q$:
+
+| Scenario                     |  $c$ |  $q$ | $\beta$ |       $R$ |
+| ---------------------------- | ---: | ---: | ------: | --------: |
+| Correct, calibrated          | 0.85 | 0.90 |   0.003 | **0.898** |
+| Correct, overconfident       | 0.99 | 0.70 |   0.084 |     0.641 |
+| Wrong, dishonestly confident | 0.90 | 0.30 |   0.360 |     0.192 |
+| Omitted confidence (→ 0.5)   |    — | 0.80 |   0.090 |     0.728 |
+
+No amount of calibration recovers bad code ($R \le q$); no overconfidence beats honest calibration ($R \le 1 - \beta$).
+
+---
+
+### 5. Task Design
+
+| Level  | ID                  | $B$ | $\tau_{\text{target}}$ | Construction                                        | Hidden tests $T_{\text{hidden}}$              |
+| ------ | ------------------- | --: | ---------------------: | --------------------------------------------------- | --------------------------------------------- |
+| easy   | `greet_single_file` |   4 |                   0.90 | One file, `greet(name: str) -> str`                 | `assert greet("Alice") == "Hello, Alice!"`    |
+| medium | `greet_with_tests`  |   6 |                   0.80 | `greet` + pytest + `ValueError` on `None`           | Raises on `None`, correct on normal input     |
+| hard   | `multi_file_module` |  10 |                   0.70 | `main.py` + `core.py` + `test_core.py`, mypy-strict | Cross-file import resolution + semantic check |
+
+---
+
+### 6. Action & Observation Space
+
+#### Actions $\mathcal{A}$
+
+| Action          | Cost $c(a)$ | Step reward | Effect                                                            |
+| --------------- | :---------: | ----------- | ----------------------------------------------------------------- |
+| `query_kb`      |      1      | 0 (shaping) | BM25 retrieval over 2,648 corpus nodes, returns top-$k$ citations |
+| `query_cluster` |      1      | 0 (shaping) | Node IDs in a named Jaccard cluster                               |
+| `interrogate`   |      1      | 0 (shaping) | 5 Socratic questions grounded in corpus citations                 |
+| `run_ralph`     |     $N$     | calibrated  | Autonomous $N$-iter synthesize → score → keep-if-better           |
+| `submit`        |      1      | $R(f, c)$   | Run § 4 pipeline; update `current_files` iff $q$ improves         |
+| `get_audit`     |      0      | 0           | Return full append-only audit ledger                              |
+
+`get_audit` is free — reflection is never penalized, attacking **P4** by making research observable _and_ cheap to review.
+
+#### Observation $\mathcal{O}$
+
+| Field                                               | Type                      | Purpose                       |
+| --------------------------------------------------- | ------------------------- | ----------------------------- |
+| `episode_id`, `task_id`, `task_level`, `task_brief` | `str`                     | Task identity + NL brief      |
+| `budget_remaining`                                  | `int`                     | $B_t = B - \sum_{i<t} c(a_i)$ |
+| `initial_files`, `current_files`                    | `dict[str,str]`           | File state $f_t$              |
+| `last_citations`                                    | `list[Citation]`          | From last `query_*`           |
+| `last_interrogation_questions`                      | `list[str]`               | From last `interrogate`       |
+| `last_grounding`                                    | `GroundingReport \| null` | Per-symbol $\rho$ breakdown   |
+| `previous_score`, `last_reward`                     | `float`                   | $q_t$, $R_t$                  |
+| `is_done`                                           | `bool`                    | Termination flag              |
+| `cumulative_audit_summary`                          | `AuditReport \| null`     | Populated by `get_audit`      |
+
+---
+
+### 7. Anti-Exploit Guarantees
+
+| Attack                                 | Mitigation                     | Formalism                                                   |
+| -------------------------------------- | ------------------------------ | ----------------------------------------------------------- |
+| `import nonexistent_lib`               | AST grounder                   | $\rho(\sigma) = 0 \Rightarrow s_{\text{gr}} \downarrow$     |
+| `os.path.joiiin()`                     | Full-path `hasattr` resolution | Leaf-attr check, not just module                            |
+| High confidence on bad code            | Brier penalty                  | $\beta = (c-q)^2$, maximal at $c=1,\,q=0$                   |
+| Omit `confidence`                      | None → 0.5                     | Still incurs $\beta = (0.5 - q)^2$                          |
+| `conftest.py` injection                | Filename allowlist             | Regex `^[a-z][a-z0-9_]*\.py$`                               |
+| File-count / size DoS                  | Hard limits                    | ≤ 10 files, ≤ 50 KB each, ≤ 200 KB total                    |
+| Clean code + trivial tests             | Hidden test injection          | $T_{\text{hidden}}$ ⊂ pytest run, invisible to agent        |
+| Zero-import "free groundedness"        | Neutral default                | $\lvert\Sigma(f)\rvert = 0 \Rightarrow s_{\text{gr}} = 0.5$ |
+| Unparseable code for free groundedness | SyntaxError trap               | $s_{\text{gr}} = 0.0$                                       |
+
+---
+
+## Part II — Technical Details
+
+Everything below is implementation. Part I is the specification.
+
+### 8. Installation
+
+**Prerequisites.** Python 3.11+. `ruff`, `mypy`, `pytest` (auto-installed inside Docker).
+
+**Docker (matches HF Space deployment):**
 
 ```bash
+cd CODEFORGE
 docker build -t code-forge .
 docker run -p 7860:7860 code-forge
 ```
 
-### Tasks
-
-| Level  | ID                   | Budget | Target score | Brief                                                 |
-|--------|----------------------|--------|--------------|-------------------------------------------------------|
-| easy   | greet_single_file    | 4      | 0.90         | Single-file `greet(name)` with type hints.            |
-| medium | greet_with_tests     | 6      | 0.80         | `greet` + pytest + `ValueError` on `None`.            |
-| hard   | multi_file_module    | 10     | 0.70         | Three-file module (entry + core + tests), mypy strict.|
-
-### Reward formula
-
-```
-reward = 0.6 * sandbox_composite_score + 0.4 * grounding_score
-```
-
-- **sandbox_composite_score** ∈ [0, 1] comes from `groundloop.python_sandbox.run_sandbox` — runs `ruff`, `mypy`, `pytest`, and static import resolution on submitted files in a temp dir.
-- **grounding_score** ∈ [0, 1] comes from `groundloop.lib_grounder.ground` — fraction of imported modules/attributes that resolve in the running interpreter.
-
-Reward is deterministic and clamped to `[0.0, 1.0]`. Query steps always return `0.0`.
-
-### Baseline Scores
-
-Run: `python3 inference.py` (stub synthesizer, no API key required).
-
-| Task | Difficulty | Baseline Reward |
-|---|---|---|
-| greet_single_file | easy | 1.000 |
-| greet_with_tests | medium | 0.920 |
-| multi_file_module | hard | 0.840 |
-
-Measured against `groundloop/kb/skills_corpus.jsonl` with `uvicorn groundloop_env.app:app` on port 17863. Per-task tool sets: easy uses `ruff`/`imports`/`mypy` (no pytest — single file); medium & hard add `pytest`.
-
-### Full verification
+**Local:**
 
 ```bash
-python3 -m pytest tests/ --cov=groundloop_env --cov-report=term -v
-ruff check groundloop_env/
-mypy --strict groundloop_env/
+cd CODEFORGE
+pip install -r requirements.txt
+pip install ruff mypy pytest
+uvicorn codeforge.app:app --host 0.0.0.0 --port 7860
 ```
+
+**Windows UTF-8 fix for demo scripts:**
+
+```powershell
+$env:PYTHONIOENCODING="utf-8"; $env:PYTHONUTF8="1"
+```
+
+### 9. Environment Variables
+
+Loaded from `.env` at repo root via `python-dotenv`.
+
+| Variable                 | Default                            | Use                           |
+| ------------------------ | ---------------------------------- | ----------------------------- |
+| `API_BASE_URL`           | `http://localhost:7860`            | [inference.py](inference.py)  |
+| `GROUNDLOOP_CORPUS_PATH` | `codeforge/kb/skills_corpus.jsonl` | Skill corpus path             |
+| `CODEFORGE_MAX_SESSIONS` | `10`                               | Max concurrent MCP sessions   |
+| `CODEFORGE_SESSION_TTL`  | `3600`                             | Session timeout (seconds)     |
+| `ANTHROPIC_API_KEY`      | —                                  | LLM synthesizer in Ralph      |
+| `OPENAI_API_KEY`         | —                                  | OpenAI-compatible synthesizer |
+
+### 10. Head-to-Head Demos
+
+```bash
+python demo_agent_with_mcp.py    # Agent queries KB, interrogates, submits
+python demo_without_mcp.py       # Agent codes cold, gets burned by hidden tests
+```
+
+Both scripts instantiate `CodeForgeMCPServer` in-process against the baked-in corpus. No separate server needed.
+
+Full walkthroughs, cheater-agent exploits, calibration comparisons → [CODEFORGE/EXAMPLES.md](CODEFORGE/EXAMPLES.md).
+
+### 11. REST API
+
+| Endpoint | Method | Body / Effect                                  |
+| -------- | ------ | ---------------------------------------------- |
+| `/`      | GET    | Health check                                   |
+| `/tasks` | GET    | Task list + action schema                      |
+| `/reset` | POST   | `{"task_level": "easy" \| "medium" \| "hard"}` |
+| `/step`  | POST   | `{"action": <CodeForgeAction>}`                |
+| `/state` | GET    | Current observation (no cost)                  |
+
+```bash
+curl -X POST http://localhost:7860/reset \
+  -H "Content-Type: application/json" \
+  -d '{"task_level": "easy"}'
+
+curl -X POST http://localhost:7860/step \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": {
+      "action_type": "submit",
+      "files": {
+        "main.py": "from __future__ import annotations\n\ndef greet(name: str) -> str:\n    return f\"Hello, {name}!\"\n"
+      },
+      "confidence": 0.9
+    }
+  }'
+```
+
+Baseline HTTP client:
+
+```bash
+cd CODEFORGE && uvicorn codeforge.app:app --host 0.0.0.0 --port 7860 &
+python inference.py
+```
+
+### 12. MCP Server
+
+**In-process Python:**
+
+```python
+from pathlib import Path
+from codeforge.mcp_server import CodeForgeMCPServer
+
+server = CodeForgeMCPServer(
+    corpus_path=Path("CODEFORGE/codeforge/kb/skills_corpus.jsonl"),
+)
+
+r = server.handle_tool("codeforge_reset", {"task_level": "easy"})
+sid = r["session_id"]
+
+server.handle_tool("codeforge_query_kb", {
+    "session_id": sid, "claim": "python greeting type hints", "top_k": 5,
+})
+
+r = server.handle_tool("codeforge_submit", {
+    "session_id": sid,
+    "files": {"main.py": "def greet(name: str) -> str:\n    return f'Hello, {name}!'\n"},
+    "confidence": 0.9,
+})
+print(r["observation"]["last_reward"])
+```
+
+**Registered tools (10):**
+
+| Tool                      | Cost | Returns                             |
+| ------------------------- | :--: | ----------------------------------- |
+| `codeforge_reset`         |  —   | New episode                         |
+| `codeforge_query_kb`      |  1   | BM25 citations                      |
+| `codeforge_query_cluster` |  1   | Cluster members                     |
+| `codeforge_interrogate`   |  1   | 5 Socratic questions with citations |
+| `codeforge_run_ralph`     |  N   | Ralph-loop result                   |
+| `codeforge_submit`        |  1   | Reward from § 4 pipeline            |
+| `codeforge_get_audit`     |  0   | Full audit trail                    |
+| `codeforge_state`         |  0   | Current observation (read-only)     |
+| `codeforge_list_clusters` |  0   | Cluster labels + sizes              |
+| `codeforge_list_tags`     |  0   | All corpus tags                     |
+
+**MCP resources (free):**
+
+- `codeforge://corpus/stats`
+- `codeforge://corpus/node/{id}`
+- `codeforge://tasks`
+- `codeforge://audit/{episode_id}`
+
+### 13. Skill Corpus
+
+Frozen corpus of **2,648 skill nodes** scraped from 242 real `SKILL.md` files (183 from [everything-claude-code](https://github.com/affaan-m/everything-claude-code), 59 locally installed). BM25 + Jaccard connected-component clustering. Read-only, baked into the Docker image.
+
+### 14. Project Structure
+
+```
+openenv-DGXAI/
+├── CODEFORGE/
+│   ├── codeforge/                 # 44 files
+│   │   ├── models.py              # 6 actions, observation, AuditEntry
+│   │   ├── grader.py              # R(f, c) — § 4.4
+│   │   ├── grounder.py            # s_gr — § 4.3
+│   │   ├── shaping.py             # Citation shaping bonus
+│   │   ├── tasks.py               # 3 levels + hidden tests
+│   │   ├── observation.py         # Observation builder
+│   │   ├── environment.py         # CodeForgeEnvironment
+│   │   ├── app.py                 # FastAPI + session isolation
+│   │   ├── mcp_server.py          # MCP server (10 tools)
+│   │   ├── sandbox/               # ruff / mypy / pytest / imports
+│   │   ├── kb/                    # BM25 + clustering + skills_corpus.jsonl
+│   │   ├── ralph/                 # Autonomous loop
+│   │   ├── interrogator/          # Socratic generator
+│   │   ├── audit/                 # Append-only ledger
+│   │   └── scraper/               # Corpus build pipeline
+│   ├── tests/                     # 429 tests, 93 % cov
+│   ├── inference.py               # REST baseline
+│   ├── Dockerfile                 # python:3.11-slim + ruff/mypy/pytest
+│   ├── openenv.yaml               # OpenEnv config
+│   ├── EXAMPLES.md                # Scenarios + exploits
+│   └── SYSTEM_DESIGN.md           # 1,942-line spec
+├── demo_agent_with_mcp.py
+├── demo_without_mcp.py
+├── inference.py                   # HTTP baseline
+└── README.md                      # this file
+```
+
+### 15. Quality Metrics
+
+| Metric                  |                          Value |
+| ----------------------- | -----------------------------: |
+| Source files            |                             44 |
+| Tests                   |                            429 |
+| Coverage                |                           93 % |
+| Ruff violations         |                              0 |
+| Mypy `--strict` errors  |                              0 |
+| Skill corpus nodes      |                          2,648 |
+| Critic reviews          | 10 module critics + 1 red-team |
+| Exploits found & closed |                              3 |
+
+### 16. Verification
+
+```bash
+cd CODEFORGE
+python -m pytest tests/ --cov=codeforge --cov-report=term -v
+ruff check codeforge/
+mypy --strict codeforge/
+```
+
+### 17. Documents
+
+- [CODEFORGE/README.md](CODEFORGE/README.md) — package README
+- [CODEFORGE/EXAMPLES.md](CODEFORGE/EXAMPLES.md) — worked scenarios, exploits, calibration
+- [CODEFORGE/SYSTEM_DESIGN.md](CODEFORGE/SYSTEM_DESIGN.md) — authoritative spec (1,942 lines)
+- [CODEFORGE/LAUNCH_PROMPT.md](CODEFORGE/LAUNCH_PROMPT.md) — launch/demo prompt
+
+---
+
+## License
+
+Part of the OpenEnv ecosystem. See the parent repository.

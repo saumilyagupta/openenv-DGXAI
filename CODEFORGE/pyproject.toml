@@ -17,6 +17,7 @@ dependencies = [
     "httpx>=0.25.0",
     "networkx>=3.0",
     "python-frontmatter>=1.0.0",
+    "python-dotenv>=1.0.0",
     "mcp>=1.0.0",
 ]
 

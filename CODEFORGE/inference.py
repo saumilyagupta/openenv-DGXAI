@@ -9,6 +9,9 @@ import os
 import sys
 
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 API_BASE = os.environ.get("API_BASE_URL", "http://localhost:7860")
 
