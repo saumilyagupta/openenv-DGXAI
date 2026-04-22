@@ -1,0 +1,16 @@
+{
+  "task_id": 407,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to create the next bigger number by rearranging the digits of a given number.\n\nYour solution must satisfy this test:\nassert rearrange_bigger(12)==21\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef rearrange_bigger(n):\n    digits = list(str(n))\n    for i in range(len(digits)-2, -1, -1):\n        if digits[i] < digits[i+1]:\n            break\n    else:\n        return None  # No bigger number can be formed\n\n    for j in range(len(digits)-1, i, -1):\n        if digits[j] > digits[i]:\n            break\n\n    digits[i], digits[j] = digits[j], digits[i]\n\n    digits[i+1:] = sorted(digits[i+1:])\n\n    return int(''.join(digits))\n```",
+  "extracted_code": "def rearrange_bigger(n):\n    digits = list(str(n))\n    for i in range(len(digits)-2, -1, -1):\n        if digits[i] < digits[i+1]:\n            break\n    else:\n        return None  # No bigger number can be formed\n\n    for j in range(len(digits)-1, i, -1):\n        if digits[j] > digits[i]:\n            break\n\n    digits[i], digits[j] = digits[j], digits[i]\n\n    digits[i+1:] = sorted(digits[i+1:])\n\n    return int(''.join(digits))",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpzzmht4h8\\candidate.py\", line 21, in <module>\n    assert rearrange_bigger(10)==False\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 11.795,
+  "eval_count": 127,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

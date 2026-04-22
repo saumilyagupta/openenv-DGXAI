@@ -1,0 +1,16 @@
+{
+  "task_id": 717,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to calculate the standard deviation.\n\nYour solution must satisfy this test:\nassert sd_calc([4, 2, 5, 8, 6])== 2.23606797749979\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef sd_calc(arr):\n    mean = sum(arr) / len(arr)\n    variance = sum((x - mean) ** 2 for x in arr) / len(arr)\n    return variance ** 0.5\n```",
+  "extracted_code": "def sd_calc(arr):\n    mean = sum(arr) / len(arr)\n    variance = sum((x - mean) ** 2 for x in arr) / len(arr)\n    return variance ** 0.5",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpuaexdat4\\candidate.py\", line 6, in <module>\n    assert sd_calc([4, 2, 5, 8, 6])== 2.23606797749979\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 8.363,
+  "eval_count": 50,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

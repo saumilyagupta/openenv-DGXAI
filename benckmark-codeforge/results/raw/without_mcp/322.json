@@ -1,0 +1,16 @@
+{
+  "task_id": 322,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find all index positions of the minimum values in a given list.\n\nYour solution must satisfy this test:\nassert position_min([12,33,23,10,67,89,45,667,23,12,11,10,54])==[3,11]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef position_min(lst):\n    return [i for i, x in enumerate(lst) if x == min(lst)]\n```",
+  "extracted_code": "def position_min(lst):\n    return [i for i, x in enumerate(lst) if x == min(lst)]",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 8.579,
+  "eval_count": 28,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

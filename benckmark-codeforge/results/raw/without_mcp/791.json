@@ -1,0 +1,16 @@
+{
+  "task_id": 791,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to remove the nested record from the given tuple.\n\nYour solution must satisfy this test:\nassert remove_nested((1, 5, 7, (4, 6), 10)) == (1, 5, 7, 10)\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef remove_nested(tup):\n    return tuple(filter(lambda x: not isinstance(x, tuple), tup))\n```",
+  "extracted_code": "def remove_nested(tup):\n    return tuple(filter(lambda x: not isinstance(x, tuple), tup))",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 6.881,
+  "eval_count": 26,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

@@ -1,0 +1,16 @@
+{
+  "task_id": 415,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to find a pair with highest product from a given array of integers.\n\nYour solution must satisfy this test:\nassert max_Product([1,2,3,4,7,0,8,4]) == (7,8)\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef max_Product(arr):\n    arr.sort()\n    return arr[-1] * arr[-2]\n```",
+  "extracted_code": "def max_Product(arr):\n    arr.sort()\n    return arr[-1] * arr[-2]",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp2c1w6_4w\\candidate.py\", line 5, in <module>\n    assert max_Product([1,2,3,4,7,0,8,4]) == (7,8)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 8.469,
+  "eval_count": 25,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

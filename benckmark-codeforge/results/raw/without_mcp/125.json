@@ -1,0 +1,16 @@
+{
+  "task_id": 125,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find the maximum difference between the number of 0s and number of 1s in any sub-string of the given binary string.\n\nYour solution must satisfy this test:\nassert find_length(\"11000010001\", 11) == 6\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef find_length(s, n):\n    max_diff = 0\n    count_0s = 0\n    count_1s = 0\n\n    for i in range(n):\n        if s[i] == '0':\n            count_0s += 1\n        else:\n            count_1s += 1\n\n        max_diff = max(max_diff, abs(count_0s - count_1s))\n\n    return max_diff\n```",
+  "extracted_code": "def find_length(s, n):\n    max_diff = 0\n    count_0s = 0\n    count_1s = 0\n\n    for i in range(n):\n        if s[i] == '0':\n            count_0s += 1\n        else:\n            count_1s += 1\n\n        max_diff = max(max_diff, abs(count_0s - count_1s))\n\n    return max_diff",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpjzo3cnx8\\candidate.py\", line 16, in <module>\n    assert find_length(\"11000010001\", 11) == 6\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 8.726,
+  "eval_count": 98,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

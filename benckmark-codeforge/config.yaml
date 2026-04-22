@@ -1,0 +1,48 @@
+model:
+  name: qwen2.5-coder:1.5b
+  endpoint: http://172.22.2.151:7021/api/generate
+  temperature: 0.0
+  num_predict: 1024
+  timeout_seconds: 120
+  max_retries: 3
+  retry_backoff_seconds: 2.0
+
+dataset:
+  name: mbpp
+  source: hf
+  hf_repo: google-research-datasets/mbpp
+  hf_config: full
+  split: all   # concat of train+test+validation+prompt = 974
+  limit: null  # null = full set; set int for debug runs
+
+sandbox:
+  python_exec: python
+  cpu_timeout_seconds: 10
+  wall_timeout_seconds: 15
+
+runner:
+  concurrency: 2
+  resume: true
+
+modes:
+  - name: without_mcp
+    use_mcp: false
+  - name: with_mcp
+    use_mcp: true
+    snippet_chars: 400
+
+mcp:
+  corpus_path: ../CODEFORGE/codeforge/kb/skills_corpus.jsonl
+  task_level: hard   # hard = budget 10, enough for reset + query_kb + interrogate
+  top_k: 5
+
+rl_agent:
+  max_iters: 5                    # hard cap on refinement iterations per task
+  confidence: 0.7                 # declared confidence for Brier calibration
+  requery_kb_on_refine: true      # fresh MCP query using failure signature
+  resume: true
+
+paths:
+  dataset_file: dataset/mbpp.jsonl
+  results_dir: results
+  logs_dir: results/logs

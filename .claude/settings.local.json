@@ -8,7 +8,9 @@
       "Grep",
       "Bash",
       "WebFetch(domain:www.scaler.com)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(rm -rf C:/Users/saumi/Desktop/CODES/openenv-DGXAI/benckmark-codeforge/results/raw/without_mcp/* C:/Users/saumi/Desktop/CODES/openenv-DGXAI/benckmark-codeforge/results/raw/with_mcp/*)",
+      "Bash(python scripts/run_benchmark.py --config config.yaml)"
     ]
   }
 }

@@ -1,0 +1,16 @@
+{
+  "task_id": 763,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to find the minimum difference between any two elements in a given array.\n\nYour solution must satisfy this test:\nassert find_Min_Diff((1,5,3,19,18,25),6) == 1\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef find_Min_Diff(arr,n):\n    arr.sort()\n    return arr[1]-arr[0]\n```",
+  "extracted_code": "def find_Min_Diff(arr,n):\n    arr.sort()\n    return arr[1]-arr[0]",
+  "passed": false,
+  "reason": "runtime_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp3dgghylq\\candidate.py\", line 5, in <module>\n    assert find_Min_Diff((1,5,3,19,18,25),6) == 1\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp3dgghylq\\candidate.py\", line 2, in find_Min_Diff\n    arr.sort()\n    ^^^^^^^^\nAttributeError: 'tuple' object has no attribute 'sort'\n",
+  "latency_seconds": 7.799,
+  "eval_count": 27,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

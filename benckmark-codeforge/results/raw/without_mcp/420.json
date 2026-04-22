@@ -1,0 +1,16 @@
+{
+  "task_id": 420,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to find the cube sum of first n even natural numbers.\n\nYour solution must satisfy this test:\nassert cube_Sum(2) == 72\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef cube_Sum(n):\n    return sum([i**3 for i in range(1, n+1, 2)])\n```",
+  "extracted_code": "def cube_Sum(n):\n    return sum([i**3 for i in range(1, n+1, 2)])",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp_cfupplv\\candidate.py\", line 4, in <module>\n    assert cube_Sum(2) == 72\n           ^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 7.729,
+  "eval_count": 32,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

@@ -1,0 +1,16 @@
+{
+  "task_id": 649,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to calculate the sum of the numbers in a list between the indices of a specified range.\n\nYour solution must satisfy this test:\nassert sum_Range_list([2, 1, 5, 6, 8, 3, 4, 9, 10, 11, 8, 12],8,10) == 29\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef sum_Range_list(lst,start,end):\n    return sum(lst[start:end+1])\n```",
+  "extracted_code": "def sum_Range_list(lst,start,end):\n    return sum(lst[start:end+1])",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 7.003,
+  "eval_count": 23,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

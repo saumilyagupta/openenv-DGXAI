@@ -1,0 +1,16 @@
+{
+  "task_id": 927,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to calculate the height of the given binary tree.\n\nYour solution must satisfy this test:\nassert (max_height(root)) == 3\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef max_height(root):\n    if not root:\n        return 0\n    left_height = max_height(root.left)\n    right_height = max_height(root.right)\n    return max(left_height, right_height) + 1\n```",
+  "extracted_code": "def max_height(root):\n    if not root:\n        return 0\n    left_height = max_height(root.left)\n    right_height = max_height(root.right)\n    return max(left_height, right_height) + 1",
+  "passed": false,
+  "reason": "name_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp2q79nj2h\\candidate.py\", line 1, in <module>\n    root = Node(1) \n           ^^^^\nNameError: name 'Node' is not defined. Did you mean: 'None'?\n",
+  "latency_seconds": 8.709,
+  "eval_count": 51,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

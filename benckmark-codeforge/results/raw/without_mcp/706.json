@@ -1,0 +1,16 @@
+{
+  "task_id": 706,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find whether an array is subset of another array.\n\nYour solution must satisfy this test:\nassert is_subset([11, 1, 13, 21, 3, 7], 6, [11, 3, 7, 1], 4) == True\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef is_subset(arr1, n1, arr2, n2):\n    return all(x in arr1 for x in arr2)\n```",
+  "extracted_code": "def is_subset(arr1, n1, arr2, n2):\n    return all(x in arr1 for x in arr2)",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 8.439,
+  "eval_count": 33,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

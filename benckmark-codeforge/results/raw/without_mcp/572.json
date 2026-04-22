@@ -1,0 +1,16 @@
+{
+  "task_id": 572,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to remove two duplicate numbers from a given number of lists.\n\nYour solution must satisfy this test:\nassert two_unique_nums([1,2,3,2,3,4,5]) == [1, 4, 5]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef two_unique_nums(nums):\n    return list(set(nums))\n```",
+  "extracted_code": "def two_unique_nums(nums):\n    return list(set(nums))",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpaw4wr3wk\\candidate.py\", line 4, in <module>\n    assert two_unique_nums([1,2,3,2,3,4,5]) == [1, 4, 5]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 6.319,
+  "eval_count": 17,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

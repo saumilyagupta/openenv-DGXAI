@@ -1,0 +1,87 @@
+{
+  "task_id": 721,
+  "final_passed": false,
+  "first_pass_iter": null,
+  "iters_used": 3,
+  "max_iters": 3,
+  "best_quality": 0.0,
+  "best_reward": 0.0,
+  "mcp_total_latency_s": 35.409,
+  "iterations": [
+    {
+      "iter_idx": 0,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nReference material:\n\n[1] autonomous-loops\nArchitecture: Two-Prompt System\n\nThe Pattern\n\n**Spec Analysis** — Orchestrator reads a specification file (Markdown) defining what to generate\n\n**Directory Recon** — Scans existing output to find the highest iteration number\n\n**Parallel Deployment** — Launches N sub-agents, each with:\n\nThe full spec\n\nA unique creative direction\n\nA specific iteratio...\n\n[2] jpa-patterns\nTesting Data Access\n\nPrefer `@DataJpaTest` with Testcontainers to mirror production\n\nAssert SQL efficiency using logs: set `logging.level.org.hibernate.SQL=DEBUG` and `logging.level.org.hibernate.orm.jdbc.bind=TRACE` for parameter values\n\n**Remember**: Keep entities lean, queries intentional, and transactions short. Prevent N+1 with fetch strategie...\n\n[3] lead-intelligence\nWhen to Activate\n\nUser wants to find leads or prospects in a specific industry\n\nBuilding an outreach list for partnerships, sales, or fundraising\n\nResearching who to reach out to and the best path to reach them\n\nUser says \"find leads\", \"outreach list\", \"who should I reach out to\", \"warm intros\"\n\nNeeds to score or rank a list of contacts by relevanc...\n\nThings to consider:\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n\nProblem:\nWrite a function to find a path with the maximum average over all existing paths for the given square matrix of size n*n.\n\nYour solution must satisfy this test:\nassert maxAverageOfPath([[1, 2, 3], [6, 5, 4], [7, 3, 9]], 3) == 5.2\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef maxAverageOfPath(matrix, n):\n    def dfs(i, j, path_sum, path_count):\n        if i < 0 or i >= n or j < 0 or j >= n:\n            return 0\n        if len(path) == n * n:\n            return path_sum / path_count\n        max_avg = float('-inf')\n        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:\n            new_i, new_j = i + dx, j + dy\n            max_avg = max(max_avg, dfs(new_i, new_j, path_sum + matrix[i][j], path_count + 1))\n        return max_avg\n\n    max_avg = float('-inf')\n    for i in range(n):\n        for j in range(n):\n            max_avg = max(max_avg, dfs(i, j, matrix[i][j], 1))\n    return max_avg\n```",
+      "extracted_code": "def maxAverageOfPath(matrix, n):\n    def dfs(i, j, path_sum, path_count):\n        if i < 0 or i >= n or j < 0 or j >= n:\n            return 0\n        if len(path) == n * n:\n            return path_sum / path_count\n        max_avg = float('-inf')\n        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:\n            new_i, new_j = i + dx, j + dy\n            max_avg = max(max_avg, dfs(new_i, new_j, path_sum + matrix[i][j], path_count + 1))\n        return max_avg\n\n    max_avg = float('-inf')\n    for i in range(n):\n        for j in range(n):\n            max_avg = max(max_avg, dfs(i, j, matrix[i][j], 1))\n    return max_avg",
+      "extract_reason": "ok",
+      "passed": false,
+      "sandbox_reason": "name_error",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpvxz1dw5g\\candidate.py\", line 19, in <module>\n    assert maxAverageOfPath([[1, 2, 3], [6, 5, 4], [7, 3, 9]], 3) == 5.2\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpvxz1dw5g\\candidate.py\", line 16, in maxAverageOfPath\n    max_avg = max(max_avg, dfs(i, j, matrix[i][j], 1))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpvxz1dw5g\\candidate.py\", line 5, in dfs\n    if len(path) == n * n:\n           ^^^^\nNameError: name 'path' is not defined\n",
+      "asserts_passed": 0,
+      "asserts_total": 3,
+      "quality": 0.0,
+      "brier": 0.49,
+      "reward": 0.0,
+      "latency_seconds": 139.987,
+      "eval_count": 206,
+      "done_reason": "stop",
+      "kb_skills": [
+        "autonomous-loops",
+        "jpa-patterns",
+        "lead-intelligence"
+      ],
+      "questions_count": 5
+    },
+    {
+      "iter_idx": 1,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nYour previous attempt (iteration 1) FAILED the hidden tests. Fix the bug. Do not repeat the same mistake.\n\nReference material:\n\n[1] gateguard\nEvidence\n\nTwo independent A/B tests, identical agents, same task:\n\n| Task | Gated | Ungated | Gap |\n| --- | --- | --- | --- |\n| Analytics module | 8.0/10 | 6.5/10 | +1.5 |\n| Webhook validator | 10.0/10 | 7.0/10 | +3.0 |\n| **Average** | **9.0** | **6....\n\n[2] click-path-audit\nStep 2: Audit Each Touchpoint\n\nFor each button/toggle/form submit in the target area:\n\n**Check each of these bug patterns:**\n\nPattern 1: Sequential Undo\n\nPattern 1: Sequential Undo\n\nPattern 2: Async Race\n\nPattern 2: Async Race\n\nPattern 3: Stale Closu...\n\n[3] cpp-coding-standards\nCross-Cutting Principles\n\nThese themes recur across the entire guidelines and form the foundation:\n\n**RAII everywhere** (P.8, R.1, E.6, CP.20): Bind resource lifetime to object lifetime\n\n**Immutability by default** (P.10, Con.1-5, ES.25): Start with...\n\nProblem:\nWrite a function to find a path with the maximum average over all existing paths for the given square matrix of size n*n.\n\nExpected to satisfy:\nassert maxAverageOfPath([[1, 2, 3], [6, 5, 4], [7, 3, 9]], 3) == 5.2\n\nPrevious code:\n```python\ndef maxAverageOfPath(matrix, n):\n    def dfs(i, j, path_sum, path_count):\n        if i < 0 or i >= n or j < 0 or j >= n:\n            return 0\n        if len(path) == n * n:\n            return path_sum / path_count\n        max_avg = float('-inf')\n        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:\n            new_i, new_j = i + dx, j + dy\n            max_avg = max(max_avg, dfs(new_i, new_j, path_sum + matrix[i][j], path_count + 1))\n        return max_avg\n\n    max_avg = float('-inf')\n    for i in range(n):\n        for j in range(n):\n            max_avg = max(max_avg, dfs(i, j, matrix[i][j], 1))\n    return max_avg\n```\n\nSandbox error:\nTraceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpvxz1dw5g\\candidate.py\", line 19, in <module>\n    assert maxAverageOfPath([[1, 2, 3], [6, 5, 4], [7, 3, 9]], 3) == 5.2\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpvxz1dw5g\\candidate.py\", line 16, in maxAverageOfPath\n    max_avg = max(max_avg, dfs(i, j, matrix[i][j], 1))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpvxz1dw5g\\candidate.py\", line 5, in dfs\n    if len(path) == n * n:\n           ^^^^\nNameError: name 'path' is not defined\n\nAnalyze the error, identify the root cause, then rewrite.\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef maxAverageOfPath(matrix, n):\n    def dfs(i, j, path_sum, path_count):\n        if i < 0 or i >= n or j < 0 or j >= n:\n            return 0\n        if len(path) == n * n:\n            return path_sum / path_count\n        max_avg = float('-inf')\n        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:\n            new_i, new_j = i + dx, j + dy\n            max_avg = max(max_avg, dfs(new_i, new_j, path_sum + matrix[i][j], path_count + 1))\n        return max_avg\n\n    max_avg = float('-inf')\n    for i in range(n):\n        for j in range(n):\n            max_avg = max(max_avg, dfs(i, j, matrix[i][j], 1))\n    return max_avg\n```",
+      "extracted_code": "def maxAverageOfPath(matrix, n):\n    def dfs(i, j, path_sum, path_count):\n        if i < 0 or i >= n or j < 0 or j >= n:\n            return 0\n        if len(path) == n * n:\n            return path_sum / path_count\n        max_avg = float('-inf')\n        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:\n            new_i, new_j = i + dx, j + dy\n            max_avg = max(max_avg, dfs(new_i, new_j, path_sum + matrix[i][j], path_count + 1))\n        return max_avg\n\n    max_avg = float('-inf')\n    for i in range(n):\n        for j in range(n):\n            max_avg = max(max_avg, dfs(i, j, matrix[i][j], 1))\n    return max_avg",
+      "extract_reason": "ok",
+      "passed": false,
+      "sandbox_reason": "name_error",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpufeqegvk\\candidate.py\", line 19, in <module>\n    assert maxAverageOfPath([[1, 2, 3], [6, 5, 4], [7, 3, 9]], 3) == 5.2\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpufeqegvk\\candidate.py\", line 16, in maxAverageOfPath\n    max_avg = max(max_avg, dfs(i, j, matrix[i][j], 1))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpufeqegvk\\candidate.py\", line 5, in dfs\n    if len(path) == n * n:\n           ^^^^\nNameError: name 'path' is not defined\n",
+      "asserts_passed": 0,
+      "asserts_total": 3,
+      "quality": 0.0,
+      "brier": 0.49,
+      "reward": 0.0,
+      "latency_seconds": 14.285,
+      "eval_count": 206,
+      "done_reason": "stop",
+      "kb_skills": [
+        "gateguard",
+        "click-path-audit",
+        "cpp-coding-standards"
+      ],
+      "questions_count": 0
+    },
+    {
+      "iter_idx": 2,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nYour previous attempt (iteration 2) FAILED the hidden tests. Fix the bug. Do not repeat the same mistake.\n\nReference material:\n\n[1] gateguard\nEvidence\n\nTwo independent A/B tests, identical agents, same task:\n\n| Task | Gated | Ungated | Gap |\n| --- | --- | --- | --- |\n| Analytics module | 8.0/10 | 6.5/10 | +1.5 |\n| Webhook validator | 10.0/10 | 7.0/10 | +3.0 |\n| **Average** | **9.0** | **6....\n\n[2] click-path-audit\nStep 2: Audit Each Touchpoint\n\nFor each button/toggle/form submit in the target area:\n\n**Check each of these bug patterns:**\n\nPattern 1: Sequential Undo\n\nPattern 1: Sequential Undo\n\nPattern 2: Async Race\n\nPattern 2: Async Race\n\nPattern 3: Stale Closu...\n\n[3] cpp-coding-standards\nCross-Cutting Principles\n\nThese themes recur across the entire guidelines and form the foundation:\n\n**RAII everywhere** (P.8, R.1, E.6, CP.20): Bind resource lifetime to object lifetime\n\n**Immutability by default** (P.10, Con.1-5, ES.25): Start with...\n\nProblem:\nWrite a function to find a path with the maximum average over all existing paths for the given square matrix of size n*n.\n\nExpected to satisfy:\nassert maxAverageOfPath([[1, 2, 3], [6, 5, 4], [7, 3, 9]], 3) == 5.2\n\nPrevious code:\n```python\ndef maxAverageOfPath(matrix, n):\n    def dfs(i, j, path_sum, path_count):\n        if i < 0 or i >= n or j < 0 or j >= n:\n            return 0\n        if len(path) == n * n:\n            return path_sum / path_count\n        max_avg = float('-inf')\n        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:\n            new_i, new_j = i + dx, j + dy\n            max_avg = max(max_avg, dfs(new_i, new_j, path_sum + matrix[i][j], path_count + 1))\n        return max_avg\n\n    max_avg = float('-inf')\n    for i in range(n):\n        for j in range(n):\n            max_avg = max(max_avg, dfs(i, j, matrix[i][j], 1))\n    return max_avg\n```\n\nSandbox error:\nTraceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpufeqegvk\\candidate.py\", line 19, in <module>\n    assert maxAverageOfPath([[1, 2, 3], [6, 5, 4], [7, 3, 9]], 3) == 5.2\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpufeqegvk\\candidate.py\", line 16, in maxAverageOfPath\n    max_avg = max(max_avg, dfs(i, j, matrix[i][j], 1))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpufeqegvk\\candidate.py\", line 5, in dfs\n    if len(path) == n * n:\n           ^^^^\nNameError: name 'path' is not defined\n\nAnalyze the error, identify the root cause, then rewrite.\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef maxAverageOfPath(matrix, n):\n    def dfs(i, j, path_sum, path_count):\n        if i < 0 or i >= n or j < 0 or j >= n:\n            return 0\n        if len(path) == n * n:\n            return path_sum / path_count\n        max_avg = float('-inf')\n        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:\n            new_i, new_j = i + dx, j + dy\n            max_avg = max(max_avg, dfs(new_i, new_j, path_sum + matrix[i][j], path_count + 1))\n        return max_avg\n\n    max_avg = float('-inf')\n    for i in range(n):\n        for j in range(n):\n            max_avg = max(max_avg, dfs(i, j, matrix[i][j], 1))\n    return max_avg\n```",
+      "extracted_code": "def maxAverageOfPath(matrix, n):\n    def dfs(i, j, path_sum, path_count):\n        if i < 0 or i >= n or j < 0 or j >= n:\n            return 0\n        if len(path) == n * n:\n            return path_sum / path_count\n        max_avg = float('-inf')\n        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:\n            new_i, new_j = i + dx, j + dy\n            max_avg = max(max_avg, dfs(new_i, new_j, path_sum + matrix[i][j], path_count + 1))\n        return max_avg\n\n    max_avg = float('-inf')\n    for i in range(n):\n        for j in range(n):\n            max_avg = max(max_avg, dfs(i, j, matrix[i][j], 1))\n    return max_avg",
+      "extract_reason": "ok",
+      "passed": false,
+      "sandbox_reason": "name_error",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpc28z5j06\\candidate.py\", line 19, in <module>\n    assert maxAverageOfPath([[1, 2, 3], [6, 5, 4], [7, 3, 9]], 3) == 5.2\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpc28z5j06\\candidate.py\", line 16, in maxAverageOfPath\n    max_avg = max(max_avg, dfs(i, j, matrix[i][j], 1))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpc28z5j06\\candidate.py\", line 5, in dfs\n    if len(path) == n * n:\n           ^^^^\nNameError: name 'path' is not defined\n",
+      "asserts_passed": 0,
+      "asserts_total": 3,
+      "quality": 0.0,
+      "brier": 0.49,
+      "reward": 0.0,
+      "latency_seconds": 16.433,
+      "eval_count": 206,
+      "done_reason": "stop",
+      "kb_skills": [
+        "gateguard",
+        "click-path-audit",
+        "cpp-coding-standards"
+      ],
+      "questions_count": 0
+    }
+  ]
+}

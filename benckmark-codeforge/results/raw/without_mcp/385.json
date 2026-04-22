@@ -1,0 +1,16 @@
+{
+  "task_id": 385,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find the n'th perrin number using recursion.\n\nYour solution must satisfy this test:\nassert get_perrin(9) == 12\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef get_perrin(n):\n    if n == 0:\n        return 3\n    elif n == 1 or n == 2:\n        return 0\n    else:\n        return get_perrin(n-2) + get_perrin(n-3)\n```",
+  "extracted_code": "def get_perrin(n):\n    if n == 0:\n        return 3\n    elif n == 1 or n == 2:\n        return 0\n    else:\n        return get_perrin(n-2) + get_perrin(n-3)",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpg9mly54h\\candidate.py\", line 9, in <module>\n    assert get_perrin(9) == 12\n           ^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 9.785,
+  "eval_count": 63,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

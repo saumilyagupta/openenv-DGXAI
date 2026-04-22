@@ -1,0 +1,27 @@
+{
+  "task_id": 951,
+  "mode": "with_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nCodeForge KB citations (research material, may or may not apply):\n\n[1] python-patterns — Python Development Patterns / Decorators / Parameterized Decorators\nData Classes with Validation\n\nNamed Tuples\n\nDecorators\n\nFunction Decorators\n\nParameterized Decorators\n\n[2] rust-testing — Rust Testing Patterns / How It Works\nHow It Works\n\n**Identify target code** — Find the function, trait, or module to test\n\n**Write a test** — Use `#[test]` in a `#[cfg(test)]` module, rstest for parameterized tests, or proptest for property-based tests\n\n**Mock dependencies** — Use mockall to isolate the unit under test\n\n**Run tests (RED)** — Verify the test fails with the expected error\n\n**Implement (GREEN)** — Write minimal code to...\n\n[3] autonomous-loops — Autonomous Loops Skill / 3. Infinite Agentic Loop / The Pattern\nArchitecture: Two-Prompt System\n\nThe Pattern\n\n**Spec Analysis** — Orchestrator reads a specification file (Markdown) defining what to generate\n\n**Directory Recon** — Scans existing output to find the highest iteration number\n\n**Parallel Deployment** — Launches N sub-agents, each with:\n\nThe full spec\n\nA unique creative direction\n\nA specific iteration number (no conflicts)\n\nA snapshot of existing it...\n\nCodeForge interrogator Socratic prompts (apply only if relevant):\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n- What is the single hardest edge case for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you consulted django-tdd for the patterns it recommends?\n\nProblem:\nWrite a function to find the maximum of similar indices in two lists of tuples.\n\nYour solution must satisfy this test:\nassert max_similar_indices([(2, 4), (6, 7), (5, 1)],[(5, 4), (8, 10), (8, 14)]) == [(5, 4), (8, 10), (8, 14)]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef max_similar_indices(list1, list2):\n    return [max(pair) for pair in zip(list1, list2)]\n```",
+  "extracted_code": "def max_similar_indices(list1, list2):\n    return [max(pair) for pair in zip(list1, list2)]",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 5.374,
+  "eval_count": 32,
+  "done_reason": "stop",
+  "gen_error": null,
+  "mcp": {
+    "session_id": "e0f8d144cf8e414a",
+    "budget_remaining": 9,
+    "n_citations": 3,
+    "n_questions": 5,
+    "citation_skills": [
+      "python-patterns",
+      "rust-testing",
+      "autonomous-loops"
+    ],
+    "error": null
+  }
+}

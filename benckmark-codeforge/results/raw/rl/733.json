@@ -1,0 +1,37 @@
+{
+  "task_id": 733,
+  "final_passed": true,
+  "first_pass_iter": 0,
+  "iters_used": 1,
+  "max_iters": 3,
+  "best_quality": 1.0,
+  "best_reward": 0.91,
+  "mcp_total_latency_s": 5.296,
+  "iterations": [
+    {
+      "iter_idx": 0,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nReference material:\n\n[1] autonomous-loops\nArchitecture: Two-Prompt System\n\nThe Pattern\n\n**Spec Analysis** — Orchestrator reads a specification file (Markdown) defining what to generate\n\n**Directory Recon** — Scans existing output to find the highest iteration number\n\n**Parallel Deployment** — Launches N sub-agents, each with:\n\nThe full spec\n\nA unique creative direction\n\nA specific iteratio...\n\n[2] rust-testing\nHow It Works\n\n**Identify target code** — Find the function, trait, or module to test\n\n**Write a test** — Use `#[test]` in a `#[cfg(test)]` module, rstest for parameterized tests, or proptest for property-based tests\n\n**Mock dependencies** — Use mockall to isolate the unit under test\n\n**Run tests (RED)** — Verify the test fails with the expected err...\n\n[3] architecture-decision-records\nWorkflow\n\nCapturing a New ADR\n\nWhen a decision moment is detected:\n\n**Initialize (first time only)** — if `docs/adr/` does not exist, ask the user for confirmation before creating the directory, a `README.md` seeded with the index table header (see ADR Index Format below), and a blank `template.md` for manual use. Do not create files without explic...\n\nThings to consider:\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n\nProblem:\nWrite a function to find the index of the first occurrence of a given number in a sorted array.\n\nYour solution must satisfy this test:\nassert find_first_occurrence([2, 5, 5, 5, 6, 6, 8, 9, 9, 9], 5) == 1\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef find_first_occurrence(arr, target):\n    left, right = 0, len(arr) - 1\n    while left <= right:\n        mid = (left + right) // 2\n        if arr[mid] == target:\n            # Move to the left to find the first occurrence\n            right = mid - 1\n        elif arr[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return left\n```",
+      "extracted_code": "def find_first_occurrence(arr, target):\n    left, right = 0, len(arr) - 1\n    while left <= right:\n        mid = (left + right) // 2\n        if arr[mid] == target:\n            # Move to the left to find the first occurrence\n            right = mid - 1\n        elif arr[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return left",
+      "extract_reason": "ok",
+      "passed": true,
+      "sandbox_reason": "pass",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "",
+      "asserts_passed": 3,
+      "asserts_total": 3,
+      "quality": 1.0,
+      "brier": 0.09,
+      "reward": 0.91,
+      "latency_seconds": 16.072,
+      "eval_count": 106,
+      "done_reason": "stop",
+      "kb_skills": [
+        "autonomous-loops",
+        "rust-testing",
+        "architecture-decision-records"
+      ],
+      "questions_count": 5
+    }
+  ]
+}

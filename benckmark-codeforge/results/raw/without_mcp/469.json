@@ -1,0 +1,16 @@
+{
+  "task_id": 469,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find the maximum profit earned from a maximum of k stock transactions\n\nYour solution must satisfy this test:\nassert max_profit([1, 5, 2, 3, 7, 6, 4, 5], 3) == 10\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef max_profit(prices, k):\n    if not prices or k <= 0:\n        return 0\n    \n    n = len(prices)\n    dp = [[0] * (k + 1) for _ in range(n)]\n    \n    for i in range(1, n):\n        for j in range(1, k + 1):\n            max_profit = 0\n            for l in range(i):\n                max_profit = max(max_profit, prices[i] - prices[l])\n            dp[i][j] = max(dp[i - 1][j], dp[l][j - 1] + max_profit)\n    \n    return dp[n - 1][k]\n```",
+  "extracted_code": "def max_profit(prices, k):\n    if not prices or k <= 0:\n        return 0\n    \n    n = len(prices)\n    dp = [[0] * (k + 1) for _ in range(n)]\n    \n    for i in range(1, n):\n        for j in range(1, k + 1):\n            max_profit = 0\n            for l in range(i):\n                max_profit = max(max_profit, prices[i] - prices[l])\n            dp[i][j] = max(dp[i - 1][j], dp[l][j - 1] + max_profit)\n    \n    return dp[n - 1][k]",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmph978ohfh\\candidate.py\", line 17, in <module>\n    assert max_profit([1, 5, 2, 3, 7, 6, 4, 5], 3) == 10\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 13.422,
+  "eval_count": 146,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

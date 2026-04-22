@@ -1,0 +1,16 @@
+{
+  "task_id": 247,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find the longest palindromic subsequence in the given string.\n\nYour solution must satisfy this test:\nassert lps(\"TENS FOR TENS\") == 5 \n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef lps(s):\n    n = len(s)\n    dp = [[0]*n for _ in range(n)]\n    \n    for i in range(n-1, -1, -1):\n        dp[i][i] = 1\n    \n    for length in range(2, n+1):\n        for start in range(n-length+1):\n            end = start + length - 1\n            if s[start] == s[end]:\n                dp[start][end] = dp[start+1][end-1] + 2\n            else:\n                dp[start][end] = max(dp[start+1][end], dp[start][end-1])\n    \n    return dp[0][n-1]\n```",
+  "extracted_code": "def lps(s):\n    n = len(s)\n    dp = [[0]*n for _ in range(n)]\n    \n    for i in range(n-1, -1, -1):\n        dp[i][i] = 1\n    \n    for length in range(2, n+1):\n        for start in range(n-length+1):\n            end = start + length - 1\n            if s[start] == s[end]:\n                dp[start][end] = dp[start+1][end-1] + 2\n            else:\n                dp[start][end] = max(dp[start+1][end], dp[start][end-1])\n    \n    return dp[0][n-1]",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 10.708,
+  "eval_count": 152,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

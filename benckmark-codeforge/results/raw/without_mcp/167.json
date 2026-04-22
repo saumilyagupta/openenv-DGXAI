@@ -1,0 +1,16 @@
+{
+  "task_id": 167,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to find smallest power of 2 greater than or equal to n.\n\nYour solution must satisfy this test:\nassert next_Power_Of_2(0) == 1\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef next_Power_Of_2(n):\n    return 1 << (n - 1).bit_length()\n```",
+  "extracted_code": "def next_Power_Of_2(n):\n    return 1 << (n - 1).bit_length()",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpqd8vb90e\\candidate.py\", line 4, in <module>\n    assert next_Power_Of_2(0) == 1\n           ^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 5.669,
+  "eval_count": 28,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

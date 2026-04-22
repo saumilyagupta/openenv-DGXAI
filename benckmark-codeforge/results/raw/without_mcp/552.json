@@ -1,0 +1,16 @@
+{
+  "task_id": 552,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to check whether a given sequence is linear or not.\n\nYour solution must satisfy this test:\nassert Seq_Linear([0,2,4,6,8,10]) == \"Linear Sequence\"\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef Seq_Linear(seq):\n    return \"Linear Sequence\" if all(seq[i] - seq[i-1] == 2*i for i in range(1, len(seq))) else \"Non-linear Sequence\"\n```",
+  "extracted_code": "def Seq_Linear(seq):\n    return \"Linear Sequence\" if all(seq[i] - seq[i-1] == 2*i for i in range(1, len(seq))) else \"Non-linear Sequence\"",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpwdvh428v\\candidate.py\", line 4, in <module>\n    assert Seq_Linear([0,2,4,6,8,10]) == \"Linear Sequence\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 8.403,
+  "eval_count": 48,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

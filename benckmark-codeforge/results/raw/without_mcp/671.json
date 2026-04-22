@@ -1,0 +1,16 @@
+{
+  "task_id": 671,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to set the right most unset bit.\n\nYour solution must satisfy this test:\nassert set_Right_most_Unset_Bit(21) == 23\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef set_Right_most_Unset_Bit(n):\n    return n | (n - 1)\n```",
+  "extracted_code": "def set_Right_most_Unset_Bit(n):\n    return n | (n - 1)",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp43x_04fb\\candidate.py\", line 4, in <module>\n    assert set_Right_most_Unset_Bit(21) == 23\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 8.877,
+  "eval_count": 25,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

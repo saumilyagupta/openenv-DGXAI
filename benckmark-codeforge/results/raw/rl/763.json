@@ -1,0 +1,87 @@
+{
+  "task_id": 763,
+  "final_passed": false,
+  "first_pass_iter": null,
+  "iters_used": 3,
+  "max_iters": 3,
+  "best_quality": 0.0,
+  "best_reward": 0.0,
+  "mcp_total_latency_s": 50.133,
+  "iterations": [
+    {
+      "iter_idx": 0,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nReference material:\n\n[1] rust-testing\nHow It Works\n\n**Identify target code** — Find the function, trait, or module to test\n\n**Write a test** — Use `#[test]` in a `#[cfg(test)]` module, rstest for parameterized tests, or proptest for property-based tests\n\n**Mock dependencies** — Use mockall to isolate the unit under test\n\n**Run tests (RED)** — Verify the test fails with the expected err...\n\n[2] videodb\nRunning Python code\n\nBefore running any VideoDB code, change to the project directory and load environment variables:\n\nThis reads `VIDEO_DB_API_KEY` from:\n\nEnvironment (if already exported)\n\nProject's `.env` file in current directory\n\nIf the key is missing, `videodb.connect()` raises `AuthenticationError` automatically.\n\nDo NOT write a script file...\n\n[3] kotlin-testing\nHow It Works\n\n**Identify target code** — Find the function, class, or module to test\n\n**Write a Kotest spec** — Choose a spec style (StringSpec, FunSpec, BehaviorSpec) matching the test scope\n\n**Mock dependencies** — Use MockK to isolate the unit under test\n\n**Run tests (RED)** — Verify the test fails with the expected error\n\n**Implement code (GREE...\n\nThings to consider:\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n\nProblem:\nWrite a python function to find the minimum difference between any two elements in a given array.\n\nYour solution must satisfy this test:\nassert find_Min_Diff((1,5,3,19,18,25),6) == 1\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef find_Min_Diff(arr, k):\n    arr.sort()\n    return min(arr[i] - arr[i+k-1] for i in range(len(arr)-k+1))\n```",
+      "extracted_code": "def find_Min_Diff(arr, k):\n    arr.sort()\n    return min(arr[i] - arr[i+k-1] for i in range(len(arr)-k+1))",
+      "extract_reason": "ok",
+      "passed": false,
+      "sandbox_reason": "runtime_error",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp72oaqa_2\\candidate.py\", line 5, in <module>\n    assert find_Min_Diff((1,5,3,19,18,25),6) == 1\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp72oaqa_2\\candidate.py\", line 2, in find_Min_Diff\n    arr.sort()\n    ^^^^^^^^\nAttributeError: 'tuple' object has no attribute 'sort'\n",
+      "asserts_passed": 0,
+      "asserts_total": 3,
+      "quality": 0.0,
+      "brier": 0.49,
+      "reward": 0.0,
+      "latency_seconds": 4.977,
+      "eval_count": 42,
+      "done_reason": "stop",
+      "kb_skills": [
+        "rust-testing",
+        "videodb",
+        "kotlin-testing"
+      ],
+      "questions_count": 5
+    },
+    {
+      "iter_idx": 1,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nYour previous attempt (iteration 1) FAILED the hidden tests. Fix the bug. Do not repeat the same mistake.\n\nReference material:\n\n[1] gateguard\nEvidence\n\nTwo independent A/B tests, identical agents, same task:\n\n| Task | Gated | Ungated | Gap |\n| --- | --- | --- | --- |\n| Analytics module | 8.0/10 | 6.5/10 | +1.5 |\n| Webhook validator | 10.0/10 | 7.0/10 | +3.0 |\n| **Average** | **9.0** | **6....\n\n[2] cpp-coding-standards\nCross-Cutting Principles\n\nThese themes recur across the entire guidelines and form the foundation:\n\n**RAII everywhere** (P.8, R.1, E.6, CP.20): Bind resource lifetime to object lifetime\n\n**Immutability by default** (P.10, Con.1-5, ES.25): Start with...\n\n[3] videodb\nRunning Python code\n\nBefore running any VideoDB code, change to the project directory and load environment variables:\n\nThis reads `VIDEO_DB_API_KEY` from:\n\nEnvironment (if already exported)\n\nProject's `.env` file in current directory\n\nIf the key is m...\n\nProblem:\nWrite a python function to find the minimum difference between any two elements in a given array.\n\nExpected to satisfy:\nassert find_Min_Diff((1,5,3,19,18,25),6) == 1\n\nPrevious code:\n```python\ndef find_Min_Diff(arr, k):\n    arr.sort()\n    return min(arr[i] - arr[i+k-1] for i in range(len(arr)-k+1))\n```\n\nSandbox error:\nTraceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp72oaqa_2\\candidate.py\", line 5, in <module>\n    assert find_Min_Diff((1,5,3,19,18,25),6) == 1\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp72oaqa_2\\candidate.py\", line 2, in find_Min_Diff\n    arr.sort()\n    ^^^^^^^^\nAttributeError: 'tuple' object has no attribute 'sort'\n\nAnalyze the error, identify the root cause, then rewrite.\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef find_Min_Diff(arr, k):\n    arr = sorted(arr)\n    return min(arr[i] - arr[i+k-1] for i in range(len(arr)-k+1))\n```",
+      "extracted_code": "def find_Min_Diff(arr, k):\n    arr = sorted(arr)\n    return min(arr[i] - arr[i+k-1] for i in range(len(arr)-k+1))",
+      "extract_reason": "ok",
+      "passed": false,
+      "sandbox_reason": "assertion_error",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpoywdlm66\\candidate.py\", line 5, in <module>\n    assert find_Min_Diff((1,5,3,19,18,25),6) == 1\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "asserts_passed": 0,
+      "asserts_total": 3,
+      "quality": 0.0,
+      "brier": 0.49,
+      "reward": 0.0,
+      "latency_seconds": 7.531,
+      "eval_count": 44,
+      "done_reason": "stop",
+      "kb_skills": [
+        "gateguard",
+        "cpp-coding-standards",
+        "videodb"
+      ],
+      "questions_count": 0
+    },
+    {
+      "iter_idx": 2,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nYour previous attempt (iteration 2) FAILED the hidden tests. Fix the bug. Do not repeat the same mistake.\n\nReference material:\n\n[1] gateguard\nEvidence\n\nTwo independent A/B tests, identical agents, same task:\n\n| Task | Gated | Ungated | Gap |\n| --- | --- | --- | --- |\n| Analytics module | 8.0/10 | 6.5/10 | +1.5 |\n| Webhook validator | 10.0/10 | 7.0/10 | +3.0 |\n| **Average** | **9.0** | **6....\n\n[2] cpp-coding-standards\nCross-Cutting Principles\n\nThese themes recur across the entire guidelines and form the foundation:\n\n**RAII everywhere** (P.8, R.1, E.6, CP.20): Bind resource lifetime to object lifetime\n\n**Immutability by default** (P.10, Con.1-5, ES.25): Start with...\n\n[3] videodb\nRunning Python code\n\nBefore running any VideoDB code, change to the project directory and load environment variables:\n\nThis reads `VIDEO_DB_API_KEY` from:\n\nEnvironment (if already exported)\n\nProject's `.env` file in current directory\n\nIf the key is m...\n\nProblem:\nWrite a python function to find the minimum difference between any two elements in a given array.\n\nExpected to satisfy:\nassert find_Min_Diff((1,5,3,19,18,25),6) == 1\n\nPrevious code:\n```python\ndef find_Min_Diff(arr, k):\n    arr = sorted(arr)\n    return min(arr[i] - arr[i+k-1] for i in range(len(arr)-k+1))\n```\n\nSandbox error:\nTraceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpoywdlm66\\candidate.py\", line 5, in <module>\n    assert find_Min_Diff((1,5,3,19,18,25),6) == 1\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n\nAnalyze the error, identify the root cause, then rewrite.\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef find_Min_Diff(arr, k):\n    arr = sorted(arr)\n    return min(arr[i] - arr[i+k-1] for i in range(len(arr)-k+1))\n```",
+      "extracted_code": "def find_Min_Diff(arr, k):\n    arr = sorted(arr)\n    return min(arr[i] - arr[i+k-1] for i in range(len(arr)-k+1))",
+      "extract_reason": "ok",
+      "passed": false,
+      "sandbox_reason": "assertion_error",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmph9cfc2m7\\candidate.py\", line 5, in <module>\n    assert find_Min_Diff((1,5,3,19,18,25),6) == 1\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "asserts_passed": 0,
+      "asserts_total": 3,
+      "quality": 0.0,
+      "brier": 0.49,
+      "reward": 0.0,
+      "latency_seconds": 6.511,
+      "eval_count": 44,
+      "done_reason": "stop",
+      "kb_skills": [
+        "gateguard",
+        "cpp-coding-standards",
+        "videodb"
+      ],
+      "questions_count": 0
+    }
+  ]
+}

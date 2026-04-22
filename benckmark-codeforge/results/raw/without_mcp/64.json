@@ -1,0 +1,16 @@
+{
+  "task_id": 64,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to sort a list of tuples using lambda.\n\nYour solution must satisfy this test:\nassert subject_marks([('English', 88), ('Science', 90), ('Maths', 97), ('Social sciences', 82)])==[('Social sciences', 82), ('English', 88), ('Science', 90), ('Maths', 97)]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\nsubject_marks = [('English', 88), ('Science', 90), ('Maths', 97), ('Social sciences', 82)]\nsorted_subject_marks = sorted(subject_marks, key=lambda x: x[1])\nprint(sorted_subject_marks)\n```",
+  "extracted_code": "subject_marks = [('English', 88), ('Science', 90), ('Maths', 97), ('Social sciences', 82)]\nsorted_subject_marks = sorted(subject_marks, key=lambda x: x[1])\nprint(sorted_subject_marks)",
+  "passed": false,
+  "reason": "runtime_error",
+  "sandbox_stdout": "[('Social sciences', 82), ('English', 88), ('Science', 90), ('Maths', 97)]\n",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpi5eo7mxe\\candidate.py\", line 5, in <module>\n    assert subject_marks([('English', 88), ('Science', 90), ('Maths', 97), ('Social sciences', 82)])==[('Social sciences', 82), ('English', 88), ('Science', 90), ('Maths', 97)]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: 'list' object is not callable\n",
+  "latency_seconds": 10.136,
+  "eval_count": 59,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

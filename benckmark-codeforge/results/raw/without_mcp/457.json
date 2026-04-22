@@ -1,0 +1,16 @@
+{
+  "task_id": 457,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to find the sublist having minimum length.\n\nYour solution must satisfy this test:\nassert Find_Min([[1],[1,2],[1,2,3]]) == [1]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef Find_Min(lst):\n    return min(lst, key=len)\n```",
+  "extracted_code": "def Find_Min(lst):\n    return min(lst, key=len)",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 6.02,
+  "eval_count": 18,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

@@ -1,0 +1,37 @@
+{
+  "task_id": 690,
+  "final_passed": true,
+  "first_pass_iter": 0,
+  "iters_used": 1,
+  "max_iters": 3,
+  "best_quality": 1.0,
+  "best_reward": 0.91,
+  "mcp_total_latency_s": 9.86,
+  "iterations": [
+    {
+      "iter_idx": 0,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nReference material:\n\n[1] quality-nonconformance\nInspection Level Adjustment\n\n| Condition | Action |\n|---|---|\n| New supplier, first 5 lots | Tightened inspection (Level III or 100%) |\n| 10+ consecutive lots accepted at normal | Qualify for reduced or skip-lot |\n| 1 lot rejected under reduced inspection | Revert to normal immediately |\n| 2 of 5 consecutive lots rejected under normal | Switch to t...\n\n[2] customs-trade-compliance\nScreening Hit Assessment\n\nWhen a restricted party screening tool returns a match, do not block the transaction automatically or clear it without investigation. Follow this protocol:\n\n**Assess match quality:** Name match percentage, address correlation, country nexus, alias analysis, date of birth (individuals). Matches below 85% name similarity wit...\n\n[3] rust-testing\nHow It Works\n\n**Identify target code** — Find the function, trait, or module to test\n\n**Write a test** — Use `#[test]` in a `#[cfg(test)]` module, rstest for parameterized tests, or proptest for property-based tests\n\n**Mock dependencies** — Use mockall to isolate the unit under test\n\n**Run tests (RED)** — Verify the test fails with the expected err...\n\nThings to consider:\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n\nProblem:\nWrite a function to multiply consecutive numbers of a given list.\n\nYour solution must satisfy this test:\nassert mul_consecutive_nums([1, 1, 3, 4, 4, 5, 6, 7])==[1, 3, 12, 16, 20, 30, 42]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef mul_consecutive_nums(lst):\n    return [lst[i] * lst[i + 1] for i in range(len(lst) - 1)]\n```",
+      "extracted_code": "def mul_consecutive_nums(lst):\n    return [lst[i] * lst[i + 1] for i in range(len(lst) - 1)]",
+      "extract_reason": "ok",
+      "passed": true,
+      "sandbox_reason": "pass",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "",
+      "asserts_passed": 3,
+      "asserts_total": 3,
+      "quality": 1.0,
+      "brier": 0.09,
+      "reward": 0.91,
+      "latency_seconds": 4.006,
+      "eval_count": 36,
+      "done_reason": "stop",
+      "kb_skills": [
+        "quality-nonconformance",
+        "customs-trade-compliance",
+        "rust-testing"
+      ],
+      "questions_count": 5
+    }
+  ]
+}

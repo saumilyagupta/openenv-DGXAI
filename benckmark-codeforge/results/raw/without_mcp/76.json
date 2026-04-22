@@ -1,0 +1,16 @@
+{
+  "task_id": 76,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to count the number of squares in a rectangle.\n\nYour solution must satisfy this test:\nassert count_Squares(4,3) == 20\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef count_Squares(a,b):\n    return (a-1)*(b-1)\n```",
+  "extracted_code": "def count_Squares(a,b):\n    return (a-1)*(b-1)",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpymlg53u3\\candidate.py\", line 4, in <module>\n    assert count_Squares(4,3) == 20\n           ^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 5.942,
+  "eval_count": 23,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

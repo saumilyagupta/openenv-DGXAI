@@ -1,0 +1,16 @@
+{
+  "task_id": 837,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to find the cube sum of first n odd natural numbers.\n\nYour solution must satisfy this test:\nassert cube_Sum(2) == 28\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef cube_Sum(n):\n    return sum([i**3 for i in range(1, 2*n, 2)])\n```",
+  "extracted_code": "def cube_Sum(n):\n    return sum([i**3 for i in range(1, 2*n, 2)])",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 6.731,
+  "eval_count": 32,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

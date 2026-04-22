@@ -1,0 +1,16 @@
+{
+  "task_id": 533,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to remove particular data type elements from the given tuple.\n\nYour solution must satisfy this test:\nassert remove_datatype((4, 5, 4, 7.7, 1.2), int) == [7.7, 1.2]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef remove_datatype(tup, dtype):\n    return tuple(filter(lambda x: not isinstance(x, dtype), tup))\n```",
+  "extracted_code": "def remove_datatype(tup, dtype):\n    return tuple(filter(lambda x: not isinstance(x, dtype), tup))",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp_xicic98\\candidate.py\", line 4, in <module>\n    assert remove_datatype((4, 5, 4, 7.7, 1.2), int) == [7.7, 1.2]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 6.158,
+  "eval_count": 29,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

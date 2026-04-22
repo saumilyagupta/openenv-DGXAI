@@ -1,0 +1,16 @@
+{
+  "task_id": 318,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to find the maximum volume of a cuboid with given sum of sides.\n\nYour solution must satisfy this test:\nassert max_volume(8) == 18\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef max_volume(s):\n    return (s - 2)**3\n```",
+  "extracted_code": "def max_volume(s):\n    return (s - 2)**3",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpneg6jqeu\\candidate.py\", line 4, in <module>\n    assert max_volume(8) == 18\n           ^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 11.634,
+  "eval_count": 20,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

@@ -1,0 +1,16 @@
+{
+  "task_id": 938,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find three closest elements from three sorted arrays.\n\nYour solution must satisfy this test:\nassert find_closet([1, 4, 10],[2, 15, 20],[10, 12],3,3,2) == (10, 15, 10)\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef find_closet(arr1, arr2, arr3, k1, k2, k3):\n    i = j = l = 0\n    while i < len(arr1) and j < len(arr2) and l < len(arr3):\n        if abs(arr1[i] - arr2[j]) + abs(arr2[j] - arr3[l]) == min(abs(arr1[i] - arr2[j]), abs(arr2[j] - arr3[l]), abs(arr1[i] - arr3[l])):\n            return (arr1[i], arr2[j], arr3[l])\n        elif abs(arr1[i] - arr2[j]) + abs(arr2[j] - arr3[l]) > min(abs(arr1[i] - arr2[j]), abs(arr2[j] - arr3[l]), abs(arr1[i] - arr3[l])):\n            if abs(arr1[i] - arr2[j]) < abs(arr2[j] - arr3[l]):\n                i += 1\n            elif abs(arr2[j] - arr3[l]) < abs(arr1[i] - arr2[j]):\n                j += 1\n            else:\n                l += 1\n        else:\n            if abs(arr1[i] - arr2[j]) < abs(arr2[j] - arr3[l]):\n                i += 1\n            elif abs(arr2[j] - arr3[l]) < abs(arr1[i] - arr2[j]):\n                j += 1\n            else:\n                l += 1\n```",
+  "extracted_code": "def find_closet(arr1, arr2, arr3, k1, k2, k3):\n    i = j = l = 0\n    while i < len(arr1) and j < len(arr2) and l < len(arr3):\n        if abs(arr1[i] - arr2[j]) + abs(arr2[j] - arr3[l]) == min(abs(arr1[i] - arr2[j]), abs(arr2[j] - arr3[l]), abs(arr1[i] - arr3[l])):\n            return (arr1[i], arr2[j], arr3[l])\n        elif abs(arr1[i] - arr2[j]) + abs(arr2[j] - arr3[l]) > min(abs(arr1[i] - arr2[j]), abs(arr2[j] - arr3[l]), abs(arr1[i] - arr3[l])):\n            if abs(arr1[i] - arr2[j]) < abs(arr2[j] - arr3[l]):\n                i += 1\n            elif abs(arr2[j] - arr3[l]) < abs(arr1[i] - arr2[j]):\n                j += 1\n            else:\n                l += 1\n        else:\n            if abs(arr1[i] - arr2[j]) < abs(arr2[j] - arr3[l]):\n                i += 1\n            elif abs(arr2[j] - arr3[l]) < abs(arr1[i] - arr2[j]):\n                j += 1\n            else:\n                l += 1",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpwb5d5a9c\\candidate.py\", line 21, in <module>\n    assert find_closet([1, 4, 10],[2, 15, 20],[10, 12],3,3,2) == (10, 15, 10)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 24.008,
+  "eval_count": 322,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

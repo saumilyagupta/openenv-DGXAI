@@ -1,0 +1,16 @@
+{
+  "task_id": 10,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to get the n smallest items from a dataset.\n\nYour solution must satisfy this test:\nassert small_nnum([10, 20, 50, 70, 90, 20, 50, 40, 60, 80, 100],2)==[10,20]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef small_nnum(data,n):\n    return sorted(data)[:n]\n```",
+  "extracted_code": "def small_nnum(data,n):\n    return sorted(data)[:n]",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 5.94,
+  "eval_count": 19,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

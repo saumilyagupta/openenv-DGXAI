@@ -1,0 +1,37 @@
+{
+  "task_id": 729,
+  "final_passed": true,
+  "first_pass_iter": 0,
+  "iters_used": 1,
+  "max_iters": 3,
+  "best_quality": 1.0,
+  "best_reward": 0.91,
+  "mcp_total_latency_s": 4.976,
+  "iterations": [
+    {
+      "iter_idx": 0,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nReference material:\n\n[1] content-hash-cache-pattern\n4. Service Layer Wrapper (SRP)\n\nKeep the processing function pure. Add caching as a separate service layer.\n\n[2] accessibility\nStep 2: Define Perceivable Attributes\n\nEnsure text contrast meets **4.5:1** (normal) or **3:1** (large/UI).\n\nAdd text alternatives for non-text content (images, icons).\n\nImplement responsive reflow (up to 400% zoom without loss of function).\n\n[3] cpp-coding-standards\nConcepts (C++20)\n\nAnti-Patterns\n\nUnconstrained templates in visible namespaces (T.47)\n\nSpecializing function templates instead of overloading (T.144)\n\nTemplate metaprogramming where `constexpr` suffices (T.120)\n\n`typedef` instead of `using` (T.43)\n\nThings to consider:\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n\nProblem:\nWrite a function to add two lists using map and lambda function.\n\nYour solution must satisfy this test:\nassert add_list([1, 2, 3],[4,5,6])==[5, 7, 9]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef add_list(a,b):\n    return list(map(lambda x,y:x+y,a,b))\n```",
+      "extracted_code": "def add_list(a,b):\n    return list(map(lambda x,y:x+y,a,b))",
+      "extract_reason": "ok",
+      "passed": true,
+      "sandbox_reason": "pass",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "",
+      "asserts_passed": 3,
+      "asserts_total": 3,
+      "quality": 1.0,
+      "brier": 0.09,
+      "reward": 0.91,
+      "latency_seconds": 3.334,
+      "eval_count": 23,
+      "done_reason": "stop",
+      "kb_skills": [
+        "content-hash-cache-pattern",
+        "accessibility",
+        "cpp-coding-standards"
+      ],
+      "questions_count": 5
+    }
+  ]
+}

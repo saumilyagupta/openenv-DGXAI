@@ -1,0 +1,14 @@
+{
+  "n": 974,
+  "passed": 444,
+  "pass_at_1": 0.4559,
+  "reasons": {
+    "assertion_error": 435,
+    "pass": 444,
+    "runtime_error": 47,
+    "name_error": 45,
+    "syntax_error": 3
+  },
+  "mean_latency_s": 11.442,
+  "mean_eval_count": 37.4
+}

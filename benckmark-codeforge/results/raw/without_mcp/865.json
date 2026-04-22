@@ -1,0 +1,16 @@
+{
+  "task_id": 865,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to print n-times a list using map function.\n\nYour solution must satisfy this test:\nassert ntimes_list([1, 2, 3, 4, 5, 6, 7],3)==[3, 6, 9, 12, 15, 18, 21]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef ntimes_list(lst, n):\n    return list(map(lambda x: x * n, lst))\n```",
+  "extracted_code": "def ntimes_list(lst, n):\n    return list(map(lambda x: x * n, lst))",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 8.338,
+  "eval_count": 26,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

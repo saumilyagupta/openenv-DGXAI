@@ -1,0 +1,16 @@
+{
+  "task_id": 216,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to check if a nested list is a subset of another nested list.\n\nYour solution must satisfy this test:\nassert check_subset_list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],[[12, 18, 23, 25, 45], [7, 11, 19, 24, 28], [1, 5, 8, 18, 15, 16]])==False\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef check_subset_list(list1, list2):\n    for sublist in list1:\n        if not all(item in sublist for item in list2):\n            return False\n    return True\n```",
+  "extracted_code": "def check_subset_list(list1, list2):\n    for sublist in list1:\n        if not all(item in sublist for item in list2):\n            return False\n    return True",
+  "passed": false,
+  "reason": "runtime_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp9p5etkm9\\candidate.py\", line 7, in <module>\n    assert check_subset_list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],[[12, 18, 23, 25, 45], [7, 11, 19, 24, 28], [1, 5, 8, 18, 15, 16]])==False\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp9p5etkm9\\candidate.py\", line 3, in check_subset_list\n    if not all(item in sublist for item in list2):\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp9p5etkm9\\candidate.py\", line 3, in <genexpr>\n    if not all(item in sublist for item in list2):\n               ^^^^^^^^^^^^^^^\nTypeError: argument of type 'int' is not iterable\n",
+  "latency_seconds": 8.342,
+  "eval_count": 43,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

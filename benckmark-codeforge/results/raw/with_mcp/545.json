@@ -1,0 +1,27 @@
+{
+  "task_id": 545,
+  "mode": "with_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nCodeForge KB citations (research material, may or may not apply):\n\n[1] documentation-lookup — Documentation Lookup (Context7) / Core Concepts\nCore Concepts\n\n**Context7**: MCP server that exposes live documentation; use it instead of training data for libraries and APIs.\n\n**resolve-library-id**: Returns Context7-compatible library IDs (e.g. `/vercel/next.js`) from a library name and query.\n\n**query-docs**: Fetches documentation and code snippets for a given library ID and question. Always call resolve-library-id first to get a valid libr...\n\n[2] article-writing — Article Writing / Voice Handling\nVoice Handling\n\nIf the user wants a specific voice, run `brand-voice` first and reuse its `VOICE PROFILE`.\nDo not duplicate a second style-analysis pass here unless the user explicitly asks for one.\n\nIf no voice references are given, default to a sharp operator voice: concrete, unsentimental, useful.\n\n[3] code-tour — Code Tour / Anti-Patterns\nExample\n\nAnti-Patterns\n\n| Anti-pattern | Fix |\n| --- | --- |\n| Flat file listing | Tell a story with dependency between steps |\n| Generic descriptions | Name the concrete code path or pattern |\n| Guessed anchors | Verify every file and line first |\n| Too many steps for a quick tour | Cut aggressively |\n| First step is content-only | Anchor the first step to a real file or directory |\n| Persona mis...\n\nCodeForge interrogator Socratic prompts (apply only if relevant):\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n- What is the single hardest edge case for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you consulted django-tdd for the patterns it recommends?\n\nProblem:\nWrite a python function to toggle only first and last bits of a given number.\n\nYour solution must satisfy this test:\nassert toggle_F_and_L_bits(10) == 3\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef toggle_F_and_L_bits(n):\n    return (n ^ (n >> 1)) & ((n << 1) - 1)\n```",
+  "extracted_code": "def toggle_F_and_L_bits(n):\n    return (n ^ (n >> 1)) & ((n << 1) - 1)",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp5lvo0a8d\\candidate.py\", line 6, in <module>\n    assert toggle_F_and_L_bits(15) == 6\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 6.435,
+  "eval_count": 35,
+  "done_reason": "stop",
+  "gen_error": null,
+  "mcp": {
+    "session_id": "1c13602291844232",
+    "budget_remaining": 9,
+    "n_citations": 3,
+    "n_questions": 5,
+    "citation_skills": [
+      "documentation-lookup",
+      "article-writing",
+      "code-tour"
+    ],
+    "error": null
+  }
+}

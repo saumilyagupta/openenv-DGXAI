@@ -1,0 +1,16 @@
+{
+  "task_id": 96,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to find the number of divisors of a given integer.\n\nYour solution must satisfy this test:\nassert divisor(15) == 4 \n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef divisor(n):\n    return sum([i for i in range(1, n+1) if n % i == 0])\n```",
+  "extracted_code": "def divisor(n):\n    return sum([i for i in range(1, n+1) if n % i == 0])",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpvr4i9g7g\\candidate.py\", line 4, in <module>\n    assert divisor(15) == 4 \n           ^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 5.626,
+  "eval_count": 33,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

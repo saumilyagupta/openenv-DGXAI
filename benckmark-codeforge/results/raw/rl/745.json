@@ -1,0 +1,37 @@
+{
+  "task_id": 745,
+  "final_passed": true,
+  "first_pass_iter": 0,
+  "iters_used": 1,
+  "max_iters": 3,
+  "best_quality": 1.0,
+  "best_reward": 0.91,
+  "mcp_total_latency_s": 15.02,
+  "iterations": [
+    {
+      "iter_idx": 0,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nReference material:\n\n[1] code-tour\n3. Read and verify anchors\n\nEvery file path and line anchor must be real:\n\nconfirm the file exists\n\nconfirm the line numbers are in range\n\nif using a selection, verify the exact block\n\nif the file is volatile, prefer a pattern-based anchor\n\nNever guess line numbers.\n\n[2] code-tour\n4. Write the `.tour`\n\nWrite to:\n\nKeep the path deterministic and readable.\n\n5. Validate\n\nBefore finishing:\n\nevery referenced path exists\n\nevery line or selection is valid\n\nthe first step is anchored to a real file or directory\n\nthe tour tells a coherent story rather than listing files\n\n[3] cpp-coding-standards\nError Handling (E.*)\n\nKey Rules\n\n| Rule | Summary |\n|------|---------|\n| **E.1** | Develop an error-handling strategy early in a design |\n| **E.2** | Throw an exception to signal that a function can't perform its assigned task |\n| **E.6** | Use RAII to prevent leaks |\n| **E.12** | Use `noexcept` when throwing is impossible or unacceptable |\n| **E.1...\n\nThings to consider:\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n\nProblem:\nWrite a function to find numbers within a given range where every number is divisible by every digit it contains.\n\nYour solution must satisfy this test:\nassert divisible_by_digits(1,22)==[1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 15, 22]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef divisible_by_digits(start, end):\n    return [i for i in range(start, end + 1) if all(int(digit) != 0 and i % int(digit) == 0 for digit in str(i))]\n```",
+      "extracted_code": "def divisible_by_digits(start, end):\n    return [i for i in range(start, end + 1) if all(int(digit) != 0 and i % int(digit) == 0 for digit in str(i))]",
+      "extract_reason": "ok",
+      "passed": true,
+      "sandbox_reason": "pass",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "",
+      "asserts_passed": 3,
+      "asserts_total": 3,
+      "quality": 1.0,
+      "brier": 0.09,
+      "reward": 0.91,
+      "latency_seconds": 5.876,
+      "eval_count": 53,
+      "done_reason": "stop",
+      "kb_skills": [
+        "code-tour",
+        "code-tour",
+        "cpp-coding-standards"
+      ],
+      "questions_count": 5
+    }
+  ]
+}

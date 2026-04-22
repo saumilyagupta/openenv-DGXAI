@@ -1,0 +1,37 @@
+{
+  "task_id": 693,
+  "final_passed": true,
+  "first_pass_iter": 0,
+  "iters_used": 1,
+  "max_iters": 3,
+  "best_quality": 1.0,
+  "best_reward": 0.91,
+  "mcp_total_latency_s": 5.188,
+  "iterations": [
+    {
+      "iter_idx": 0,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nReference material:\n\n[1] cpp-coding-standards\nDO\n\nDON'T\n\nFunctions (F.*)\n\nKey Rules\n\n| Rule | Summary |\n|------|---------|\n| **F.1** | Package meaningful operations as carefully named functions |\n| **F.2** | A function should perform a single logical operation |\n| **F.3** | Keep functions short and simple |\n| **F.4** | If a function might be evaluated at compile time, declare it `constexpr` |...\n\n[2] regex-vs-llm-structured-text\nBest Practices\n\n**Start with regex** — even imperfect regex gives you a baseline to improve\n\n**Use confidence scoring** to programmatically identify what needs LLM help\n\n**Use the cheapest LLM** for validation (Haiku-class models are sufficient)\n\n**Never mutate** parsed items — return new instances from cleaning/validation steps\n\n**TDD works well**...\n\n[3] foundation-models-on-device\nAnti-Patterns to Avoid\n\nCreating sessions without checking `model.availability` first\n\nSending inputs exceeding the 4,096 token context window\n\nAttempting concurrent requests on a single session\n\nUsing `.output` instead of `.content` to access response data\n\nParsing raw string responses when `@Generable` structured output would work\n\nBuilding compl...\n\nThings to consider:\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n\nProblem:\nWrite a function to remove multiple spaces in a string by using regex.\n\nYour solution must satisfy this test:\nassert remove_multiple_spaces('Google      Assistant') == 'Google Assistant'\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\nimport re\n\ndef remove_multiple_spaces(text):\n    return re.sub(r'\\s+', ' ', text)\n```",
+      "extracted_code": "import re\n\ndef remove_multiple_spaces(text):\n    return re.sub(r'\\s+', ' ', text)",
+      "extract_reason": "ok",
+      "passed": true,
+      "sandbox_reason": "pass",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "",
+      "asserts_passed": 3,
+      "asserts_total": 3,
+      "quality": 1.0,
+      "brier": 0.09,
+      "reward": 0.91,
+      "latency_seconds": 3.939,
+      "eval_count": 26,
+      "done_reason": "stop",
+      "kb_skills": [
+        "cpp-coding-standards",
+        "regex-vs-llm-structured-text",
+        "foundation-models-on-device"
+      ],
+      "questions_count": 5
+    }
+  ]
+}

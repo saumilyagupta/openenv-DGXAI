@@ -1,0 +1,16 @@
+{
+  "task_id": 448,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to calculate the sum of perrin numbers.\n\nYour solution must satisfy this test:\nassert cal_sum(9) == 49\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef cal_sum(n):\n    p, q = 3, 2\n    for _ in range(1, n):\n        p, q = q, p + q\n    return p + q\n```",
+  "extracted_code": "def cal_sum(n):\n    p, q = 3, 2\n    for _ in range(1, n):\n        p, q = q, p + q\n    return p + q",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp3enr8mvy\\candidate.py\", line 7, in <module>\n    assert cal_sum(9) == 49\n           ^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 8.119,
+  "eval_count": 48,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

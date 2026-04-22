@@ -1,0 +1,27 @@
+{
+  "task_id": 693,
+  "mode": "with_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nCodeForge KB citations (research material, may or may not apply):\n\n[1] cpp-coding-standards — C++ Coding Standards (C++ Core Guidelines) / Functions (F.*) / Key Rules\nDO\n\nDON'T\n\nFunctions (F.*)\n\nKey Rules\n\n| Rule | Summary |\n|------|---------|\n| **F.1** | Package meaningful operations as carefully named functions |\n| **F.2** | A function should perform a single logical operation |\n| **F.3** | Keep functions short and simple |\n| **F.4** | If a function might be evaluated at compile time, declare it `constexpr` |\n| **F.6** | If your function must not throw, decla...\n\n[2] regex-vs-llm-structured-text — Regex vs LLM for Structured Text Parsing / Best Practices\nBest Practices\n\n**Start with regex** — even imperfect regex gives you a baseline to improve\n\n**Use confidence scoring** to programmatically identify what needs LLM help\n\n**Use the cheapest LLM** for validation (Haiku-class models are sufficient)\n\n**Never mutate** parsed items — return new instances from cleaning/validation steps\n\n**TDD works well** for parsers — write tests for known patterns firs...\n\n[3] foundation-models-on-device — FoundationModels: On-Device LLM (iOS 26) / Anti-Patterns to Avoid\nAnti-Patterns to Avoid\n\nCreating sessions without checking `model.availability` first\n\nSending inputs exceeding the 4,096 token context window\n\nAttempting concurrent requests on a single session\n\nUsing `.output` instead of `.content` to access response data\n\nParsing raw string responses when `@Generable` structured output would work\n\nBuilding complex multi-step logic in a single prompt — break int...\n\nCodeForge interrogator Socratic prompts (apply only if relevant):\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n- What is the single hardest edge case for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you consulted django-tdd for the patterns it recommends?\n\nProblem:\nWrite a function to remove multiple spaces in a string by using regex.\n\nYour solution must satisfy this test:\nassert remove_multiple_spaces('Google      Assistant') == 'Google Assistant'\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\nimport re\n\ndef remove_multiple_spaces(text):\n    return re.sub(r'\\s+', ' ', text)\n```",
+  "extracted_code": "import re\n\ndef remove_multiple_spaces(text):\n    return re.sub(r'\\s+', ' ', text)",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 4.581,
+  "eval_count": 26,
+  "done_reason": "stop",
+  "gen_error": null,
+  "mcp": {
+    "session_id": "f448d2da3b144bda",
+    "budget_remaining": 9,
+    "n_citations": 3,
+    "n_questions": 5,
+    "citation_skills": [
+      "cpp-coding-standards",
+      "regex-vs-llm-structured-text",
+      "foundation-models-on-device"
+    ],
+    "error": null
+  }
+}

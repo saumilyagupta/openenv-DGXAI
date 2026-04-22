@@ -1,0 +1,16 @@
+{
+  "task_id": 160,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find x and y that satisfies ax + by = n.\n\nYour solution must satisfy this test:\nassert solution(2, 3, 7) == ('x = ', 2, ', y = ', 1)\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef solution(a, b, n):\n    x = (n - b) // a\n    y = n - a * x\n    return f\"x = {x}, y = {y}\"\n```",
+  "extracted_code": "def solution(a, b, n):\n    x = (n - b) // a\n    y = n - a * x\n    return f\"x = {x}, y = {y}\"",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmprvn1c8t5\\candidate.py\", line 6, in <module>\n    assert solution(2, 3, 7) == ('x = ', 2, ', y = ', 1)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 7.258,
+  "eval_count": 46,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

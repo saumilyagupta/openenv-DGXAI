@@ -1,0 +1,16 @@
+{
+  "task_id": 379,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find the surface area of a cuboid.\n\nYour solution must satisfy this test:\nassert surfacearea_cuboid(1,2,3)==22\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef surfacearea_cuboid(a,b,c):\n    return 2*(a*b+a*c+b*c)\n```",
+  "extracted_code": "def surfacearea_cuboid(a,b,c):\n    return 2*(a*b+a*c+b*c)",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 7.195,
+  "eval_count": 27,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

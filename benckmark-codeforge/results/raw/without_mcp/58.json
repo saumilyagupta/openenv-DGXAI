@@ -1,0 +1,16 @@
+{
+  "task_id": 58,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to check whether the given two integers have opposite sign or not.\n\nYour solution must satisfy this test:\nassert opposite_Signs(1,-2) == True\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef opposite_Signs(a, b):\n    return (a < 0) != (b < 0)\n```",
+  "extracted_code": "def opposite_Signs(a, b):\n    return (a < 0) != (b < 0)",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 7.553,
+  "eval_count": 29,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

@@ -1,0 +1,16 @@
+{
+  "task_id": 757,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to count the pairs of reverse strings in the given string list.\n\nYour solution must satisfy this test:\nassert count_reverse_pairs([\"julia\", \"best\", \"tseb\", \"for\", \"ailuj\"])== '2'\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef count_reverse_pairs(lst):\n    return sum(1 for i in range(len(lst)) for j in range(i+1, len(lst)) if lst[i] == lst[j][::-1])\n```",
+  "extracted_code": "def count_reverse_pairs(lst):\n    return sum(1 for i in range(len(lst)) for j in range(i+1, len(lst)) if lst[i] == lst[j][::-1])",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpo8m92_rc\\candidate.py\", line 4, in <module>\n    assert count_reverse_pairs([\"julia\", \"best\", \"tseb\", \"for\", \"ailuj\"])== '2'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 8.684,
+  "eval_count": 45,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

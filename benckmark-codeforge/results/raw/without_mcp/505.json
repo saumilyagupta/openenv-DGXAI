@@ -1,0 +1,16 @@
+{
+  "task_id": 505,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to move all zeroes to the end of the given array.\n\nYour solution must satisfy this test:\nassert re_order([6, 0, 8, 2, 3, 0, 4, 0, 1]) == [6, 8, 2, 3, 4, 1, 0, 0, 0]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef re_order(arr):\n    i = 0\n    for j in range(len(arr)):\n        if arr[j] != 0:\n            arr[i], arr[j] = arr[j], arr[i]\n            i += 1\n```",
+  "extracted_code": "def re_order(arr):\n    i = 0\n    for j in range(len(arr)):\n        if arr[j] != 0:\n            arr[i], arr[j] = arr[j], arr[i]\n            i += 1",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpkv1dekso\\candidate.py\", line 8, in <module>\n    assert re_order([6, 0, 8, 2, 3, 0, 4, 0, 1]) == [6, 8, 2, 3, 4, 1, 0, 0, 0]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 8.819,
+  "eval_count": 53,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

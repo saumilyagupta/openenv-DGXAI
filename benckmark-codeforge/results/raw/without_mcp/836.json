@@ -1,0 +1,16 @@
+{
+  "task_id": 836,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find length of the subarray having maximum sum.\n\nYour solution must satisfy this test:\nassert max_sub_array_sum([-2, -3, 4, -1, -2, 1, 5, -3],8) == 5\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef max_sub_array_sum(arr, n):\n    max_so_far = arr[0]\n    curr_max = arr[0]\n\n    for i in range(1, n):\n        curr_max = max(arr[i], curr_max + arr[i])\n        max_so_far = max(max_so_far, curr_max)\n\n    return max_so_far\n```",
+  "extracted_code": "def max_sub_array_sum(arr, n):\n    max_so_far = arr[0]\n    curr_max = arr[0]\n\n    for i in range(1, n):\n        curr_max = max(arr[i], curr_max + arr[i])\n        max_so_far = max(max_so_far, curr_max)\n\n    return max_so_far",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp4n176kxe\\candidate.py\", line 11, in <module>\n    assert max_sub_array_sum([-2, -3, 4, -1, -2, 1, 5, -3],8) == 5\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 11.088,
+  "eval_count": 74,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

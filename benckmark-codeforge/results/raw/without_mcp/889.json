@@ -1,0 +1,16 @@
+{
+  "task_id": 889,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to reverse each list in a given list of lists.\n\nYour solution must satisfy this test:\nassert reverse_list_lists([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]])==[[4, 3, 2, 1], [8, 7, 6, 5], [12, 11, 10, 9], [16, 15, 14, 13]]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef reverse_list_lists(lists):\n    return [[i[::-1] for i in sublist] for sublist in lists]\n```",
+  "extracted_code": "def reverse_list_lists(lists):\n    return [[i[::-1] for i in sublist] for sublist in lists]",
+  "passed": false,
+  "reason": "runtime_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpyvff8biy\\candidate.py\", line 4, in <module>\n    assert reverse_list_lists([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]])==[[4, 3, 2, 1], [8, 7, 6, 5], [12, 11, 10, 9], [16, 15, 14, 13]]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpyvff8biy\\candidate.py\", line 2, in reverse_list_lists\n    return [[i[::-1] for i in sublist] for sublist in lists]\n             ~^^^^^^\nTypeError: 'int' object is not subscriptable\n",
+  "latency_seconds": 6.455,
+  "eval_count": 29,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

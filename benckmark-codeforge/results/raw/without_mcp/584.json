@@ -1,0 +1,16 @@
+{
+  "task_id": 584,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find all adverbs and their positions in a given sentence by using regex.\n\nYour solution must satisfy this test:\nassert find_adverbs(\"Clearly, he has no excuse for such behavior.\") == '0-7: Clearly'\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\nimport re\n\ndef find_adverbs(sentence):\n    adverbs = re.findall(r'\\b\\w+ly\\b', sentence)\n    positions = [sentence.find(adverb) for adv in adverbs]\n    return f'{positions[0]}-{positions[-1]}: {adverbs[0]}' if adverbs else 'No adverbs found'\n```",
+  "extracted_code": "import re\n\ndef find_adverbs(sentence):\n    adverbs = re.findall(r'\\b\\w+ly\\b', sentence)\n    positions = [sentence.find(adverb) for adv in adverbs]\n    return f'{positions[0]}-{positions[-1]}: {adverbs[0]}' if adverbs else 'No adverbs found'",
+  "passed": false,
+  "reason": "name_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmplrcjfzcg\\candidate.py\", line 8, in <module>\n    assert find_adverbs(\"Clearly, he has no excuse for such behavior.\") == '0-7: Clearly'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmplrcjfzcg\\candidate.py\", line 5, in find_adverbs\n    positions = [sentence.find(adverb) for adv in adverbs]\n                               ^^^^^^\nNameError: name 'adverb' is not defined. Did you mean: 'adverbs'?\n",
+  "latency_seconds": 8.237,
+  "eval_count": 77,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

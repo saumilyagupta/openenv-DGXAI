@@ -1,0 +1,87 @@
+{
+  "task_id": 780,
+  "final_passed": false,
+  "first_pass_iter": null,
+  "iters_used": 3,
+  "max_iters": 3,
+  "best_quality": 0.0,
+  "best_reward": 0.0,
+  "mcp_total_latency_s": 29.875,
+  "iterations": [
+    {
+      "iter_idx": 0,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nReference material:\n\n[1] python-patterns\nData Classes with Validation\n\nNamed Tuples\n\nDecorators\n\nFunction Decorators\n\nParameterized Decorators\n\n[2] lead-intelligence\nWhen to Activate\n\nUser wants to find leads or prospects in a specific industry\n\nBuilding an outreach list for partnerships, sales, or fundraising\n\nResearching who to reach out to and the best path to reach them\n\nUser says \"find leads\", \"outreach list\", \"who should I reach out to\", \"warm intros\"\n\nNeeds to score or rank a list of contacts by relevanc...\n\n[3] rust-testing\nHow It Works\n\n**Identify target code** — Find the function, trait, or module to test\n\n**Write a test** — Use `#[test]` in a `#[cfg(test)]` module, rstest for parameterized tests, or proptest for property-based tests\n\n**Mock dependencies** — Use mockall to isolate the unit under test\n\n**Run tests (RED)** — Verify the test fails with the expected err...\n\nThings to consider:\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n\nProblem:\nWrite a function to find the combinations of sums with tuples in the given tuple list.\n\nYour solution must satisfy this test:\nassert find_combinations([(2, 4), (6, 7), (5, 1), (6, 10)]) == [(8, 11), (7, 5), (8, 14), (11, 8), (12, 17), (11, 11)]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef find_combinations(tuples_list):\n    result = []\n    for i in range(len(tuples_list)):\n        for j in range(i + 1, len(tuples_list)):\n            for k in range(j + 1, len(tuples_list)):\n                if tuples_list[i][0] + tuples_list[j][0] + tuples_list[k][0] == 8:\n                    result.append((tuples_list[i], tuples_list[j], tuples_list[k]))\n    return result\n```",
+      "extracted_code": "def find_combinations(tuples_list):\n    result = []\n    for i in range(len(tuples_list)):\n        for j in range(i + 1, len(tuples_list)):\n            for k in range(j + 1, len(tuples_list)):\n                if tuples_list[i][0] + tuples_list[j][0] + tuples_list[k][0] == 8:\n                    result.append((tuples_list[i], tuples_list[j], tuples_list[k]))\n    return result",
+      "extract_reason": "ok",
+      "passed": false,
+      "sandbox_reason": "assertion_error",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp1hcte7jc\\candidate.py\", line 10, in <module>\n    assert find_combinations([(2, 4), (6, 7), (5, 1), (6, 10)]) == [(8, 11), (7, 5), (8, 14), (11, 8), (12, 17), (11, 11)]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "asserts_passed": 0,
+      "asserts_total": 3,
+      "quality": 0.0,
+      "brier": 0.49,
+      "reward": 0.0,
+      "latency_seconds": 10.267,
+      "eval_count": 104,
+      "done_reason": "stop",
+      "kb_skills": [
+        "python-patterns",
+        "lead-intelligence",
+        "rust-testing"
+      ],
+      "questions_count": 5
+    },
+    {
+      "iter_idx": 1,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nYour previous attempt (iteration 1) FAILED the hidden tests. Fix the bug. Do not repeat the same mistake.\n\nReference material:\n\n[1] gateguard\nEvidence\n\nTwo independent A/B tests, identical agents, same task:\n\n| Task | Gated | Ungated | Gap |\n| --- | --- | --- | --- |\n| Analytics module | 8.0/10 | 6.5/10 | +1.5 |\n| Webhook validator | 10.0/10 | 7.0/10 | +3.0 |\n| **Average** | **9.0** | **6....\n\n[2] laravel-plugin-discovery\nMCP Tools\n\nThe LaraPlugins MCP provides two primary tools:\n\nSearchPluginTool\n\nSearch packages by keyword, health score, vendor, and version compatibility.\n\n**Parameters:**\n\n`text_search` (string, optional): Keyword to search (e.g. \"permission\", \"admi...\n\n[3] cpp-coding-standards\nCross-Cutting Principles\n\nThese themes recur across the entire guidelines and form the foundation:\n\n**RAII everywhere** (P.8, R.1, E.6, CP.20): Bind resource lifetime to object lifetime\n\n**Immutability by default** (P.10, Con.1-5, ES.25): Start with...\n\nProblem:\nWrite a function to find the combinations of sums with tuples in the given tuple list.\n\nExpected to satisfy:\nassert find_combinations([(2, 4), (6, 7), (5, 1), (6, 10)]) == [(8, 11), (7, 5), (8, 14), (11, 8), (12, 17), (11, 11)]\n\nPrevious code:\n```python\ndef find_combinations(tuples_list):\n    result = []\n    for i in range(len(tuples_list)):\n        for j in range(i + 1, len(tuples_list)):\n            for k in range(j + 1, len(tuples_list)):\n                if tuples_list[i][0] + tuples_list[j][0] + tuples_list[k][0] == 8:\n                    result.append((tuples_list[i], tuples_list[j], tuples_list[k]))\n    return result\n```\n\nSandbox error:\nTraceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp1hcte7jc\\candidate.py\", line 10, in <module>\n    assert find_combinations([(2, 4), (6, 7), (5, 1), (6, 10)]) == [(8, 11), (7, 5), (8, 14), (11, 8), (12, 17), (11, 11)]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n\nAnalyze the error, identify the root cause, then rewrite.\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef find_combinations(tuples_list):\n    result = []\n    for i in range(len(tuples_list)):\n        for j in range(i + 1, len(tuples_list)):\n            for k in range(j + 1, len(tuples_list)):\n                if tuples_list[i][0] + tuples_list[j][0] + tuples_list[k][0] == 8:\n                    result.append((tuples_list[i], tuples_list[j], tuples_list[k]))\n    return result\n```",
+      "extracted_code": "def find_combinations(tuples_list):\n    result = []\n    for i in range(len(tuples_list)):\n        for j in range(i + 1, len(tuples_list)):\n            for k in range(j + 1, len(tuples_list)):\n                if tuples_list[i][0] + tuples_list[j][0] + tuples_list[k][0] == 8:\n                    result.append((tuples_list[i], tuples_list[j], tuples_list[k]))\n    return result",
+      "extract_reason": "ok",
+      "passed": false,
+      "sandbox_reason": "assertion_error",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp3up0mu_k\\candidate.py\", line 10, in <module>\n    assert find_combinations([(2, 4), (6, 7), (5, 1), (6, 10)]) == [(8, 11), (7, 5), (8, 14), (11, 8), (12, 17), (11, 11)]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "asserts_passed": 0,
+      "asserts_total": 3,
+      "quality": 0.0,
+      "brier": 0.49,
+      "reward": 0.0,
+      "latency_seconds": 10.325,
+      "eval_count": 104,
+      "done_reason": "stop",
+      "kb_skills": [
+        "gateguard",
+        "laravel-plugin-discovery",
+        "cpp-coding-standards"
+      ],
+      "questions_count": 0
+    },
+    {
+      "iter_idx": 2,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nYour previous attempt (iteration 2) FAILED the hidden tests. Fix the bug. Do not repeat the same mistake.\n\nReference material:\n\n[1] gateguard\nEvidence\n\nTwo independent A/B tests, identical agents, same task:\n\n| Task | Gated | Ungated | Gap |\n| --- | --- | --- | --- |\n| Analytics module | 8.0/10 | 6.5/10 | +1.5 |\n| Webhook validator | 10.0/10 | 7.0/10 | +3.0 |\n| **Average** | **9.0** | **6....\n\n[2] laravel-plugin-discovery\nMCP Tools\n\nThe LaraPlugins MCP provides two primary tools:\n\nSearchPluginTool\n\nSearch packages by keyword, health score, vendor, and version compatibility.\n\n**Parameters:**\n\n`text_search` (string, optional): Keyword to search (e.g. \"permission\", \"admi...\n\n[3] cpp-coding-standards\nCross-Cutting Principles\n\nThese themes recur across the entire guidelines and form the foundation:\n\n**RAII everywhere** (P.8, R.1, E.6, CP.20): Bind resource lifetime to object lifetime\n\n**Immutability by default** (P.10, Con.1-5, ES.25): Start with...\n\nProblem:\nWrite a function to find the combinations of sums with tuples in the given tuple list.\n\nExpected to satisfy:\nassert find_combinations([(2, 4), (6, 7), (5, 1), (6, 10)]) == [(8, 11), (7, 5), (8, 14), (11, 8), (12, 17), (11, 11)]\n\nPrevious code:\n```python\ndef find_combinations(tuples_list):\n    result = []\n    for i in range(len(tuples_list)):\n        for j in range(i + 1, len(tuples_list)):\n            for k in range(j + 1, len(tuples_list)):\n                if tuples_list[i][0] + tuples_list[j][0] + tuples_list[k][0] == 8:\n                    result.append((tuples_list[i], tuples_list[j], tuples_list[k]))\n    return result\n```\n\nSandbox error:\nTraceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp3up0mu_k\\candidate.py\", line 10, in <module>\n    assert find_combinations([(2, 4), (6, 7), (5, 1), (6, 10)]) == [(8, 11), (7, 5), (8, 14), (11, 8), (12, 17), (11, 11)]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n\nAnalyze the error, identify the root cause, then rewrite.\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef find_combinations(tuples_list):\n    result = []\n    for i in range(len(tuples_list)):\n        for j in range(i + 1, len(tuples_list)):\n            for k in range(j + 1, len(tuples_list)):\n                if tuples_list[i][0] + tuples_list[j][0] + tuples_list[k][0] == 8:\n                    result.append((tuples_list[i], tuples_list[j], tuples_list[k]))\n    return result\n```",
+      "extracted_code": "def find_combinations(tuples_list):\n    result = []\n    for i in range(len(tuples_list)):\n        for j in range(i + 1, len(tuples_list)):\n            for k in range(j + 1, len(tuples_list)):\n                if tuples_list[i][0] + tuples_list[j][0] + tuples_list[k][0] == 8:\n                    result.append((tuples_list[i], tuples_list[j], tuples_list[k]))\n    return result",
+      "extract_reason": "ok",
+      "passed": false,
+      "sandbox_reason": "assertion_error",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpynzamqnt\\candidate.py\", line 10, in <module>\n    assert find_combinations([(2, 4), (6, 7), (5, 1), (6, 10)]) == [(8, 11), (7, 5), (8, 14), (11, 8), (12, 17), (11, 11)]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "asserts_passed": 0,
+      "asserts_total": 3,
+      "quality": 0.0,
+      "brier": 0.49,
+      "reward": 0.0,
+      "latency_seconds": 8.647,
+      "eval_count": 104,
+      "done_reason": "stop",
+      "kb_skills": [
+        "gateguard",
+        "laravel-plugin-discovery",
+        "cpp-coding-standards"
+      ],
+      "questions_count": 0
+    }
+  ]
+}

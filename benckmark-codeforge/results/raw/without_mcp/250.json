@@ -1,0 +1,16 @@
+{
+  "task_id": 250,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to count the occcurences of an element in a tuple.\n\nYour solution must satisfy this test:\nassert count_X((10, 8, 5, 2, 10, 15, 10, 8, 5, 8, 8, 2),4) == 0\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef count_X(tup,x):\n    return tup.count(x)\n```",
+  "extracted_code": "def count_X(tup,x):\n    return tup.count(x)",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 9.175,
+  "eval_count": 18,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

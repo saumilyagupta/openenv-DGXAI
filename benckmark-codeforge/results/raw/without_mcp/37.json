@@ -1,0 +1,16 @@
+{
+  "task_id": 37,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to sort a given mixed list of integers and strings.\n\nYour solution must satisfy this test:\nassert sort_mixed_list([19,'red',12,'green','blue', 10,'white','green',1])==[1, 10, 12, 19, 'blue', 'green', 'green', 'red', 'white']\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef sort_mixed_list(mixed_list):\n    return sorted(mixed_list)\n```",
+  "extracted_code": "def sort_mixed_list(mixed_list):\n    return sorted(mixed_list)",
+  "passed": false,
+  "reason": "runtime_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpdr9riq81\\candidate.py\", line 4, in <module>\n    assert sort_mixed_list([19,'red',12,'green','blue', 10,'white','green',1])==[1, 10, 12, 19, 'blue', 'green', 'green', 'red', 'white']\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpdr9riq81\\candidate.py\", line 2, in sort_mixed_list\n    return sorted(mixed_list)\n           ^^^^^^^^^^^^^^^^^^\nTypeError: '<' not supported between instances of 'str' and 'int'\n",
+  "latency_seconds": 6.221,
+  "eval_count": 21,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

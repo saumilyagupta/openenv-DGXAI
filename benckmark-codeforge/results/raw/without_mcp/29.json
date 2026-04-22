@@ -1,0 +1,16 @@
+{
+  "task_id": 29,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to find the element occurring odd number of times.\n\nYour solution must satisfy this test:\nassert get_Odd_Occurrence([1,2,3,1,2,3,1],7) == 1\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef get_Odd_Occurrence(arr,n):\n    for i in range(n):\n        count = arr.count(arr[i])\n        if count % 2 != 0:\n            return arr[i]\n```",
+  "extracted_code": "def get_Odd_Occurrence(arr,n):\n    for i in range(n):\n        count = arr.count(arr[i])\n        if count % 2 != 0:\n            return arr[i]",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 6.706,
+  "eval_count": 45,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

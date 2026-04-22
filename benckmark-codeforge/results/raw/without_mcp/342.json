@@ -1,0 +1,16 @@
+{
+  "task_id": 342,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find the smallest range that includes at-least one element from each of the given arrays.\n\nYour solution must satisfy this test:\nassert find_minimum_range([[3, 6, 8, 10, 15], [1, 5, 12], [4, 8, 15, 16], [2, 6]]) == (4, 6)\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef find_minimum_range(arrays):\n    min_val = float('inf')\n    max_val = float('-inf')\n\n    for arr in arrays:\n        min_val = min(min_val, min(arr))\n        max_val = max(max_val, max(arr))\n\n    return (min_val, max_val)\n```",
+  "extracted_code": "def find_minimum_range(arrays):\n    min_val = float('inf')\n    max_val = float('-inf')\n\n    for arr in arrays:\n        min_val = min(min_val, min(arr))\n        max_val = max(max_val, max(arr))\n\n    return (min_val, max_val)",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp969oqy_1\\candidate.py\", line 11, in <module>\n    assert find_minimum_range([[3, 6, 8, 10, 15], [1, 5, 12], [4, 8, 15, 16], [2, 6]]) == (4, 6)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 6.076,
+  "eval_count": 65,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

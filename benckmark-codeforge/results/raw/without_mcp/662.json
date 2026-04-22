@@ -1,0 +1,16 @@
+{
+  "task_id": 662,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to sort a list in a dictionary.\n\nYour solution must satisfy this test:\nassert sorted_dict({'n1': [2, 3, 1], 'n2': [5, 1, 2], 'n3': [3, 2, 4]})=={'n1': [1, 2, 3], 'n2': [1, 2, 5], 'n3': [2, 3, 4]}\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef sorted_dict(d):\n    return {k: sorted(v) for k, v in d.items()}\n```",
+  "extracted_code": "def sorted_dict(d):\n    return {k: sorted(v) for k, v in d.items()}",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 9.974,
+  "eval_count": 26,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

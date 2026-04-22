@@ -1,0 +1,16 @@
+{
+  "task_id": 617,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to check for the number of jumps required of given length to reach a point of form (d, 0) from origin in a 2d plane.\n\nYour solution must satisfy this test:\nassert min_Jumps(3,4,11)==3.5\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef min_Jumps(x,y,d):\n    return (d-x)/y\n```",
+  "extracted_code": "def min_Jumps(x,y,d):\n    return (d-x)/y",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpmyzeuk0l\\candidate.py\", line 4, in <module>\n    assert min_Jumps(3,4,11)==3.5\n           ^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 4.496,
+  "eval_count": 21,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

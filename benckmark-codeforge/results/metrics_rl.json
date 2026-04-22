@@ -1,0 +1,16 @@
+{
+  "n": 200,
+  "first_try_pass_at_1": 0.42,
+  "final_pass_at_k": 0.45,
+  "mean_iters_to_pass": 1.09,
+  "mean_best_reward": 0.4759,
+  "mean_best_quality": 0.52,
+  "iter_distribution": {
+    "1": 84,
+    "3": 112,
+    "2": 4
+  },
+  "model": "qwen2.5-coder:1.5b",
+  "max_iters": 3,
+  "dataset_sha256": "616cbea1e7b2123d6889382cccacb6ba29481fd873d2e716fddcaf1e7f3e20de"
+}

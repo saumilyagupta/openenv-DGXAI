@@ -1,0 +1,87 @@
+{
+  "task_id": 722,
+  "final_passed": false,
+  "first_pass_iter": null,
+  "iters_used": 3,
+  "max_iters": 3,
+  "best_quality": 0.0,
+  "best_reward": 0.0,
+  "mcp_total_latency_s": 46.529,
+  "iterations": [
+    {
+      "iter_idx": 0,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nReference material:\n\n[1] cpp-coding-standards\nRule of Zero\n\nRule of Five\n\nClass Hierarchy\n\nAnti-Patterns\n\nCalling virtual functions in constructors/destructors (C.82)\n\nUsing `memset`/`memcpy` on non-trivial types (C.90)\n\nProviding different default arguments for virtual function and overrider (C.140)\n\nMaking data members `const` or references, which suppresses move/copy (C.12)\n\n[2] frontend-slides\n5. Enforce Viewport Fit\n\nTreat this as a hard gate.\n\nRules:\n\nevery `.slide` must use `height: 100vh; height: 100dvh; overflow: hidden;`\n\nall type and spacing must scale with `clamp()`\n\nwhen content does not fit, split into multiple slides\n\nnever solve overflow by shrinking text below readable sizes\n\nnever allow scrollbars inside a slide\n\nUse the de...\n\n[3] swift-actor-persistence\nAnti-Patterns to Avoid\n\nUsing `DispatchQueue` or `NSLock` instead of actors for new Swift concurrency code\n\nExposing the internal cache dictionary to external callers\n\nMaking the file URL configurable without validation\n\nForgetting that all actor method calls are `await` — callers must handle async context\n\nUsing `nonisolated` to bypass actor isola...\n\nThings to consider:\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n\nProblem:\nWrite a function to filter the height and width of students which are stored in a dictionary.\n\nYour solution must satisfy this test:\nassert filter_data({'Cierra Vega': (6.2, 70), 'Alden Cantrell': (5.9, 65), 'Kierra Gentry': (6.0, 68), 'Pierre Cox': (5.8, 66)},6.0,70)=={'Cierra Vega': (6.2, 70)}\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef filter_data(students, height, width):\n    return {name: (height, width) for name, (h, w) in students.items() if h >= height and w >= width}\n```",
+      "extracted_code": "def filter_data(students, height, width):\n    return {name: (height, width) for name, (h, w) in students.items() if h >= height and w >= width}",
+      "extract_reason": "ok",
+      "passed": false,
+      "sandbox_reason": "assertion_error",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp6brz2wf3\\candidate.py\", line 4, in <module>\n    assert filter_data({'Cierra Vega': (6.2, 70), 'Alden Cantrell': (5.9, 65), 'Kierra Gentry': (6.0, 68), 'Pierre Cox': (5.8, 66)},6.0,70)=={'Cierra Vega': (6.2, 70)}\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "asserts_passed": 0,
+      "asserts_total": 3,
+      "quality": 0.0,
+      "brier": 0.49,
+      "reward": 0.0,
+      "latency_seconds": 6.167,
+      "eval_count": 46,
+      "done_reason": "stop",
+      "kb_skills": [
+        "cpp-coding-standards",
+        "frontend-slides",
+        "swift-actor-persistence"
+      ],
+      "questions_count": 5
+    },
+    {
+      "iter_idx": 1,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nYour previous attempt (iteration 1) FAILED the hidden tests. Fix the bug. Do not repeat the same mistake.\n\nReference material:\n\n[1] quality-nonconformance\nExamples\n\n**Incoming inspection failure**: A lot of 10,000 molded components fails AQL sampling at Level II. Defect is a dimensional deviation of +0.15mm on a critical-to-function feature. Walk through containment, supplier notification, root cause i...\n\n[2] laravel-plugin-discovery\nMCP Tools\n\nThe LaraPlugins MCP provides two primary tools:\n\nSearchPluginTool\n\nSearch packages by keyword, health score, vendor, and version compatibility.\n\n**Parameters:**\n\n`text_search` (string, optional): Keyword to search (e.g. \"permission\", \"admi...\n\n[3] code-tour\n4. Write the `.tour`\n\nWrite to:\n\nKeep the path deterministic and readable.\n\n5. Validate\n\nBefore finishing:\n\nevery referenced path exists\n\nevery line or selection is valid\n\nthe first step is anchored to a real file or directory\n\nthe tour tells a coher...\n\nProblem:\nWrite a function to filter the height and width of students which are stored in a dictionary.\n\nExpected to satisfy:\nassert filter_data({'Cierra Vega': (6.2, 70), 'Alden Cantrell': (5.9, 65), 'Kierra Gentry': (6.0, 68), 'Pierre Cox': (5.8, 66)},6.0,70)=={'Cierra Vega': (6.2, 70)}\n\nPrevious code:\n```python\ndef filter_data(students, height, width):\n    return {name: (height, width) for name, (h, w) in students.items() if h >= height and w >= width}\n```\n\nSandbox error:\nTraceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp6brz2wf3\\candidate.py\", line 4, in <module>\n    assert filter_data({'Cierra Vega': (6.2, 70), 'Alden Cantrell': (5.9, 65), 'Kierra Gentry': (6.0, 68), 'Pierre Cox': (5.8, 66)},6.0,70)=={'Cierra Vega': (6.2, 70)}\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n\nAnalyze the error, identify the root cause, then rewrite.\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef filter_data(students, height, width):\n    return {name: (height, width) for name, (h, w) in students.items() if h >= height and w >= width}\n```",
+      "extracted_code": "def filter_data(students, height, width):\n    return {name: (height, width) for name, (h, w) in students.items() if h >= height and w >= width}",
+      "extract_reason": "ok",
+      "passed": false,
+      "sandbox_reason": "assertion_error",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmplaue5hno\\candidate.py\", line 4, in <module>\n    assert filter_data({'Cierra Vega': (6.2, 70), 'Alden Cantrell': (5.9, 65), 'Kierra Gentry': (6.0, 68), 'Pierre Cox': (5.8, 66)},6.0,70)=={'Cierra Vega': (6.2, 70)}\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "asserts_passed": 0,
+      "asserts_total": 3,
+      "quality": 0.0,
+      "brier": 0.49,
+      "reward": 0.0,
+      "latency_seconds": 8.217,
+      "eval_count": 46,
+      "done_reason": "stop",
+      "kb_skills": [
+        "quality-nonconformance",
+        "laravel-plugin-discovery",
+        "code-tour"
+      ],
+      "questions_count": 0
+    },
+    {
+      "iter_idx": 2,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nYour previous attempt (iteration 2) FAILED the hidden tests. Fix the bug. Do not repeat the same mistake.\n\nReference material:\n\n[1] quality-nonconformance\nExamples\n\n**Incoming inspection failure**: A lot of 10,000 molded components fails AQL sampling at Level II. Defect is a dimensional deviation of +0.15mm on a critical-to-function feature. Walk through containment, supplier notification, root cause i...\n\n[2] laravel-plugin-discovery\nMCP Tools\n\nThe LaraPlugins MCP provides two primary tools:\n\nSearchPluginTool\n\nSearch packages by keyword, health score, vendor, and version compatibility.\n\n**Parameters:**\n\n`text_search` (string, optional): Keyword to search (e.g. \"permission\", \"admi...\n\n[3] code-tour\n4. Write the `.tour`\n\nWrite to:\n\nKeep the path deterministic and readable.\n\n5. Validate\n\nBefore finishing:\n\nevery referenced path exists\n\nevery line or selection is valid\n\nthe first step is anchored to a real file or directory\n\nthe tour tells a coher...\n\nProblem:\nWrite a function to filter the height and width of students which are stored in a dictionary.\n\nExpected to satisfy:\nassert filter_data({'Cierra Vega': (6.2, 70), 'Alden Cantrell': (5.9, 65), 'Kierra Gentry': (6.0, 68), 'Pierre Cox': (5.8, 66)},6.0,70)=={'Cierra Vega': (6.2, 70)}\n\nPrevious code:\n```python\ndef filter_data(students, height, width):\n    return {name: (height, width) for name, (h, w) in students.items() if h >= height and w >= width}\n```\n\nSandbox error:\nTraceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmplaue5hno\\candidate.py\", line 4, in <module>\n    assert filter_data({'Cierra Vega': (6.2, 70), 'Alden Cantrell': (5.9, 65), 'Kierra Gentry': (6.0, 68), 'Pierre Cox': (5.8, 66)},6.0,70)=={'Cierra Vega': (6.2, 70)}\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n\nAnalyze the error, identify the root cause, then rewrite.\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef filter_data(students, height, width):\n    return {name: (height, width) for name, (h, w) in students.items() if h >= height and w >= width}\n```",
+      "extracted_code": "def filter_data(students, height, width):\n    return {name: (height, width) for name, (h, w) in students.items() if h >= height and w >= width}",
+      "extract_reason": "ok",
+      "passed": false,
+      "sandbox_reason": "assertion_error",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp6232mj6u\\candidate.py\", line 4, in <module>\n    assert filter_data({'Cierra Vega': (6.2, 70), 'Alden Cantrell': (5.9, 65), 'Kierra Gentry': (6.0, 68), 'Pierre Cox': (5.8, 66)},6.0,70)=={'Cierra Vega': (6.2, 70)}\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "asserts_passed": 0,
+      "asserts_total": 3,
+      "quality": 0.0,
+      "brier": 0.49,
+      "reward": 0.0,
+      "latency_seconds": 7.053,
+      "eval_count": 46,
+      "done_reason": "stop",
+      "kb_skills": [
+        "quality-nonconformance",
+        "laravel-plugin-discovery",
+        "code-tour"
+      ],
+      "questions_count": 0
+    }
+  ]
+}

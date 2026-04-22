@@ -1,0 +1,16 @@
+{
+  "task_id": 156,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to convert a tuple of string values to a tuple of integer values.\n\nYour solution must satisfy this test:\nassert tuple_int_str((('333', '33'), ('1416', '55')))==((333, 33), (1416, 55))\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ntuple_int_str = lambda t: tuple(map(int, map(str, t)))\n```",
+  "extracted_code": "tuple_int_str = lambda t: tuple(map(int, map(str, t)))",
+  "passed": false,
+  "reason": "runtime_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp68du8osa\\candidate.py\", line 3, in <module>\n    assert tuple_int_str((('333', '33'), ('1416', '55')))==((333, 33), (1416, 55))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp68du8osa\\candidate.py\", line 1, in <lambda>\n    tuple_int_str = lambda t: tuple(map(int, map(str, t)))\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nValueError: invalid literal for int() with base 10: \"('333', '33')\"\n",
+  "latency_seconds": 11.022,
+  "eval_count": 21,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

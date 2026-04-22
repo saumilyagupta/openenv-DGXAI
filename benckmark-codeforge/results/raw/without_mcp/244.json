@@ -1,0 +1,16 @@
+{
+  "task_id": 244,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to find the next perfect square greater than a given number.\n\nYour solution must satisfy this test:\nassert next_Perfect_Square(35) == 36\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef next_Perfect_Square(n):\n    return (int(n**0.5)+1)**2\n```",
+  "extracted_code": "def next_Perfect_Square(n):\n    return (int(n**0.5)+1)**2",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 7.239,
+  "eval_count": 27,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

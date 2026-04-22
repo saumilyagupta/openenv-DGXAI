@@ -1,0 +1,16 @@
+{
+  "task_id": 56,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to check if a given number is one less than twice its reverse.\n\nYour solution must satisfy this test:\nassert check(70) == False\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef check(n):\n    return n + 1 == int(str(n)[::-1]) * 2\n```",
+  "extracted_code": "def check(n):\n    return n + 1 == int(str(n)[::-1]) * 2",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 6.576,
+  "eval_count": 27,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

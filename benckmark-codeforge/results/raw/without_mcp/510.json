@@ -1,0 +1,16 @@
+{
+  "task_id": 510,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find the number of subsequences having product smaller than k for the given non negative array.\n\nYour solution must satisfy this test:\nassert no_of_subsequences([1,2,3,4], 10) == 11\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef no_of_subsequences(arr, k):\n    return sum(sum(i < j for i in range(len(arr)) for j in range(i + 1, len(arr))) // 2\n```",
+  "extracted_code": "def no_of_subsequences(arr, k):\n    return sum(sum(i < j for i in range(len(arr)) for j in range(i + 1, len(arr))) // 2",
+  "passed": false,
+  "reason": "syntax_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 8.497,
+  "eval_count": 44,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

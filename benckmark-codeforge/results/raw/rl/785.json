@@ -1,0 +1,37 @@
+{
+  "task_id": 785,
+  "final_passed": true,
+  "first_pass_iter": 0,
+  "iters_used": 1,
+  "max_iters": 3,
+  "best_quality": 1.0,
+  "best_reward": 0.91,
+  "mcp_total_latency_s": 4.987,
+  "iterations": [
+    {
+      "iter_idx": 0,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nReference material:\n\n[1] fal-ai-media\nImage-to-Video\n\nStart from an existing image:\n\nVideo Parameters\n\n| Param | Type | Options | Notes |\n|-------|------|---------|-------|\n| `prompt` | string | required | Describe the video |\n| `duration` | string | `\"5s\"`, `\"10s\"` | Video length |\n| `aspect_ratio` | string | `\"16:9\"`, `\"9:16\"`, `\"1:1\"` | Frame ratio |\n| `seed` | number | any integer...\n\n[2] fal-ai-media\nCommon Image Parameters\n\n| Param | Type | Options | Notes |\n|-------|------|---------|-------|\n| `prompt` | string | required | Describe what you want |\n| `image_size` | string | `square`, `portrait_4_3`, `landscape_16_9`, `portrait_16_9`, `landscape_4_3` | Aspect ratio |\n| `num_images` | number | 1-4 | How many to generate |\n| `seed` | number | an...\n\n[3] rust-testing\nHow It Works\n\n**Identify target code** — Find the function, trait, or module to test\n\n**Write a test** — Use `#[test]` in a `#[cfg(test)]` module, rstest for parameterized tests, or proptest for property-based tests\n\n**Mock dependencies** — Use mockall to isolate the unit under test\n\n**Run tests (RED)** — Verify the test fails with the expected err...\n\nThings to consider:\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n\nProblem:\nWrite a function to convert tuple string to integer tuple.\n\nYour solution must satisfy this test:\nassert tuple_str_int(\"(7, 8, 9)\") == (7, 8, 9)\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef tuple_str_int(s):\n    return eval(s)\n```",
+      "extracted_code": "def tuple_str_int(s):\n    return eval(s)",
+      "extract_reason": "ok",
+      "passed": true,
+      "sandbox_reason": "pass",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "",
+      "asserts_passed": 3,
+      "asserts_total": 3,
+      "quality": 1.0,
+      "brier": 0.09,
+      "reward": 0.91,
+      "latency_seconds": 3.673,
+      "eval_count": 16,
+      "done_reason": "stop",
+      "kb_skills": [
+        "fal-ai-media",
+        "fal-ai-media",
+        "rust-testing"
+      ],
+      "questions_count": 5
+    }
+  ]
+}

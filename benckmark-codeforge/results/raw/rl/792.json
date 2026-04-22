@@ -1,0 +1,37 @@
+{
+  "task_id": 792,
+  "final_passed": true,
+  "first_pass_iter": 0,
+  "iters_used": 1,
+  "max_iters": 3,
+  "best_quality": 1.0,
+  "best_reward": 0.91,
+  "mcp_total_latency_s": 5.519,
+  "iterations": [
+    {
+      "iter_idx": 0,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nReference material:\n\n[1] flutter-dart-code-review\nLazy loading:\n\n[ ] `ListView.builder` / `GridView.builder` used instead of `ListView(children: [...])` for large or dynamic lists (concrete constructors are fine for small, static lists)\n\n[ ] Pagination implemented for large data sets\n\n[ ] Deferred loading (`deferred as`) used for heavy libraries in web builds\n\n[2] autonomous-loops\nArchitecture: Two-Prompt System\n\nThe Pattern\n\n**Spec Analysis** — Orchestrator reads a specification file (Markdown) defining what to generate\n\n**Directory Recon** — Scans existing output to find the highest iteration number\n\n**Parallel Deployment** — Launches N sub-agents, each with:\n\nThe full spec\n\nA unique creative direction\n\nA specific iteratio...\n\n[3] investor-materials\nQuality Gate\n\nBefore delivering:\n\nevery number matches the current source of truth\n\nuse of funds and revenue layers sum correctly\n\nassumptions are visible, not buried\n\nthe story is clear without hype language\n\nthe final asset is defensible in a partner meeting\n\nThings to consider:\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n\nProblem:\nWrite a python function to count the number of lists in a given number of lists.\n\nYour solution must satisfy this test:\nassert count_list([[1, 3], [5, 7], [9, 11], [13, 15, 17]]) == 4\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef count_list(lists):\n    return len(lists)\n```",
+      "extracted_code": "def count_list(lists):\n    return len(lists)",
+      "extract_reason": "ok",
+      "passed": true,
+      "sandbox_reason": "pass",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "",
+      "asserts_passed": 3,
+      "asserts_total": 3,
+      "quality": 1.0,
+      "brier": 0.09,
+      "reward": 0.91,
+      "latency_seconds": 3.205,
+      "eval_count": 17,
+      "done_reason": "stop",
+      "kb_skills": [
+        "flutter-dart-code-review",
+        "autonomous-loops",
+        "investor-materials"
+      ],
+      "questions_count": 5
+    }
+  ]
+}

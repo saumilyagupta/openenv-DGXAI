@@ -1,0 +1,16 @@
+{
+  "task_id": 228,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to check whether all the bits are unset in the given range or not.\n\nYour solution must satisfy this test:\nassert all_Bits_Set_In_The_Given_Range(4,1,2) == True\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef all_Bits_Set_In_The_Given_Range(n, start, end):\n    return not (n & ((1 << (end - start + 1)) - 1) >> start)\n```",
+  "extracted_code": "def all_Bits_Set_In_The_Given_Range(n, start, end):\n    return not (n & ((1 << (end - start + 1)) - 1) >> start)",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp9ne9a799\\candidate.py\", line 6, in <module>\n    assert all_Bits_Set_In_The_Given_Range(17,2,4) == True\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 9.22,
+  "eval_count": 47,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

@@ -1,0 +1,16 @@
+{
+  "task_id": 880,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to find number of solutions in quadratic equation.\n\nYour solution must satisfy this test:\nassert Check_Solution(2,5,2) == \"2 solutions\"\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef Check_Solution(a,b,c):\n    if b**2 - 4*a*c > 0:\n        return \"2 solutions\"\n    elif b**2 - 4*a*c == 0:\n        return \"1 solution\"\n    else:\n        return \"No real solutions\"\n```",
+  "extracted_code": "def Check_Solution(a,b,c):\n    if b**2 - 4*a*c > 0:\n        return \"2 solutions\"\n    elif b**2 - 4*a*c == 0:\n        return \"1 solution\"\n    else:\n        return \"No real solutions\"",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmprmnu47p7\\candidate.py\", line 11, in <module>\n    assert Check_Solution(1,1,1) == \"No solutions\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 7.703,
+  "eval_count": 63,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

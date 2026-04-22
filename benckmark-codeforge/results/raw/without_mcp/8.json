@@ -1,0 +1,16 @@
+{
+  "task_id": 8,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find squares of individual elements in a list using lambda function.\n\nYour solution must satisfy this test:\nassert square_nums([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])==[1, 4, 9, 16, 25, 36, 49, 64, 81, 100]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\nsquare_nums = lambda nums: [x**2 for x in nums]\n```",
+  "extracted_code": "square_nums = lambda nums: [x**2 for x in nums]",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 9.932,
+  "eval_count": 20,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

@@ -1,0 +1,16 @@
+{
+  "task_id": 961,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to convert a roman numeral to an integer.\n\nYour solution must satisfy this test:\nassert roman_to_int('MMMCMLXXXVI')==3986\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef roman_to_int(s):\n    return sum([1000 if c == 'M' else 500 if c == 'D' else 100 if c == 'C' else 90 if c == 'XC' else 50 if c == 'L' else 40 if c == 'XL' else 10 if c == 'X' else 9 if c == 'IX' else 5 if c == 'V' else 4 if c == 'IV' else 1 for c in s])\n```",
+  "extracted_code": "def roman_to_int(s):\n    return sum([1000 if c == 'M' else 500 if c == 'D' else 100 if c == 'C' else 90 if c == 'XC' else 50 if c == 'L' else 40 if c == 'XL' else 10 if c == 'X' else 9 if c == 'IX' else 5 if c == 'V' else 4 if c == 'IV' else 1 for c in s])",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpetvswr1z\\candidate.py\", line 4, in <module>\n    assert roman_to_int('MMMCMLXXXVI')==3986\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 9.773,
+  "eval_count": 122,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

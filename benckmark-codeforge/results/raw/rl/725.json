@@ -1,0 +1,37 @@
+{
+  "task_id": 725,
+  "final_passed": true,
+  "first_pass_iter": 0,
+  "iters_used": 1,
+  "max_iters": 3,
+  "best_quality": 1.0,
+  "best_reward": 0.91,
+  "mcp_total_latency_s": 12.978,
+  "iterations": [
+    {
+      "iter_idx": 0,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nReference material:\n\n[1] cpp-coding-standards\nDO\n\nDON'T\n\nFunctions (F.*)\n\nKey Rules\n\n| Rule | Summary |\n|------|---------|\n| **F.1** | Package meaningful operations as carefully named functions |\n| **F.2** | A function should perform a single logical operation |\n| **F.3** | Keep functions short and simple |\n| **F.4** | If a function might be evaluated at compile time, declare it `constexpr` |...\n\n[2] hookify-rules\nRule File Format\n\nBasic Structure\n\nFrontmatter Fields\n\n| Field | Required | Values | Description |\n|-------|----------|--------|-------------|\n| name | Yes | kebab-case string | Unique identifier (verb-first: warn-*, block-*, require-*) |\n| enabled | Yes | true/false | Toggle without deleting |\n| event | Yes | bash/file/stop/prompt/all | Which hook...\n\n[3] python-testing\nBest Practices\n\nDO\n\n**Follow TDD**: Write tests before code (red-green-refactor)\n\n**Test one thing**: Each test should verify a single behavior\n\n**Use descriptive names**: `test_user_login_with_invalid_credentials_fails`\n\n**Use fixtures**: Eliminate duplication with fixtures\n\n**Mock external dependencies**: Don't depend on external services\n\n**Test...\n\nThings to consider:\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n\nProblem:\nWrite a function to extract values between quotation marks of the given string by using regex.\n\nYour solution must satisfy this test:\nassert extract_quotation('Cortex \"A53\" Based \"multi\" tasking \"Processor\"') == ['A53', 'multi', 'Processor']\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\nimport re\n\ndef extract_quotation(s):\n    return re.findall(r'\"([^\"]+)\"', s)\n```",
+      "extracted_code": "import re\n\ndef extract_quotation(s):\n    return re.findall(r'\"([^\"]+)\"', s)",
+      "extract_reason": "ok",
+      "passed": true,
+      "sandbox_reason": "pass",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "",
+      "asserts_passed": 3,
+      "asserts_total": 3,
+      "quality": 1.0,
+      "brier": 0.09,
+      "reward": 0.91,
+      "latency_seconds": 4.079,
+      "eval_count": 27,
+      "done_reason": "stop",
+      "kb_skills": [
+        "cpp-coding-standards",
+        "hookify-rules",
+        "python-testing"
+      ],
+      "questions_count": 5
+    }
+  ]
+}

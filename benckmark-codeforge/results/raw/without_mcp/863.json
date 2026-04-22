@@ -1,0 +1,16 @@
+{
+  "task_id": 863,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find the length of the longest sub-sequence such that elements in the subsequences are consecutive integers.\n\nYour solution must satisfy this test:\nassert find_longest_conseq_subseq([1, 2, 2, 3], 4) == 3\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef find_longest_conseq_subseq(arr, n):\n    arr.sort()\n    max_length = 1\n    current_length = 1\n    \n    for i in range(1, n):\n        if arr[i] == arr[i-1] + 1:\n            current_length += 1\n        else:\n            max_length = max(max_length, current_length)\n            current_length = 1\n            \n    return max(max_length, current_length)\n```",
+  "extracted_code": "def find_longest_conseq_subseq(arr, n):\n    arr.sort()\n    max_length = 1\n    current_length = 1\n    \n    for i in range(1, n):\n        if arr[i] == arr[i-1] + 1:\n            current_length += 1\n        else:\n            max_length = max(max_length, current_length)\n            current_length = 1\n            \n    return max(max_length, current_length)",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpvlfzx1d3\\candidate.py\", line 15, in <module>\n    assert find_longest_conseq_subseq([1, 2, 2, 3], 4) == 3\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 11.125,
+  "eval_count": 97,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

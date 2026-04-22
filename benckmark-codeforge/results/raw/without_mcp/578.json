@@ -1,0 +1,16 @@
+{
+  "task_id": 578,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to interleave lists of the same length.\n\nYour solution must satisfy this test:\nassert interleave_lists([1,2,3,4,5,6,7],[10,20,30,40,50,60,70],[100,200,300,400,500,600,700])==[1, 10, 100, 2, 20, 200, 3, 30, 300, 4, 40, 400, 5, 50, 500, 6, 60, 600, 7, 70, 700]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef interleave_lists(*lists):\n    return [item for sublist in zip(*lists) for item in sublist]\n```",
+  "extracted_code": "def interleave_lists(*lists):\n    return [item for sublist in zip(*lists) for item in sublist]",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 6.471,
+  "eval_count": 28,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

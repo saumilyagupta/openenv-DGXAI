@@ -1,0 +1,16 @@
+{
+  "task_id": 916,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find if there is a triplet in the array whose sum is equal to a given value.\n\nYour solution must satisfy this test:\nassert find_triplet_array([1, 4, 45, 6, 10, 8], 6, 22) == (4, 10, 8)\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef find_triplet_array(arr, target_sum, value):\n    arr.sort()\n    for i in range(len(arr) - 2):\n        left, right = i + 1, len(arr) - 1\n        while left < right:\n            current_sum = arr[i] + arr[left] + arr[right]\n            if current_sum == target_sum:\n                return (arr[i], arr[left], arr[right])\n            elif current_sum < target_sum:\n                left += 1\n            else:\n                right -= 1\n    return None\n```",
+  "extracted_code": "def find_triplet_array(arr, target_sum, value):\n    arr.sort()\n    for i in range(len(arr) - 2):\n        left, right = i + 1, len(arr) - 1\n        while left < right:\n            current_sum = arr[i] + arr[left] + arr[right]\n            if current_sum == target_sum:\n                return (arr[i], arr[left], arr[right])\n            elif current_sum < target_sum:\n                left += 1\n            else:\n                right -= 1\n    return None",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpzojtyn8c\\candidate.py\", line 15, in <module>\n    assert find_triplet_array([1, 4, 45, 6, 10, 8], 6, 22) == (4, 10, 8)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 15.663,
+  "eval_count": 118,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

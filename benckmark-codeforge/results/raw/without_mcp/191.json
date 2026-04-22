@@ -1,0 +1,16 @@
+{
+  "task_id": 191,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to check whether the given month name contains 30 days or not.\n\nYour solution must satisfy this test:\nassert check_monthnumber(\"February\")==False\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef check_monthnumber(month):\n    return month in [\"April\", \"June\", \"September\", \"November\"]\n```",
+  "extracted_code": "def check_monthnumber(month):\n    return month in [\"April\", \"June\", \"September\", \"November\"]",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 9.713,
+  "eval_count": 27,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

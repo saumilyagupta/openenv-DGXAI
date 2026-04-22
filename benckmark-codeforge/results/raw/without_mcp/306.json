@@ -1,0 +1,16 @@
+{
+  "task_id": 306,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find the maximum sum of increasing subsequence from prefix till ith index and also including a given kth element which is after i, i.e., k > i .\n\nYour solution must satisfy this test:\nassert max_sum_increasing_subseq([1, 101, 2, 3, 100, 4, 5 ], 7, 4, 6) == 11\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef max_sum_increasing_subseq(arr, i, k, j):\n    if i >= len(arr) or j < i:\n        return 0\n    if arr[i] > arr[j]:\n        return arr[i] + max_sum_increasing_subseq(arr, i+1, k, j)\n    else:\n        return max(max_sum_increasing_subseq(arr, i+1, k, j), max_sum_increasing_subseq(arr, i, k-1, j))\n```",
+  "extracted_code": "def max_sum_increasing_subseq(arr, i, k, j):\n    if i >= len(arr) or j < i:\n        return 0\n    if arr[i] > arr[j]:\n        return arr[i] + max_sum_increasing_subseq(arr, i+1, k, j)\n    else:\n        return max(max_sum_increasing_subseq(arr, i+1, k, j), max_sum_increasing_subseq(arr, i, k-1, j))",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpdaybld9c\\candidate.py\", line 9, in <module>\n    assert max_sum_increasing_subseq([1, 101, 2, 3, 100, 4, 5 ], 7, 4, 6) == 11\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 18.122,
+  "eval_count": 106,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

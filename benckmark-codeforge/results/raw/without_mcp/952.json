@@ -1,0 +1,16 @@
+{
+  "task_id": 952,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to compute the value of ncr mod p.\n\nYour solution must satisfy this test:\nassert nCr_mod_p(10, 2, 13) == 6\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef nCr_mod_p(n, r, p):\n    return (factorial(n) * pow(factorial(r), p-2, p)) % p\n```",
+  "extracted_code": "def nCr_mod_p(n, r, p):\n    return (factorial(n) * pow(factorial(r), p-2, p)) % p",
+  "passed": false,
+  "reason": "name_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpwg232njr\\candidate.py\", line 4, in <module>\n    assert nCr_mod_p(10, 2, 13) == 6\n           ^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpwg232njr\\candidate.py\", line 2, in nCr_mod_p\n    return (factorial(n) * pow(factorial(r), p-2, p)) % p\n            ^^^^^^^^^\nNameError: name 'factorial' is not defined\n",
+  "latency_seconds": 5.454,
+  "eval_count": 38,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

@@ -1,0 +1,16 @@
+{
+  "task_id": 449,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to check whether the triangle is valid or not if 3 points are given.\n\nYour solution must satisfy this test:\nassert check_Triangle(1,5,2,5,4,6) == 'Yes'\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef check_Triangle(x1,y1,x2,y2,x3,y3):\n    return (x1*y2 + x2*y3 + x3*y1 - y1*x2 - y2*x3 - y3*x1) != 0\n```",
+  "extracted_code": "def check_Triangle(x1,y1,x2,y2,x3,y3):\n    return (x1*y2 + x2*y3 + x3*y1 - y1*x2 - y2*x3 - y3*x1) != 0",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpn3jv563a\\candidate.py\", line 4, in <module>\n    assert check_Triangle(1,5,2,5,4,6) == 'Yes'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 12.046,
+  "eval_count": 59,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

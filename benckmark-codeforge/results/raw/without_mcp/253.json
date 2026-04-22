@@ -1,0 +1,16 @@
+{
+  "task_id": 253,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to count integers from a given list.\n\nYour solution must satisfy this test:\nassert count_integer([1,2,'abc',1.2]) == 2\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef count_integer(lst):\n    return sum(isinstance(i, int) for i in lst)\n```",
+  "extracted_code": "def count_integer(lst):\n    return sum(isinstance(i, int) for i in lst)",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 9.899,
+  "eval_count": 23,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

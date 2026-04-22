@@ -1,0 +1,16 @@
+{
+  "task_id": 940,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to sort the given array by using heap sort.\n\nYour solution must satisfy this test:\nassert heap_sort([12, 2, 4, 5, 2, 3]) == [2, 2, 3, 4, 5, 12]\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef heap_sort(arr):\n    n = len(arr)\n    for i in range(n // 2 - 1, -1, -1):\n        heapify(arr, n, i)\n\n    for i in range(n - 1, 0, -1):\n        arr[i], arr[0] = arr[0], arr[i]\n        heapify(arr, i, 0)\n```",
+  "extracted_code": "def heap_sort(arr):\n    n = len(arr)\n    for i in range(n // 2 - 1, -1, -1):\n        heapify(arr, n, i)\n\n    for i in range(n - 1, 0, -1):\n        arr[i], arr[0] = arr[0], arr[i]\n        heapify(arr, i, 0)",
+  "passed": false,
+  "reason": "name_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp6vckkjxk\\candidate.py\", line 10, in <module>\n    assert heap_sort([12, 2, 4, 5, 2, 3]) == [2, 2, 3, 4, 5, 12]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp6vckkjxk\\candidate.py\", line 4, in heap_sort\n    heapify(arr, n, i)\n    ^^^^^^^\nNameError: name 'heapify' is not defined\n",
+  "latency_seconds": 10.611,
+  "eval_count": 86,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

@@ -1,0 +1,16 @@
+{
+  "task_id": 114,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to assign frequency to each tuple in the given tuple list.\n\nYour solution must satisfy this test:\nassert assign_freq([(6, 5, 8), (2, 7), (6, 5, 8), (6, 5, 8), (9, ), (2, 7)] ) == '[(6, 5, 8, 3), (2, 7, 2), (9, 1)]'\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef assign_freq(lst):\n    freq = {}\n    for tup in lst:\n        if tup not in freq:\n            freq[tup] = 1\n        else:\n            freq[tup] += 1\n    return [(tup, freq[tup]) for tup in lst]\n```",
+  "extracted_code": "def assign_freq(lst):\n    freq = {}\n    for tup in lst:\n        if tup not in freq:\n            freq[tup] = 1\n        else:\n            freq[tup] += 1\n    return [(tup, freq[tup]) for tup in lst]",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpodp2go0x\\candidate.py\", line 10, in <module>\n    assert assign_freq([(6, 5, 8), (2, 7), (6, 5, 8), (6, 5, 8), (9, ), (2, 7)] ) == '[(6, 5, 8, 3), (2, 7, 2), (9, 1)]'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 7.555,
+  "eval_count": 63,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

@@ -1,0 +1,16 @@
+{
+  "task_id": 675,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to add two integers. however, if the sum is between the given range it will return 20.\n\nYour solution must satisfy this test:\nassert sum_nums(2,10,11,20)==20\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef sum_nums(a, b, c, d):\n    return 20 if (a + b) in range(c, d+1) else a + b\n```",
+  "extracted_code": "def sum_nums(a, b, c, d):\n    return 20 if (a + b) in range(c, d+1) else a + b",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 15.614,
+  "eval_count": 40,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

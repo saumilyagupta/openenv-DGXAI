@@ -1,0 +1,16 @@
+{
+  "task_id": 468,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find the maximum product formed by multiplying numbers of an increasing subsequence of that array.\n\nYour solution must satisfy this test:\nassert max_product([3, 100, 4, 5, 150, 6], 6) == 45000 \n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef max_product(arr, n):\n    dp = [arr[i] for i in range(n)]\n    for i in range(1, n):\n        for j in range(i):\n            if arr[j] < arr[i]:\n                dp[i] = max(dp[i], dp[j] * arr[i])\n    return max(dp)\n```",
+  "extracted_code": "def max_product(arr, n):\n    dp = [arr[i] for i in range(n)]\n    for i in range(1, n):\n        for j in range(i):\n            if arr[j] < arr[i]:\n                dp[i] = max(dp[i], dp[j] * arr[i])\n    return max(dp)",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 9.935,
+  "eval_count": 72,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

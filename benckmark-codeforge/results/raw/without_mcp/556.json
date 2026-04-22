@@ -1,0 +1,16 @@
+{
+  "task_id": 556,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a python function to count the pairs with xor as an odd number.\n\nYour solution must satisfy this test:\nassert find_Odd_Pair([5,4,7,2,1],5) == 6\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef find_Odd_Pair(arr,n):\n    count = 0\n    for i in range(n-1):\n        for j in range(i+1, n):\n            if (arr[i] ^ arr[j]) % 2 != 0:\n                count += 1\n    return count\n```",
+  "extracted_code": "def find_Odd_Pair(arr,n):\n    count = 0\n    for i in range(n-1):\n        for j in range(i+1, n):\n            if (arr[i] ^ arr[j]) % 2 != 0:\n                count += 1\n    return count",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 10.711,
+  "eval_count": 67,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

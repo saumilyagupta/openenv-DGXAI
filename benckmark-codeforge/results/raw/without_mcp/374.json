@@ -1,0 +1,16 @@
+{
+  "task_id": 374,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to print all permutations of a given string including duplicates.\n\nYour solution must satisfy this test:\nassert permute_string('ab')==['ab', 'ba']\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ndef permute_string(s):\n    if len(s) == 1:\n        return [s]\n    perms = []\n    for i in range(len(s)):\n        char = s[i]\n        remaining_chars = s[:i] + s[i+1:]\n        for perm in permute_string(remaining_chars):\n            perms.append(char + perm)\n    return perms\n```",
+  "extracted_code": "def permute_string(s):\n    if len(s) == 1:\n        return [s]\n    perms = []\n    for i in range(len(s)):\n        char = s[i]\n        remaining_chars = s[:i] + s[i+1:]\n        for perm in permute_string(remaining_chars):\n            perms.append(char + perm)\n    return perms",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpsbsd4wh2\\candidate.py\", line 14, in <module>\n    assert permute_string('abc')==['abc', 'bac', 'bca', 'acb', 'cab', 'cba']\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 230.121,
+  "eval_count": 79,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

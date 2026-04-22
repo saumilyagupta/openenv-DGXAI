@@ -1,0 +1,16 @@
+{
+  "task_id": 860,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to check whether the given string is ending with only alphanumeric characters or not using regex.\n\nYour solution must satisfy this test:\nassert check_alphanumeric(\"dawood@\") == 'Discard'\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\nimport re\n\ndef check_alphanumeric(s):\n    return 'Discard' if not re.match(r'^[a-zA-Z0-9]*$', s) else 'Accept'\n```",
+  "extracted_code": "import re\n\ndef check_alphanumeric(s):\n    return 'Discard' if not re.match(r'^[a-zA-Z0-9]*$', s) else 'Accept'",
+  "passed": true,
+  "reason": "pass",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "",
+  "latency_seconds": 7.625,
+  "eval_count": 41,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

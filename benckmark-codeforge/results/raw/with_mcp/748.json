@@ -1,0 +1,27 @@
+{
+  "task_id": 748,
+  "mode": "with_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nCodeForge KB citations (research material, may or may not apply):\n\n[1] regex-vs-llm-structured-text — Regex vs LLM for Structured Text Parsing / Best Practices\nBest Practices\n\n**Start with regex** — even imperfect regex gives you a baseline to improve\n\n**Use confidence scoring** to programmatically identify what needs LLM help\n\n**Use the cheapest LLM** for validation (Haiku-class models are sufficient)\n\n**Never mutate** parsed items — return new instances from cleaning/validation steps\n\n**TDD works well** for parsers — write tests for known patterns firs...\n\n[2] regex-vs-llm-structured-text — Regex vs LLM for Structured Text Parsing / When to Activate\nWhen to Activate\n\nParsing structured text with repeating patterns (questions, forms, tables)\n\nDeciding between regex and LLM for text extraction\n\nBuilding hybrid pipelines that combine both approaches\n\nOptimizing cost/accuracy tradeoffs in text processing\n\n[3] search-first — /search-first — Research Before You Code / Trigger\nTrigger\n\nUse this skill when:\n\nStarting a new feature that likely has existing solutions\n\nAdding a dependency or integration\n\nThe user asks \"add X functionality\" and you're about to write code\n\nBefore creating a new utility, helper, or abstraction\n\nCodeForge interrogator Socratic prompts (apply only if relevant):\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n- What is the single hardest edge case for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you consulted django-tdd for the patterns it recommends?\n\nProblem:\nWrite a function to put spaces between words starting with capital letters in a given string by using regex.\n\nYour solution must satisfy this test:\nassert capital_words_spaces(\"Python\") == 'Python'\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\nimport re\n\ndef capital_words_spaces(text):\n    return re.sub(r'(?=[A-Z])', ' ', text)\n```",
+  "extracted_code": "import re\n\ndef capital_words_spaces(text):\n    return re.sub(r'(?=[A-Z])', ' ', text)",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmp1y02yc8i\\candidate.py\", line 6, in <module>\n    assert capital_words_spaces(\"Python\") == 'Python'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 3.89,
+  "eval_count": 30,
+  "done_reason": "stop",
+  "gen_error": null,
+  "mcp": {
+    "session_id": "143e80e286ef4da5",
+    "budget_remaining": 9,
+    "n_citations": 3,
+    "n_questions": 5,
+    "citation_skills": [
+      "regex-vs-llm-structured-text",
+      "regex-vs-llm-structured-text",
+      "search-first"
+    ],
+    "error": null
+  }
+}

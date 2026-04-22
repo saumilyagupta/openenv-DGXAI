@@ -1,0 +1,16 @@
+{
+  "task_id": 354,
+  "mode": "without_mcp",
+  "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nProblem:\nWrite a function to find t-nth term of arithemetic progression.\n\nYour solution must satisfy this test:\nassert tn_ap(1,5,2)==9\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+  "response": "```python\ntn_ap = lambda a, d, n: a + (n - 1) * d\n```",
+  "extracted_code": "tn_ap = lambda a, d, n: a + (n - 1) * d",
+  "passed": false,
+  "reason": "assertion_error",
+  "sandbox_stdout": "",
+  "sandbox_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\saumi\\AppData\\Local\\Temp\\tmpfhubh_2h\\candidate.py\", line 3, in <module>\n    assert tn_ap(1,5,2)==9\n           ^^^^^^^^^^^^^^^\nAssertionError\n",
+  "latency_seconds": 6.307,
+  "eval_count": 26,
+  "done_reason": "stop",
+  "gen_error": null,
+  "kb_snippets": []
+}

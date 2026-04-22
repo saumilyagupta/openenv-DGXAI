@@ -1,0 +1,37 @@
+{
+  "task_id": 639,
+  "final_passed": true,
+  "first_pass_iter": 0,
+  "iters_used": 1,
+  "max_iters": 3,
+  "best_quality": 1.0,
+  "best_reward": 0.91,
+  "mcp_total_latency_s": 5.4,
+  "iterations": [
+    {
+      "iter_idx": 0,
+      "prompt": "You are an expert Python programmer. Solve the problem with MINIMAL code — no docstrings, no comments, no explanation.\n\nReference material:\n\n[1] cpp-coding-standards\nSource Files & Naming (SF.*, NL.*)\n\nKey Rules\n\n| Rule | Summary |\n|------|---------|\n| **SF.1** | Use `.cpp` for code files and `.h` for interface files |\n| **SF.7** | Don't write `using namespace` at global scope in a header |\n| **SF.8** | Use `#include` guards for all `.h` files |\n| **SF.11** | Header files should be self-contained |\n| **NL.5** |...\n\n[2] codebase-onboarding\nAnti-Patterns to Avoid\n\nGenerating a CLAUDE.md that's longer than 100 lines — keep it focused\n\nListing every dependency — highlight only the ones that shape how you write code\n\nDescribing obvious directory names — `src/` doesn't need an explanation\n\nCopying the README — the onboarding guide adds structural insight the README lacks\n\n[3] terminal-ops\nVerification\n\nthe response names the proving command or test\n\ngit-related work names the repo path and branch\n\nany push claim includes the target branch and exact result\n\nThings to consider:\n- What is the exact success criterion for 'Split into three files: `main.py` (entry), `core.py` (the greet function), `test'?\n- Have you considered the guidance from django-verification: 'Django Verification Loop/Quick Reference'?\n- Which of these assumptions is most load-bearing: success metric, inputs, failure modes?\n\nProblem:\nWrite a function to sum the length of the names of a given list of names after removing the names that start with a lowercase letter.\n\nYour solution must satisfy this test:\nassert sample_nam(['sally', 'Dylan', 'rebecca', 'Diana', 'Joanne', 'keith'])==16\n\nOutput format: a single fenced Python code block. Start with ```python and end with ```. Nothing else outside the block.",
+      "response": "```python\ndef sample_nam(names):\n    return sum(len(name) for name in names if name[0].isupper())\n```",
+      "extracted_code": "def sample_nam(names):\n    return sum(len(name) for name in names if name[0].isupper())",
+      "extract_reason": "ok",
+      "passed": true,
+      "sandbox_reason": "pass",
+      "sandbox_stdout": "",
+      "sandbox_stderr": "",
+      "asserts_passed": 3,
+      "asserts_total": 3,
+      "quality": 1.0,
+      "brier": 0.09,
+      "reward": 0.91,
+      "latency_seconds": 4.032,
+      "eval_count": 29,
+      "done_reason": "stop",
+      "kb_skills": [
+        "cpp-coding-standards",
+        "codebase-onboarding",
+        "terminal-ops"
+      ],
+      "questions_count": 5
+    }
+  ]
+}
