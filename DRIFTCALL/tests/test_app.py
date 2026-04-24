@@ -974,3 +974,88 @@ def test_to_jsonable_handles_action_type_and_dataclass() -> None:
     assert out == "speak"
     out2 = app_module._to_jsonable({"a": ActionType.TOOL_CALL, "b": (1, 2)})
     assert out2 == {"a": "tool_call", "b": [1, 2]}
+
+
+# ---------------------------------------------------------------------------
+# Body-size middleware via Content-Length header
+# ---------------------------------------------------------------------------
+
+
+def test_body_size_middleware_rejects_oversize_content_length(
+    fastapi_test_client: TestClient, valid_bearer_token: str, session_id_alpha: str
+) -> None:
+    headers = _auth_headers(valid_bearer_token, session_id_alpha)
+    headers["content-length"] = str(_MIB := 2 * 1024 * 1024)
+    # We don't actually need to send 2 MiB — the middleware reads CL first.
+    resp = fastapi_test_client.post(
+        "/reset",
+        headers=headers,
+        content=b"{}",  # CL header lies; that's fine for the test.
+    )
+    assert_error_envelope(resp, code="payload_too_large", http_status=413)
+
+
+# ---------------------------------------------------------------------------
+# Build env-config rejects non-dict
+# ---------------------------------------------------------------------------
+
+
+def test_build_env_config_non_dict_raises() -> None:
+    app_module = sys.modules["app"]
+    with pytest.raises(app_module._ApiError) as exc:
+        app_module._build_env_config({"config": [1, 2]})
+    assert exc.value.code == "invalid_action"
+
+
+def test_build_env_config_none_returns_empty() -> None:
+    app_module = sys.modules["app"]
+    out = app_module._build_env_config({})
+    assert out == {}
+
+
+# ---------------------------------------------------------------------------
+# Cache evict on missing returns None
+# ---------------------------------------------------------------------------
+
+
+def test_cache_evict_unknown_returns_none() -> None:
+    app_module = sys.modules["app"]
+    cache = app_module.SessionCache()
+    assert cache.evict("not-there") is None
+
+
+# ---------------------------------------------------------------------------
+# Touch on unknown sid → (None, False)
+# ---------------------------------------------------------------------------
+
+
+def test_cache_touch_unknown_returns_none_not_expired() -> None:
+    app_module = sys.modules["app"]
+    cache = app_module.SessionCache()
+    entry, expired = cache.touch("unknown")
+    assert entry is None
+    assert expired is False
+
+
+# ---------------------------------------------------------------------------
+# /step on closed env returns 400
+# ---------------------------------------------------------------------------
+
+
+def test_step_after_close_returns_404(
+    fastapi_test_client: TestClient, valid_bearer_token: str, session_id_alpha: str
+) -> None:
+    fastapi_test_client.post(
+        "/reset",
+        headers=_auth_headers(valid_bearer_token, session_id_alpha),
+        json={"seed": 1},
+    )
+    fastapi_test_client.post(
+        "/close", headers=_auth_headers(valid_bearer_token, session_id_alpha)
+    )
+    resp = fastapi_test_client.post(
+        "/step",
+        headers=_auth_headers(valid_bearer_token, session_id_alpha),
+        json={"action": {"action_type": "speak", "message": "hi"}},
+    )
+    assert_error_envelope(resp, code="session_not_found", http_status=404)
