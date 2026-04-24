@@ -70,6 +70,7 @@ class DriftEvent:
     description: str
     from_version: str
     to_version: str
+    pattern_id: str                     # registry key — matches drift_injector catalogue
 
 
 @dataclass(frozen=True)

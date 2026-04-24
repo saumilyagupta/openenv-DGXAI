@@ -1,0 +1,142 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 DriftCall Team
+# Derived-from: AmazonScience/MASSIVE (intent taxonomy, Apache-2.0); inspirations
+# from google/schema_guided_dstc8 and facebook/mtop (no verbatim rows).
+# Task brief templates for DriftCall. Each template provides ≥1 variant per LanguageCode.
+# All strings are NFC-normalized. Domain ∈ {airline,cab,restaurant,hotel}.
+
+- template_id: airline.book.budget_timewindow
+  domain: airline
+  intent: book_flight
+  min_stage: 1
+  required_slots: [from, to, when]
+  optional_slots: [seat_pref]
+  constraints_template:
+    budget_inr:
+      distribution: uniform
+      low: 3000
+      high: 15000
+      step: 500
+    time_window:
+      choices: [morning, afternoon, evening, late_night]
+  drift_slot_tags: [price, total_fare_inr, passenger_count]
+  language_variants:
+    hinglish:
+      - "Bhai {when} ko {to} jaana hai, cheapest flight {time_window} mein, {budget_inr} rupees max"
+      - "{when} ko {from} se {to} ka ticket book kar de, under {budget_inr}, {time_window} ke baad"
+    hi:
+      - "मुझे {when} को {from} से {to} जाना है, {budget_inr} रुपये से कम में, {time_window} में"
+    ta:
+      - "{when} அன்று {from} லிருந்து {to} க்கு டிக்கெட் வேண்டும், {budget_inr} ரூபாய்க்கு கீழ், {time_window} நேரத்தில்"
+    kn:
+      - "{when} ರಂದು {from} ಇಂದ {to} ಗೆ ಅಗ್ಗದ ವಿಮಾನ ಟಿಕೆಟ್ ಬೇಕು, {budget_inr} ರೂಪಾಯಿಗಳ ಒಳಗೆ, {time_window}"
+    en:
+      - "Book the cheapest flight from {from} to {to} on {when}, budget under {budget_inr}, departing {time_window}"
+
+- template_id: cab.book.airport_pickup
+  domain: cab
+  intent: book_cab
+  min_stage: 1
+  required_slots: [pickup, drop, when]
+  optional_slots: [vehicle_class]
+  constraints_template:
+    budget_inr:
+      distribution: uniform
+      low: 200
+      high: 2000
+      step: 50
+    vehicle_class:
+      choices: [mini, sedan, suv, infant_seat_sedan]
+  drift_slot_tags: [fare_inr, fare_breakdown, vehicle_class]
+  language_variants:
+    hinglish:
+      - "{when} ko {pickup} se {drop} cab book kar, {vehicle_class} chahiye, {budget_inr} ke andar"
+    hi:
+      - "{when} को {pickup} से {drop} के लिए कैब बुक करो, {vehicle_class} चाहिए, {budget_inr} के अंदर"
+    ta:
+      - "{when} அன்று {pickup} லிருந்து {drop} க்கு கேப் வேண்டும், {vehicle_class}, {budget_inr} க்குள்"
+    kn:
+      - "{when} ರಂದು {pickup} ಇಂದ {drop} ಗೆ ಕ್ಯಾಬ್ ಬುಕ್ ಮಾಡಿ, {vehicle_class}, {budget_inr} ಒಳಗೆ"
+    en:
+      - "Book a cab from {pickup} to {drop} on {when}, {vehicle_class}, under {budget_inr}"
+
+- template_id: restaurant.order.veg_budget
+  domain: restaurant
+  intent: order_food
+  min_stage: 1
+  required_slots: [city, cuisine, when]
+  optional_slots: []
+  constraints_template:
+    budget_inr:
+      distribution: uniform
+      low: 200
+      high: 1500
+      step: 50
+    veg_only:
+      choices: ["true", "false"]
+  drift_slot_tags: [min_order_inr, veg_only, modifiers]
+  language_variants:
+    hinglish:
+      - "Bhai {when} {city} mein {cuisine} order karna hai, {budget_inr} rupees se kam, veg option {veg_only}"
+    hi:
+      - "{when} {city} में {cuisine} ऑर्डर करना है, {budget_inr} रुपये से कम में, veg_only={veg_only}"
+    ta:
+      - "{when} {city} இல் {cuisine} ஆர்டர் செய்ய வேண்டும், {budget_inr} ரூபாய்க்கு கீழ், veg_only={veg_only}"
+    kn:
+      - "{when} {city} ನಲ್ಲಿ {cuisine} ಆರ್ಡರ್ ಮಾಡಬೇಕು, {budget_inr} ರೂಪಾಯಿಗಳ ಒಳಗೆ, veg_only={veg_only}"
+    en:
+      - "Order {cuisine} in {city} on {when}, budget under {budget_inr}, veg_only={veg_only}"
+
+- template_id: hotel.book.city_nights
+  domain: hotel
+  intent: book_hotel
+  min_stage: 1
+  required_slots: [city, checkin, checkout]
+  optional_slots: [room_type]
+  constraints_template:
+    budget_inr:
+      distribution: uniform
+      low: 1500
+      high: 12000
+      step: 500
+  drift_slot_tags: [nightly_rate, total_with_tax, cancel_window_hours, gst_number, resort_fee_inr]
+  language_variants:
+    hinglish:
+      - "Bhai {city} mein hotel chahiye, {checkin} se {checkout} tak, under {budget_inr} per night"
+    hi:
+      - "{city} में होटल चाहिए, {checkin} से {checkout} तक, {budget_inr} रुपये प्रति रात से कम में"
+    ta:
+      - "{city} இல் ஹோட்டல் வேண்டும், {checkin} முதல் {checkout} வரை, ஒரு இரவுக்கு {budget_inr} ரூபாய்க்கு கீழ்"
+    kn:
+      - "{city} ನಲ್ಲಿ ಹೋಟೆಲ್ ಬೇಕು, {checkin} ಇಂದ {checkout} ವರೆಗೆ, ರಾತ್ರಿಗೆ {budget_inr} ರೂಪಾಯಿ ಒಳಗೆ"
+    en:
+      - "Book a hotel in {city} from {checkin} to {checkout}, under {budget_inr} per night"
+
+- template_id: airline.book.compound_passenger_budget
+  domain: airline
+  intent: book_flight
+  min_stage: 3
+  required_slots: [from, to, when]
+  optional_slots: [seat_pref]
+  constraints_template:
+    budget_inr:
+      distribution: uniform
+      low: 5000
+      high: 25000
+      step: 500
+    passenger_count:
+      choices: ["1", "2", "3", "4"]
+    time_window:
+      choices: [morning, afternoon, evening, late_night]
+  drift_slot_tags: [price, total_fare_inr, passenger_count, convenience_fee]
+  language_variants:
+    hinglish:
+      - "Bhai {when} ko {from} se {to} {passenger_count} log, {budget_inr} ke andar, {time_window} flight"
+    hi:
+      - "{when} को {from} से {to} {passenger_count} यात्री, {budget_inr} रुपये से कम में, {time_window} में"
+    ta:
+      - "{when} அன்று {from} லிருந்து {to} {passenger_count} பயணிகள், {budget_inr} ரூபாய்க்கு கீழ், {time_window}"
+    kn:
+      - "{when} ರಂದು {from} ಇಂದ {to} {passenger_count} ಪ್ರಯಾಣಿಕರು, {budget_inr} ಒಳಗೆ, {time_window}"
+    en:
+      - "Book flight from {from} to {to} on {when} for {passenger_count} passengers, under {budget_inr}, {time_window}"

@@ -1,0 +1,102 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 DriftCall Team
+# Localized lookup table for cities + weekdays used by task_generator.
+# All string values are NFC-normalized. Keys are LanguageCode = {hi,ta,kn,en,hinglish}.
+# City codes are IATA where applicable; otherwise domain-local neighborhood names.
+
+hi:
+  # Cities (IATA / common name)
+  BLR: बेंगलुरु
+  HYD: हैदराबाद
+  BOM: मुंबई
+  DEL: दिल्ली
+  MAA: चेन्नई
+  CCU: कोलकाता
+  GOI: गोवा
+  PNQ: पुणे
+  AMD: अहमदाबाद
+  COK: कोच्चि
+  # Weekdays
+  Monday: सोमवार
+  Tuesday: मंगलवार
+  Wednesday: बुधवार
+  Thursday: गुरुवार
+  Friday: शुक्रवार
+  Saturday: शनिवार
+  Sunday: रविवार
+
+ta:
+  BLR: பெங்களூர்
+  HYD: ஹைதராபாத்
+  BOM: மும்பை
+  DEL: டெல்லி
+  MAA: சென்னை
+  CCU: கொல்கத்தா
+  GOI: கோவா
+  PNQ: புணே
+  AMD: அகமதாபாத்
+  COK: கொச்சி
+  Monday: திங்கள்
+  Tuesday: செவ்வாய்
+  Wednesday: புதன்
+  Thursday: வியாழன்
+  Friday: வெள்ளி
+  Saturday: சனி
+  Sunday: ஞாயிறு
+
+kn:
+  BLR: ಬೆಂಗಳೂರು
+  HYD: ಹೈದರಾಬಾದ್
+  BOM: ಮುಂಬೈ
+  DEL: ದೆಹಲಿ
+  MAA: ಚೆನ್ನೈ
+  CCU: ಕೋಲ್ಕತಾ
+  GOI: ಗೋವಾ
+  PNQ: ಪುಣೆ
+  AMD: ಅಹಮದಾಬಾದ್
+  COK: ಕೊಚ್ಚಿ
+  Monday: ಸೋಮವಾರ
+  Tuesday: ಮಂಗಳವಾರ
+  Wednesday: ಬುಧವಾರ
+  Thursday: ಗುರುವಾರ
+  Friday: ಶುಕ್ರವಾರ
+  Saturday: ಶನಿವಾರ
+  Sunday: ಭಾನುವಾರ
+
+en:
+  BLR: Bangalore
+  HYD: Hyderabad
+  BOM: Mumbai
+  DEL: Delhi
+  MAA: Chennai
+  CCU: Kolkata
+  GOI: Goa
+  PNQ: Pune
+  AMD: Ahmedabad
+  COK: Kochi
+  Monday: Monday
+  Tuesday: Tuesday
+  Wednesday: Wednesday
+  Thursday: Thursday
+  Friday: Friday
+  Saturday: Saturday
+  Sunday: Sunday
+
+hinglish:
+  BLR: Bangalore
+  HYD: Hyderabad
+  BOM: Mumbai
+  DEL: Delhi
+  MAA: Chennai
+  CCU: Kolkata
+  GOI: Goa
+  PNQ: Pune
+  AMD: Ahmedabad
+  COK: Kochi
+  Monday: Monday
+  Tuesday: Tuesday
+  Wednesday: Wednesday
+  Thursday: Thursday
+  Friday: Friday
+  Saturday: Saturday
+  Sunday: Sunday

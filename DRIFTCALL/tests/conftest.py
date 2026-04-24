@@ -7,7 +7,10 @@ that needs models.
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Literal
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 import pytest
 
@@ -20,6 +23,8 @@ from cells.step_04_models import (
     GoalSpec,
     ToolResult,
 )
+
+StatusLiteral = Literal["ok", "schema_error", "policy_error", "auth_error", "timeout"]
 
 
 @pytest.fixture
@@ -39,7 +44,11 @@ def valid_goal_spec() -> GoalSpec:
 def valid_drift_event_factory() -> Callable[..., DriftEvent]:
     """Factory fixture so tests can override turn/domain. Matches models.md §8.4."""
 
-    def _build(turn: int = 3, domain: str = "airline") -> DriftEvent:
+    def _build(
+        turn: int = 3,
+        domain: str = "airline",
+        pattern_id: str = "airline.price_rename",
+    ) -> DriftEvent:
         return DriftEvent(
             turn=turn,
             drift_type="schema",
@@ -47,6 +56,7 @@ def valid_drift_event_factory() -> Callable[..., DriftEvent]:
             description="field 'price' renamed to 'total_fare_inr'; 'currency' removed",
             from_version="v1",
             to_version="v2",
+            pattern_id=pattern_id,
         )
 
     return _build
@@ -65,7 +75,7 @@ def valid_tool_result_factory() -> Callable[..., ToolResult]:
     """Factory fixture for ToolResult. Matches models.md §8.2."""
 
     def _build(
-        status: str = "ok",
+        status: StatusLiteral = "ok",
         response: dict[str, Any] | None = None,
         tool_name: str = "airline.search",
         schema_version: str = "v1",
@@ -91,7 +101,7 @@ def valid_tool_result_factory() -> Callable[..., ToolResult]:
             )
         return ToolResult(
             tool_name=tool_name,
-            status=status,  # type: ignore[arg-type]
+            status=status,
             response=response,
             schema_version=schema_version,
             latency_ms=latency_ms,

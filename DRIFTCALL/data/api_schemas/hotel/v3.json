@@ -1,0 +1,47 @@
+{
+  "$comment": "SPDX-License-Identifier: Apache-2.0. Copyright 2026 DriftCall Team. Hotel v3 after gst_field drift per DESIGN.md §5.4.",
+  "$id": "https://driftcall.dev/schemas/hotel/v3.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "cancel_window_hours": {
+      "const": 6,
+      "type": "integer"
+    },
+    "checkin": {
+      "format": "date",
+      "type": "string"
+    },
+    "checkout": {
+      "format": "date",
+      "type": "string"
+    },
+    "city": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "gst_number": {
+      "pattern": "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$",
+      "type": "string"
+    },
+    "hotel_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "nightly_rate": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "resort_fee_inr": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "total_with_tax": {
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": ["hotel_id", "city", "checkin", "checkout", "nightly_rate", "total_with_tax", "cancel_window_hours", "resort_fee_inr", "gst_number"],
+  "title": "Hotel booking (v3)",
+  "type": "object"
+}

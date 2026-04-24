@@ -231,6 +231,7 @@ class DriftEvent:
     description: str                    # human-readable
     from_version: str
     to_version: str
+    pattern_id: str                     # registry key, e.g. "airline.price_rename" — matches drift_injector catalogue
 
 @dataclass(frozen=True)
 class GoalSpec:
@@ -1144,6 +1145,8 @@ driftcall/
 | 2026-04-24 | §3.3 — session identity switched from `session_id` query param to `X-Session-Id` HTTP header for auth-middleware cleanliness and log-redaction friendliness. Surfaced by deploy_env_space.md critic round-1. | Orchestrator |
 | 2026-04-24 | §4.2 — reset() signature simplified: config is now passed at `__init__`, not per-reset. Curriculum stage + language weights are fixed for the env's lifetime (training: one env per stage; HTTP: one env per session). Surfaced by Phase D Final Gate cross-doc consistency check. | Orchestrator |
 | 2026-04-24 | CLAUDE.md §6 — all `huggingface-cli upload` commands replaced with `hf upload` (new HF CLI). Surfaced by datasets.md critic + Phase D Gate. | Orchestrator |
+| 2026-04-25 | vendors.md §2.1 — primary-domain dispatch signature corrected to 3-tuple (ToolResult, VendorState, PaymentState) to match §3.7's transactional payment-return requirement. Surfaced by step_05 critic round-1. | Orchestrator |
+| 2026-04-25 | §4.1 DriftEvent — added `pattern_id: str` field (registry key, matches drift_injector catalogue). Required by drift_injector.md §2 + drift_injector_tests.md §U22. Was missing from models.md — surfaced by Phase C coder-A2-drift. | Orchestrator |
 
 ---
 

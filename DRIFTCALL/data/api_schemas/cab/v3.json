@@ -1,0 +1,42 @@
+{
+  "$comment": "SPDX-License-Identifier: Apache-2.0. Copyright 2026 DriftCall Team. Cab v3 after fare_breakdown drift per DESIGN.md §5.2.",
+  "$id": "https://driftcall.dev/schemas/cab/v3.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "drop": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "eta_min": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "fare_breakdown": {
+      "additionalProperties": false,
+      "properties": {
+        "base": {"minimum": 0, "type": "integer"},
+        "gst": {"minimum": 0, "type": "integer"},
+        "surge": {"minimum": 0, "type": "integer"},
+        "tolls": {"minimum": 0, "type": "integer"}
+      },
+      "required": ["base", "surge", "tolls", "gst"],
+      "type": "object"
+    },
+    "pickup": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "total_inr": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "vehicle_class": {
+      "enum": ["mini", "sedan", "suv", "infant_seat_sedan"],
+      "type": "string"
+    }
+  },
+  "required": ["pickup", "drop", "vehicle_class", "fare_breakdown", "total_inr", "eta_min"],
+  "title": "Cab estimate (v3)",
+  "type": "object"
+}

@@ -1,0 +1,39 @@
+{
+  "$comment": "SPDX-License-Identifier: Apache-2.0. Copyright 2026 DriftCall Team. Airline v3 after pax_required drift per DESIGN.md §5.1.",
+  "$id": "https://driftcall.dev/schemas/airline/v3.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "depart": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "flight_id": {
+      "pattern": "^[0-9A-Z]{2}-[0-9]{4}$",
+      "type": "string"
+    },
+    "from": {
+      "pattern": "^[A-Z]{3}$",
+      "type": "string"
+    },
+    "passenger_count": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "seats_left": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "to": {
+      "pattern": "^[A-Z]{3}$",
+      "type": "string"
+    },
+    "total_fare_inr": {
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": ["flight_id", "from", "to", "depart", "total_fare_inr", "seats_left", "passenger_count"],
+  "title": "Airline search result (v3)",
+  "type": "object"
+}

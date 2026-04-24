@@ -43,6 +43,12 @@ Every vendor module (`airline.py`, `cab.py`, `restaurant.py`, `hotel.py`, `payme
 from __future__ import annotations
 
 # Public tool dispatch — called by env.step
+#
+# Primary-domain vendors (airline, cab, restaurant, hotel): 3-tuple signature.
+# The third element is the post-commit PaymentState because book/order/cancel
+# handlers invoke payment.charge transactionally and must return the updated
+# PaymentState so env.step can thread it through the state graph. Returned by
+# identity if the tool didn't touch payment.
 def dispatch(
     tool_name: str,                          # e.g. "airline.search" (fully-qualified)
     tool_args: dict[str, Any],
@@ -50,13 +56,28 @@ def dispatch(
     schema_version: str,                     # "v1" | "v2" | "v3"
     episode_seed: int,
     now_ist: datetime,                       # env-owned clock, IST-tzaware (episode-constant, see §3.5)
-) -> tuple[ToolResult, VendorState]: ...
-    # Returns (result, new_state).
-    # For non-write ops (*.search, *.estimate, *.get_booking, *.track): new_state IS vendor_state
-    # (identity equality: `returned_state is input_state`).
-    # For write ops (*.book, *.order, *.cancel, payment.charge/refund/get_token): new_state is a fresh
-    # frozen VendorState built via dataclasses.replace(old, records={**old.records, new_id: record}).
-    # In-place mutation of any dict/list field on vendor_state is a contract violation.
+    payment_state: PaymentState,             # threaded through for transactional charge/refund
+) -> tuple[ToolResult, VendorState, PaymentState]: ...
+    # Returns (result, new_vendor_state, new_payment_state).
+    # For non-write ops (*.search, *.estimate, *.get_booking, *.track): new_vendor_state IS vendor_state
+    # and new_payment_state IS payment_state (identity equality on both).
+    # For write ops (*.book, *.order, *.cancel): new_vendor_state is a fresh frozen VendorState built via
+    # dataclasses.replace(old, records={**old.records, new_id: record}); new_payment_state reflects any
+    # charge/refund committed during the transaction (returned by identity if payment wasn't touched).
+    # In-place mutation of any dict/list field on vendor_state or payment_state is a contract violation.
+
+# Payment dispatch: 2-tuple signature — there is no separate primary-domain state to return.
+def dispatch(  # in driftcall/vendors/payment.py
+    tool_name: str,
+    tool_args: dict[str, Any],
+    vendor_state: PaymentState,
+    schema_version: str,
+    episode_seed: int,
+    now_ist: datetime,
+) -> tuple[ToolResult, PaymentState]: ...
+
+# Note: primary-domain dispatch returns a 3-tuple because book/order-style tools invoke
+# payment.charge transactionally; env.step threads the updated PaymentState through the state graph.
 
 # State bootstrap — called by env.reset() once per episode
 def initial_state(
@@ -95,7 +116,7 @@ def emit_side_channel_if_pending(
 TOOLS: tuple[str, ...]
 ```
 
-`VendorState` is a per-module frozen dataclass (§4 below). `dispatch` is a pure function: same inputs → same `(ToolResult, VendorState)` pair, no hidden randomness beyond the seeded RNG derived from `episode_seed + tool_name + tool_args`. **`dispatch`'s signature is fixed: `(...) → tuple[ToolResult, VendorState]`.** Commit-path transitions (a new booking/order/ride/charge record) flow through `dispatch`'s returned state; drift-path transitions flow through `apply_schema_mutation`; initial construction flows through `initial_state`; side-channel consumption flows through `emit_side_channel_if_pending`. All four are pure functions returning a new frozen `VendorState`.
+`VendorState` is a per-module frozen dataclass (§4 below). `dispatch` is a pure function: same inputs → same return tuple, no hidden randomness beyond the seeded RNG derived from `episode_seed + tool_name + tool_args`. **`dispatch`'s signature is fixed per vendor kind: primary-domain vendors (airline, cab, restaurant, hotel) return `tuple[ToolResult, VendorState, PaymentState]` (3-tuple) because their book/order/cancel tools invoke `payment.charge`/`payment.refund` transactionally and must return the updated PaymentState; payment returns `tuple[ToolResult, PaymentState]` (2-tuple) since there is no separate primary-domain state to return.** Commit-path transitions (a new booking/order/ride/charge record) flow through `dispatch`'s returned state; drift-path transitions flow through `apply_schema_mutation`; initial construction flows through `initial_state`; side-channel consumption flows through `emit_side_channel_if_pending`. All four are pure functions returning a new frozen `VendorState`.
 
 **Mechanical rule for implementers.** Every dict-field update uses `{**old_dict, key: value}` to construct a new dict, and `dataclasses.replace(state, field=new_dict)` builds the new frozen state. For example, committing a booking:
 
