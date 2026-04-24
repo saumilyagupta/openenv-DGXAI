@@ -164,7 +164,7 @@ No hackathon idea has a real 90%+ win probability. This is the defensible ceilin
 
 - **Hardware:** CPU basic (free tier) — Kokoro + Whisper run on CPU at real-time.
 - **API:** FastAPI + OpenEnv-compliant REST (`/reset`, `/step`, `/state`, `/close`).
-- **Stateless per session** (`session_id` query param); in-memory session cache with 1 hr TTL, max 10 concurrent sessions.
+- **Stateless per session** (`X-Session-Id` HTTP header); in-memory session cache with 1 hr TTL, max 10 concurrent sessions. Header chosen over query param for auth-middleware cleanliness and log-redaction friendliness.
 - **No GPU model loaded** — agent runs elsewhere and hits this env over HTTP.
 
 ### 3.4 Demo Topology (HF Space — demo)
@@ -272,18 +272,29 @@ All dataclasses are **frozen** (immutable) per the project's coding-style rules.
 ### 4.2 `reset()` Semantics
 
 ```python
-def reset(self, seed: int | None = None, config: dict | None = None) -> DriftCallObservation:
+def __init__(self, config: dict) -> None:
     """
-    - Sample a goal from the procedural generator (seeded).
-    - Pre-compute the drift schedule for this episode.
+    Config keys (lock):
+      - curriculum_stage: Literal[1, 2, 3]  (controls drift count per episode)
+      - language_weights: dict[LanguageCode, float]  (sums to 1.0 ± 1e-6)
+      - audio_boundary_enabled: bool  (default False for training, True for deployed env)
+    Stored on self._config; immutable for env lifetime. A new DriftCallEnv is
+    constructed for each training stage; the HTTP layer constructs one per session.
+    """
+
+def reset(self, seed: int | None = None) -> DriftCallObservation:
+    """
+    - Sample a goal via task_generator.generate(seed, self._config.curriculum_stage,
+      self._config.language_weights).
+    - Pre-compute the drift schedule for this episode (drift_injector).
     - Initialize vendor states to v1 schemas.
     - Return initial observation (turn=0, empty tool_results, empty drift_log).
     """
 ```
 
 - `seed` deterministic for reproducibility.
-- `config.curriculum_stage` ∈ {1, 2, 3} controls drift frequency.
-- `config.language_weights` lets stage 1 weight English/Hinglish up, stage 3 rebalance.
+- Config lives at `__init__`, **not** per-reset — an env instance's curriculum + language weights are fixed for its lifetime. Changing stage = new `DriftCallEnv`.
+- The HTTP `/reset` body carries `config` so the server can construct the right env per session (see `deploy_env_space.md §2.1.1`).
 
 ### 4.3 `step(action)` Semantics
 
@@ -402,7 +413,15 @@ Drifts fire **at the start** of the scheduled turn, before the agent's action is
 
 ### 6.3 Drift Pattern Library (20 patterns)
 
-Hand-authored in `drift_patterns/drifts.yaml`. 5 drift types × 4 consumer domains = 20.
+Hand-authored in `drift_patterns/drifts.yaml`. **20 patterns total**, not a strict Cartesian product:
+
+- **5 schema patterns** across `{airline, cab, restaurant, hotel}` (one per primary domain + one transversal)
+- **5 policy patterns** across the same domains
+- **5 T&C patterns** across the same domains
+- **3 pricing patterns** across `{airline, cab, hotel}` — restaurant "pricing" collapses into the `min_order` policy pattern
+- **2 transversal auth patterns** on the shared `payment` domain, affecting all four primary domains
+
+`detection_hints` values are **substring-matchable tokens** (not free-form sentences) so R2 can use exact case-insensitive substring match against agent `SPEAK` / `CLARIFY` text or tool-call arg strings.
 
 ```yaml
 - id: airline.price_rename
@@ -415,8 +434,9 @@ Hand-authored in `drift_patterns/drifts.yaml`. 5 drift types × 4 consumer domai
     rename: {price: total_fare_inr}
     remove: [currency]
   detection_hints:
-    - KeyError on 'price' in search response
-    - new 'total_fare_inr' key in v2 responses
+    - "price"
+    - "total_fare_inr"
+    - "rename"
 
 - id: airline.pax_required
   drift_type: schema
@@ -427,9 +447,10 @@ Hand-authored in `drift_patterns/drifts.yaml`. 5 drift types × 4 consumer domai
   mutation:
     require_new_field: [passenger_count]
   detection_hints:
-    - 400 with error code 'MISSING_PASSENGER_COUNT'
+    - "passenger_count"
+    - "MISSING_PASSENGER_COUNT"
 
-# ... 18 more
+# ... 18 more, catalogued in docs/modules/drift_injector.md
 ```
 
 ---
@@ -563,17 +584,20 @@ Supervision comes from the reward function, not from teacher traces.
   constraints_template:
     budget_inr: {distribution: uniform, low: 3000, high: 15000, step: 500}
     time_window: {choices: ["morning", "afternoon", "evening", "late_night"]}
+  # Language keys use ISO short codes to match §4.1 GoalSpec.language Literal
+  # ("hi", "ta", "kn", "en", "hinglish"). Long names (hindi/tamil/kannada/english)
+  # are NOT accepted. Template loaders must validate keys ⊆ LanguageCode set.
   language_variants:
     hinglish:
       - "Bhai {when} ko {to} jaana hai, cheapest flight {time_window} mein, {budget} rupees max"
       - "{when} ko {from} se {to} ka ticket book kar de, under {budget}, {time_window} ke baad"
-    hindi:
+    hi:
       - "मुझे {when} को {from} से {to} जाना है, {budget} रुपये से कम में"
-    tamil:
+    ta:
       - "{when} அன்று {from} லிருந்து {to} க்கு திக்கெட் வேண்டும்"
-    kannada:
+    kn:
       - "{when} {from} inda {to} ge cheapest flight book madi"
-    english:
+    en:
       - "Book the cheapest flight from {from} to {to} on {when}, budget under ₹{budget}, departing after {time_window}"
 ```
 
@@ -603,10 +627,14 @@ Package all generated briefs + drift patterns + held-out eval set as `<team>/dri
 ```
 driftcall-indic-briefs/
 ├── README.md
+├── LICENSE                   (Apache 2.0)
 ├── train/briefs.jsonl        (15,000 sampled episodes)
 ├── val/briefs.jsonl          (500 held-out)
 ├── drift_patterns.yaml       (20 patterns)
-└── api_schemas/              (12 schema versions across 4 domains)
+└── api_schemas/              (14 schema versions across 5 domains:
+                               airline v1/v2/v3, cab v1/v2/v3,
+                               restaurant v1/v2/v3, hotel v1/v2/v3,
+                               payment v1/v2)
 ```
 
 ---
@@ -1110,6 +1138,12 @@ driftcall/
 | Date | Change | By |
 |---|---|---|
 | 2026-04-24 | Initial design doc locked after 4-agent research convergence | Team |
+| 2026-04-24 | §6.3 — drift pattern library reshaped from strict 5×4 grid to explicit 20-pattern enumeration (5 schema + 5 policy + 5 T&C + 3 pricing + 2 transversal payment-auth). detection_hints normalized to substring-matchable tokens. Surfaced by drift_injector.md critic round-1. | Orchestrator |
+| 2026-04-24 | §8.3 — language_variants YAML keys normalized to ISO short codes (`hi`, `ta`, `kn`, `en`, `hinglish`) to match §4.1 GoalSpec.language Literal. Long names (hindi/tamil/kannada/english) deprecated. Surfaced by task_generator.md critic round-1. | Orchestrator |
+| 2026-04-24 | §8.6 — HF Hub bundle: corrected api_schemas count from "12 schemas / 4 domains" to "14 schemas / 5 domains" to match §5 vendor enumeration (airline v1/v2/v3 + cab v1/v2/v3 + restaurant v1/v2/v3 + hotel v1/v2/v3 + payment v1/v2 = 14). Added LICENSE file to bundle. Surfaced by datasets.md critic round-1. | Orchestrator |
+| 2026-04-24 | §3.3 — session identity switched from `session_id` query param to `X-Session-Id` HTTP header for auth-middleware cleanliness and log-redaction friendliness. Surfaced by deploy_env_space.md critic round-1. | Orchestrator |
+| 2026-04-24 | §4.2 — reset() signature simplified: config is now passed at `__init__`, not per-reset. Curriculum stage + language weights are fixed for the env's lifetime (training: one env per stage; HTTP: one env per session). Surfaced by Phase D Final Gate cross-doc consistency check. | Orchestrator |
+| 2026-04-24 | CLAUDE.md §6 — all `huggingface-cli upload` commands replaced with `hf upload` (new HF CLI). Surfaced by datasets.md critic + Phase D Gate. | Orchestrator |
 
 ---
 

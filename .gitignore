@@ -2,7 +2,6 @@
 .env
 __pycache__/
 *.pyc
-.claude/
 data/claims_easy.json
 data/claims_medium.json
 data/claims_hard.json
