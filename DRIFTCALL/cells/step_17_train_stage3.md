@@ -1,0 +1,7 @@
+# Step 17 — Stage-3 GRPO training entry
+
+Stage-3 is the compound-drift curriculum (training.md §3.5, DESIGN.md §10.3): 150 GRPO steps, two drifts per episode (`curriculum_stage=3`), language mix identical to Stage 2 (30% EN / 30% Hinglish / 20% Hi / 10% Ta / 10% Kn), `warmup_ratio=0.0` (continuous cosine across all 500 steps). `resume_from` is required — must point at the Stage-2 final checkpoint. Saves checkpoints every 50 steps via `save_pretrained(safe_serialization=True)`; never the naive 4-bit -> 16-bit merge path (DESIGN.md §10.5).
+
+`train(stage=3, num_steps=150, resume_from=Path("checkpoints/stage2_final"))` boots Gemma 4 E2B in 4-bit (FP16-pinned), re-asserts FP16 dtype, attaches the Stage-2 LoRA adapters via `PeftModel.from_pretrained(..., is_trainable=True)`, constructs the Stage-3 config + adapter + trainer, and resumes via `trainer.train(resume_from_checkpoint=str(resume_from))`. Language weights are validated up-front: every non-English cohort must carry weight >= 0.05 (training.md §7f).
+
+`build_run_plan` is the pure-function entry point used by tests; rejects `resume_from=None` and weights below the 0.05 floor. `WandBStartupError` only fires when `WANDB_MODE != "offline"` and `wandb.init()` raises (training.md §2.4.1). BF16-slippage halt fires before any optimizer/PEFT state is built (V100 safety; training.md §3.1).
