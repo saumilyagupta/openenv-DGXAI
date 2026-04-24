@@ -1059,3 +1059,123 @@ def test_step_after_close_returns_404(
         json={"action": {"action_type": "speak", "message": "hi"}},
     )
     assert_error_envelope(resp, code="session_not_found", http_status=404)
+
+
+# ---------------------------------------------------------------------------
+# /reset env.reset OSError path → 500 io_error
+# ---------------------------------------------------------------------------
+
+
+def test_reset_env_reset_oserror_returns_500_io(
+    fastapi_test_client: TestClient,
+    valid_bearer_token: str,
+    session_id_alpha: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Force env.reset to raise OSError → io_error 500."""
+
+    app_module = sys.modules["app"]
+    real_factory = app_module.DriftCallEnv
+
+    class _BadEnv:
+        def __init__(self, *_a: Any, **_kw: Any) -> None:
+            pass
+
+        def reset(self, seed: int | None = None) -> Any:
+            raise OSError("disk full")
+
+        def close(self) -> None:
+            return None
+
+    monkeypatch.setattr(app_module, "DriftCallEnv", _BadEnv)
+    try:
+        resp = fastapi_test_client.post(
+            "/reset",
+            headers=_auth_headers(valid_bearer_token, session_id_alpha),
+            json={"seed": 1},
+        )
+        assert_error_envelope(resp, code="io_error", http_status=500)
+    finally:
+        monkeypatch.setattr(app_module, "DriftCallEnv", real_factory)
+
+
+def test_reset_env_reset_arbitrary_raise_returns_500(
+    fastapi_test_client: TestClient,
+    valid_bearer_token: str,
+    session_id_alpha: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app_module = sys.modules["app"]
+
+    class _BadEnv:
+        def __init__(self, *_a: Any, **_kw: Any) -> None:
+            pass
+
+        def reset(self, seed: int | None = None) -> Any:
+            raise RuntimeError("bork")
+
+        def close(self) -> None:
+            return None
+
+    monkeypatch.setattr(app_module, "DriftCallEnv", _BadEnv)
+    resp = fastapi_test_client.post(
+        "/reset",
+        headers=_auth_headers(valid_bearer_token, session_id_alpha),
+        json={"seed": 1},
+    )
+    assert_error_envelope(resp, code="internal_error", http_status=500)
+
+
+# ---------------------------------------------------------------------------
+# Step OSError → 500 io_error
+# ---------------------------------------------------------------------------
+
+
+def test_step_oserror_returns_500_io(
+    fastapi_test_client: TestClient,
+    valid_bearer_token: str,
+    session_id_alpha: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fastapi_test_client.post(
+        "/reset",
+        headers=_auth_headers(valid_bearer_token, session_id_alpha),
+        json={"seed": 1},
+    )
+    app_module = sys.modules["app"]
+    cache = app_module.app.state.driftcall.cache
+    entry = cache.get(session_id_alpha)
+    assert entry is not None
+    monkeypatch.setattr(
+        entry.env, "step", lambda *_a, **_kw: (_ for _ in ()).throw(OSError("disk"))
+    )
+    resp = fastapi_test_client.post(
+        "/step",
+        headers=_auth_headers(valid_bearer_token, session_id_alpha),
+        json={"action": {"action_type": "speak", "message": "hi"}},
+    )
+    assert_error_envelope(resp, code="io_error", http_status=500)
+
+
+# ---------------------------------------------------------------------------
+# State on never-reset session via stale cache hack
+# ---------------------------------------------------------------------------
+
+
+def test_state_unknown_session_returns_404_not_found(
+    fastapi_test_client: TestClient, valid_bearer_token: str
+) -> None:
+    resp = fastapi_test_client.get(
+        "/state", headers=_auth_headers(valid_bearer_token, "no-such-sid")
+    )
+    assert_error_envelope(resp, code="session_not_found", http_status=404)
+
+
+def test_close_unknown_session_returns_200(
+    fastapi_test_client: TestClient, valid_bearer_token: str
+) -> None:
+    resp = fastapi_test_client.post(
+        "/close", headers=_auth_headers(valid_bearer_token, "no-such-sid")
+    )
+    assert resp.status_code == 200
+    assert resp.json() == {"closed": True, "final_state": None}

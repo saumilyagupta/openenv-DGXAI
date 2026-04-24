@@ -861,12 +861,12 @@ def build_ui() -> Any:
         reset_btn = gr.Button("New episode")
 
         def _on_submit(
-            mic_in: tuple[int, np.ndarray] | None,
-            ckpt: CheckpointId,
-            drift_pat: str | None,
-            sid: str,
-            text_in: str,
-        ) -> tuple[str, tuple[int, np.ndarray], pd.DataFrame, dict[str, float], str]:
+            mic_in: Any,
+            ckpt: Any,
+            drift_pat: Any,
+            sid: Any,
+            text_in: Any,
+        ) -> Any:
             return infer_turn(mic_in, ckpt, drift_pat, sid, text_input=text_in)
 
         mic.stop_recording(
@@ -875,7 +875,7 @@ def build_ui() -> Any:
             outputs=[transcript, speaker, trace, rewards, status],
         )
 
-        def _on_reset(sid: str) -> tuple[str, pd.DataFrame, dict[str, float], str]:
+        def _on_reset(sid: Any) -> Any:
             reset_session(sid)
             return "", _empty_trace_df(), {}, "Episode reset."
 
