@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import ast
 import math
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock

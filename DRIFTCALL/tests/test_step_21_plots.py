@@ -7,7 +7,6 @@ PlotRenderError / WandBHistoryUnavailableWarning. matplotlib uses Agg backend.
 from __future__ import annotations
 
 import ast
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 

@@ -8,9 +8,8 @@ from __future__ import annotations
 
 import ast
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -22,13 +21,11 @@ from cells.step_18_eval_baseline import (
     EvalBudgetExceededError,
     EvalReport,
     EvaluationError,
-    PerLanguageReport,
     bootstrap_ci,
     compute_episode_seed,
     eval_baseline,
     run_eval,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -25,11 +25,8 @@ from cells.step_18_eval_baseline import (
 from cells.step_20_probe import (
     BUDGET_PROBE_SECONDS,
     EXPLOIT_CLASSES,
-    ProbeExploitClassSummary,
-    ProbeHit,
     ProbeInsufficientSamplesError,
     ProbeOnBaseModelError,
-    ProbeReport,
     probe_reward_hacking,
     render_probe_report_md,
     scan_episode_for_exploits,
