@@ -19,7 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-BASE_MODEL_ID: str = "unsloth/gemma-4-E2B-it-bnb-4bit"
+BASE_MODEL_ID: str = "unsloth/gemma-4-E2B-it-unsloth-bnb-4bit"
 MAX_SEQ_LENGTH: int = 4096
 LORA_R: int = 16
 LORA_ALPHA: int = 32

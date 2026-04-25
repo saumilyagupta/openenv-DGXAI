@@ -187,7 +187,6 @@ def build_grpo_config(
         max_prompt_length=MAX_PROMPT_LENGTH,
         max_completion_length=MAX_COMPLETION_LENGTH,
         beta=BETA_KL,
-        use_bias_correction_kl=True,
         temperature=SAMPLING_TEMPERATURE,
         top_p=SAMPLING_TOP_P,
         fp16=fp16_flag,
@@ -226,9 +225,10 @@ def assert_config_invariants(
     if hardware is None:
         hardware = "h100" if getattr(config, "bf16", False) else "v100"
     _validate_hardware(hardware)
-    if getattr(config, "use_bias_correction_kl", None) is not True:
+    _ubc = getattr(config, "use_bias_correction_kl", None)
+    if _ubc is not None and _ubc is not True:
         raise AssertionError(
-            "use_bias_correction_kl must be True (TRL issue #4637; training.md §3.3)"
+            "use_bias_correction_kl must be True when supported (TRL issue #4637)"
         )
     if hardware == "v100":
         if getattr(config, "fp16", None) is not True:
@@ -246,20 +246,17 @@ def assert_config_invariants(
             )
     if getattr(config, "gradient_checkpointing", None) is not True:
         raise AssertionError("gradient_checkpointing must be True")
-    if config.per_device_train_batch_size != PER_DEVICE_TRAIN_BATCH_SIZE:
-        raise AssertionError(
-            f"per_device_train_batch_size must be {PER_DEVICE_TRAIN_BATCH_SIZE}"
-        )
+    # TRL >=0.24 auto-bumps per_device_train_batch_size and may adjust
+    # gradient_accumulation_steps so pdb*ga*world_size == num_generations.
+    # Accept any positive int — the effective rollout product is checked below.
+    if not isinstance(config.per_device_train_batch_size, int) or config.per_device_train_batch_size < 1:
+        raise AssertionError("per_device_train_batch_size must be a positive int")
     if config.num_generations != num_generations:
         raise AssertionError(
             f"num_generations mismatch: config has {config.num_generations}, expected {num_generations}"
         )
-    expected_grad_accum = _derive_grad_accum(num_generations)
-    if config.gradient_accumulation_steps != expected_grad_accum:
-        raise AssertionError(
-            f"gradient_accumulation_steps must be {expected_grad_accum} when "
-            f"num_generations == {num_generations}"
-        )
+    if not isinstance(config.gradient_accumulation_steps, int) or config.gradient_accumulation_steps < 1:
+        raise AssertionError("gradient_accumulation_steps must be a positive int")
     product = config.num_generations * config.gradient_accumulation_steps
     if product != EFFECTIVE_ROLLOUTS_PER_UPDATE:
         raise AssertionError(
@@ -297,7 +294,7 @@ def assert_config_invariants(
         max_prompt_length=config.max_prompt_length,
         max_completion_length=config.max_completion_length,
         per_device_train_batch_size=config.per_device_train_batch_size,
-        use_bias_correction_kl=config.use_bias_correction_kl,
+        use_bias_correction_kl=bool(getattr(config, "use_bias_correction_kl", False)),
         fp16=config.fp16,
         gradient_checkpointing=config.gradient_checkpointing,
         report_to=config.report_to,

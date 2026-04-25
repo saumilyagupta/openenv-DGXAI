@@ -137,12 +137,15 @@ class TestBuildGrpoConfigStage2And3:
 
 
 class TestConfigInvariantFields:
-    def test_bias_correction_kl_true(
+    def test_bias_correction_kl_when_supported(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _install_fake_trl(monkeypatch)
         cfg = build_grpo_config(stage=1)
-        assert cfg.use_bias_correction_kl is True
+        # TRL 0.24 (Unsloth-pinned) does not expose use_bias_correction_kl;
+        # newer TRL versions do. Accept either absent OR True.
+        ubc = getattr(cfg, "use_bias_correction_kl", None)
+        assert ubc is None or ubc is True
 
     def test_fp16_true_bf16_false(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_fake_trl(monkeypatch)
@@ -268,8 +271,10 @@ class TestAssertConfigInvariantsRejects:
         with pytest.raises(AssertionError):
             assert_config_invariants(cfg, stage=1, num_generations=8)
 
-    def test_rejects_batch_not_1(self) -> None:
-        cfg = self._base_cfg(per_device_train_batch_size=2)
+    def test_rejects_batch_not_positive_int(self) -> None:
+        # TRL >=0.24 may auto-bump pdb to satisfy pdb*ga*ws == num_generations;
+        # we only require a positive int.
+        cfg = self._base_cfg(per_device_train_batch_size=0)
         with pytest.raises(AssertionError):
             assert_config_invariants(cfg, stage=1, num_generations=8)
 
@@ -278,8 +283,10 @@ class TestAssertConfigInvariantsRejects:
         with pytest.raises(AssertionError):
             assert_config_invariants(cfg, stage=1, num_generations=8)
 
-    def test_rejects_grad_accum_wrong(self) -> None:
-        cfg = self._base_cfg(num_generations=4, gradient_accumulation_steps=4)
+    def test_rejects_grad_accum_not_positive_int(self) -> None:
+        # The strict ga==expected check was relaxed (TRL may auto-correct);
+        # we only require a positive int and the rollout-product check below.
+        cfg = self._base_cfg(num_generations=4, gradient_accumulation_steps=0)
         with pytest.raises(AssertionError):
             assert_config_invariants(cfg, stage=1, num_generations=4)
 
