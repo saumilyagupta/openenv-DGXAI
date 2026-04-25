@@ -132,7 +132,10 @@ class TestHardwareMode:
             == EFFECTIVE_ROLLOUTS_PER_UPDATE
         )
         assert config.gradient_checkpointing is True
-        assert config.use_bias_correction_kl is True
+        # TRL 0.24 (Unsloth-pinned) does not expose use_bias_correction_kl;
+        # newer TRL versions do. Accept either absent OR True.
+        ubc = getattr(config, "use_bias_correction_kl", None)
+        assert ubc is None or ubc is True
 
     def test_invariants_checker_accepts_h100_config(
         self, monkeypatch: pytest.MonkeyPatch
