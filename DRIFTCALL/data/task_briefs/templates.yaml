@@ -102,7 +102,7 @@
       low: 1500
       high: 12000
       step: 500
-  drift_slot_tags: [nightly_rate, total_with_tax, cancel_window_hours, gst_number, resort_fee_inr]
+  drift_slot_tags: [cancel_window_hours, gst_number, resort_fee_inr]
   language_variants:
     hinglish:
       - "Bhai {city} mein hotel chahiye, {checkin} se {checkout} tak, under {budget_inr} per night"
@@ -131,7 +131,7 @@
       choices: ["1", "2", "3", "4"]
     time_window:
       choices: [morning, afternoon, evening, late_night]
-  drift_slot_tags: [price, total_fare_inr, passenger_count, convenience_fee]
+  drift_slot_tags: [price, total_fare_inr, passenger_count, convenience_fee_inr]
   language_variants:
     hinglish:
       - "Bhai {when} ko {from} se {to} {passenger_count} log, {budget_inr} ke andar, {time_window} flight"
