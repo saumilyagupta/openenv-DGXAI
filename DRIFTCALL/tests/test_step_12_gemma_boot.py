@@ -58,7 +58,7 @@ def _install_fake_unsloth(
     FastModel.get_peft_model = MagicMock(return_value=peft_model)
 
     unsloth_mod = types.ModuleType("unsloth")
-    unsloth_mod.FastLanguageModel = FastModel  # type: ignore[attr-defined]
+    unsloth_mod.FastVisionModel = FastModel  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "unsloth", unsloth_mod)
     return FastModel, base_model, peft_model
 
@@ -92,7 +92,8 @@ class TestConstants:
         cfg = BootConfig()
         assert cfg.base_model_id == BASE_MODEL_ID
         assert cfg.max_seq_length == MAX_SEQ_LENGTH
-        assert cfg.load_in_4bit is True
+        # 16-bit LoRA per Unsloth Gemma 4 E2B GRPO Sudoku notebook.
+        assert cfg.load_in_4bit is False
         assert cfg.lora_r == LORA_R
         assert cfg.lora_alpha == LORA_ALPHA
         assert cfg.lora_target_modules == LORA_TARGET_MODULES
@@ -148,10 +149,13 @@ class TestBootGemma:
         boot_gemma()
 
         call = FastModel.from_pretrained.call_args
-        # FastLanguageModel uses model_name= kwarg per Unsloth Gemma 4 GRPO guide.
+        # FastVisionModel uses model_name= kwarg per Unsloth Gemma 4 E2B
+        # GRPO Sudoku notebook (the official RL recipe).
         assert call.kwargs["model_name"] == BASE_MODEL_ID
         assert call.kwargs["max_seq_length"] == MAX_SEQ_LENGTH
-        assert call.kwargs["load_in_4bit"] is True
+        # 16-bit LoRA — 4-bit triggers chunked-log-softmax shape bug on
+        # multimodal Gemma 4.
+        assert call.kwargs["load_in_4bit"] is False
         assert call.kwargs["dtype"] is torch.float16
         # fast_inference=False required for GRPO (Unsloth RL guide).
         assert call.kwargs.get("fast_inference") is False

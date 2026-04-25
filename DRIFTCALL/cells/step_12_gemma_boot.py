@@ -60,7 +60,11 @@ class BootConfig:
 
     base_model_id: str = BASE_MODEL_ID
     max_seq_length: int = MAX_SEQ_LENGTH
-    load_in_4bit: bool = True
+    # 16-bit LoRA — the official Unsloth Gemma 4 E2B GRPO notebook uses this.
+    # 4-bit triggers the chunked_hidden_states_selective_log_softmax path
+    # that crashes on multimodal Gemma 4. V100 32GB has ample headroom for
+    # 16-bit (Gemma 4 E2B ~10GB weights + LoRA ~0.1GB + activations ~5GB).
+    load_in_4bit: bool = False
     lora_r: int = LORA_R
     lora_alpha: int = LORA_ALPHA
     lora_dropout: float = LORA_DROPOUT
@@ -97,47 +101,40 @@ def assert_fp16_dtype(model: Any) -> None:
 
 
 def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
-    """Load Gemma 4 E2B in 4-bit + attach LoRA; return (model, tokenizer).
+    """Load Gemma 4 E2B in 16-bit LoRA + return (model, tokenizer).
 
-    Per the official Unsloth Gemma 4 GRPO guide
-    (https://unsloth.ai/docs/models/gemma-4/train#reinforcement-learning-rl):
+    Mirrors the official Unsloth Gemma 4 E2B GRPO Sudoku notebook
+    (https://github.com/unslothai/notebooks/blob/main/nb/Gemma4_(E2B)_Reinforcement_Learning_Sudoku_Game.ipynb)
+    exactly:
 
-        from unsloth import FastLanguageModel
-        model, tokenizer = FastLanguageModel.from_pretrained(
-            model_name="unsloth/gemma-4-E2B-it",
-            fast_inference=False,
+        from unsloth import FastVisionModel
+        model, tokenizer = FastVisionModel.from_pretrained(
+            model_name = "unsloth/gemma-4-E2B-it",
+            max_seq_length = 4096,
+            load_in_4bit = False,    # 16-bit LoRA (NOT 4-bit)
+            fast_inference = False,
         )
 
-    ``FastLanguageModel`` (the language-only loader) routes through
-    ``unsloth/models/llama.py`` which has all the GRPO-specific patches
-    baked in (UNSLOTH_RETURN_HIDDEN_STATES honoring at L1509, KV-shared-no-
-    cache fix, etc.). ``FastModel`` (the multimodal loader) routes through
-    ``unsloth/models/vision.py`` which lacks those patches and crashes
-    during the GRPO log-softmax / multinomial-sampling steps.
+    Why **not** ``FastLanguageModel`` and **not** 4-bit:
+      - Gemma 4 E2B-it ships with audio + vision towers; the language-only
+        loader still loads ``Gemma4ForConditionalGeneration`` and Unsloth
+        compiles a multimodal-aware GRPO trainer.
+      - 4-bit weights route through ``chunked_hidden_states_selective_log_
+        softmax`` which expects hidden states with shape ``[..., hidden_dim]``
+        but for the multimodal Gemma 4 path receives ``[..., vocab]`` and
+        crashes with the ``mat1 and mat2 shapes cannot be multiplied`` error.
+      - The Sudoku notebook uses 16-bit LoRA explicitly (``load_in_4bit=False``)
+        to bypass that path. 16-bit Gemma 4 E2B fits comfortably on V100 32GB.
 
-    The audio + vision towers are still loaded as part of the checkpoint —
-    they're just not exercised during text-only RL training. Inference time
-    on the deployed env can use the audio capability separately via the
-    standard processor path.
-
-    Steps:
-      1. ``FastLanguageModel.from_pretrained(model_name=..., load_in_4bit=True,
-         dtype=torch.float16, fast_inference=False)``.
-      2. ``assert_fp16_dtype(model)`` — raises :class:`BF16SlippageError`
-         if any BF16 slipped through.
-      3. ``FastLanguageModel.get_peft_model(model, r=16, lora_alpha=32,
-         target_modules=(...), use_gradient_checkpointing="unsloth",
-         random_state=3407)``.
-      4. Return ``(peft_model, tokenizer)``.
-
-    All heavy imports are lazy so the module is importable on CPU-only CI.
+    The ``load_in_4bit`` setting on :class:`BootConfig` is honored — it
+    defaults to ``False`` to follow the working notebook recipe.
     """
     cfg = config if config is not None else BootConfig()
 
     import torch
-    from unsloth import FastLanguageModel
+    from unsloth import FastVisionModel
 
-    model, tokenizer = FastLanguageModel.from_pretrained(
+    model, tokenizer = FastVisionModel.from_pretrained(
         model_name=cfg.base_model_id,
         max_seq_length=cfg.max_seq_length,
         load_in_4bit=cfg.load_in_4bit,
@@ -147,7 +144,7 @@ def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
 
     assert_fp16_dtype(model)
 
-    peft_model = FastLanguageModel.get_peft_model(
+    peft_model = FastVisionModel.get_peft_model(
         model,
         r=cfg.lora_r,
         lora_alpha=cfg.lora_alpha,
