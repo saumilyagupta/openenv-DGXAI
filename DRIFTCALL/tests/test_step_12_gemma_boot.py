@@ -58,14 +58,14 @@ def _install_fake_unsloth(
     FastModel.get_peft_model = MagicMock(return_value=peft_model)
 
     unsloth_mod = types.ModuleType("unsloth")
-    unsloth_mod.FastVisionModel = FastModel  # type: ignore[attr-defined]
+    unsloth_mod.FastLanguageModel = FastModel  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "unsloth", unsloth_mod)
     return FastModel, base_model, peft_model
 
 
 class TestConstants:
     def test_base_model_id_is_pinned(self) -> None:
-        assert BASE_MODEL_ID == "unsloth/gemma-4-E2B-it"
+        assert BASE_MODEL_ID == "unsloth/gemma-3-4b-it"
 
     def test_max_seq_length_4096(self) -> None:
         assert MAX_SEQ_LENGTH == 4096

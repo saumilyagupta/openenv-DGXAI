@@ -1,17 +1,23 @@
-"""Gemma 4 E2B boot via Unsloth FastModel (docs/modules/training.md §3.1).
+"""Gemma 3 4B boot via Unsloth FastLanguageModel (docs/modules/training.md §3.1).
 
-Contract:
-  - Base model: ``unsloth/gemma-4-E2B-it-unsloth-bnb-4bit`` (4-bit NF4).
-  - Precision: explicit FP16 (V100-safe; explicit ``dtype=torch.float16``
-    at load prevents Unsloth auto-picking BF16).
-  - LoRA: r=16, α=32, 7 target modules (q/k/v/o + gate/up/down), Unsloth
-    gradient checkpointing, ``random_state=3407``.
+v1 contract — text-only Gemma 3 to ship before deadline:
+
+  - Base model: ``unsloth/gemma-3-4b-it`` (text-only; no audio/vision).
+  - Loader: ``FastLanguageModel`` (routes through the well-tested llama.py
+    GRPO patches; avoids the unsloth_base_fast_generate vision wrapper that
+    breaks GRPO sampling on multimodal Gemma 4 + V100 + transformers 5.5).
+  - Precision: explicit FP16 (V100-safe).
+  - LoRA: r=16, α=32, 7 target modules, dropout=0 (Unsloth fast LoRA path),
+    Unsloth gradient checkpointing, ``random_state=3407``.
   - Hard halt: ``next(model.parameters()).dtype`` MUST be ``torch.float16``;
     any BF16 parameter triggers ``BF16SlippageError`` before optimizer build.
 
+Phase 2 (post-deadline): switch back to ``unsloth/gemma-4-E2B-it`` once
+Unsloth ships a Gemma 4 multimodal GRPO fix (see GitHub issue tracker).
+Audio capability is held aside until that lands.
+
 Heavy imports (``unsloth``, ``torch``) are deferred inside functions so this
-cell loads on CPU-only CI runners where Unsloth is not installed. Tests mock
-``FastModel.from_pretrained`` and ``FastModel.get_peft_model``.
+cell loads on CPU-only CI runners where Unsloth is not installed.
 """
 
 from __future__ import annotations
@@ -52,7 +58,7 @@ os.environ.setdefault("UNSLOTH_DISABLE_STATIC_GENERATION", "1")
 # Defensive reset prevents leaks across re-imports / test runs.
 os.environ["UNSLOTH_RETURN_HIDDEN_STATES"] = "0"
 
-BASE_MODEL_ID: str = "unsloth/gemma-4-E2B-it"
+BASE_MODEL_ID: str = "unsloth/gemma-3-4b-it"
 MAX_SEQ_LENGTH: int = 4096
 LORA_R: int = 16
 LORA_ALPHA: int = 32
@@ -266,95 +272,33 @@ def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
     cfg = config if config is not None else BootConfig()
 
     import torch
-    from unsloth import FastVisionModel
+    from unsloth import FastLanguageModel
 
-    # ROOT CAUSE FIX: patch Gemma 4 forward to honor UNSLOTH_RETURN_HIDDEN_STATES.
-    # Must run BEFORE FastVisionModel.from_pretrained so the patch is on the
-    # bare class before Unsloth wraps it. See _patch_gemma4_return_hidden_states
-    # for the full explanation.
-    _patch_gemma4_return_hidden_states()
-
-    # NOTE: FastVisionModel.from_pretrained returns (model, processor) for
-    # multimodal checkpoints — `processor` is a Gemma4Processor wrapping image
-    # processor + audio processor + tokenizer. The downstream trainer expects
-    # a tokenizer, so we extract `processor.tokenizer` below.
-    model, processor = FastVisionModel.from_pretrained(
+    # FastLanguageModel returns (model, tokenizer) directly — no processor
+    # unwrapping needed (Gemma 3 is text-only).
+    model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=cfg.base_model_id,
         max_seq_length=cfg.max_seq_length,
         load_in_4bit=cfg.load_in_4bit,
         dtype=torch.float16,
-        fast_inference=False,  # disables vLLM; uses Unsloth inference (RL guide)
+        fast_inference=False,
     )
-    # Unwrap to the actual tokenizer for trainer.processing_class.
-    # Only unwrap if `processor` is a real ProcessorMixin (production path).
-    # In tests `processor` is a Mock or PreTrainedTokenizer — keep as-is.
-    try:
-        from transformers.processing_utils import ProcessorMixin as _PM
-        if isinstance(processor, _PM) and hasattr(processor, "tokenizer"):
-            tokenizer = processor.tokenizer
-        else:
-            tokenizer = processor
-    except Exception:
-        tokenizer = processor
 
     assert_fp16_dtype(model)
 
-    # Bypass unsloth_base_fast_generate (vision.py:445) by binding generate
-    # directly to _old_generate. The vision wrapper force-applies static cache
-    # + compile_config to generation_config for multimodal models, which on
-    # Gemma 4 + transformers 5.5 + sampling produces 3D logits that break
-    # torch.multinomial inside _sample with "prob_dist must be 1 or 2 dim".
-    # Going through _old_generate (the underlying transformers Generate) gives
-    # the standard dynamic-cache path which produces correct [B, V] logits.
-    try:
-        if hasattr(model, "_old_generate"):
-            model.generate = model._old_generate
-        if hasattr(model, "base_model") and hasattr(model.base_model, "_old_generate"):
-            model.base_model.generate = model.base_model._old_generate
-    except Exception:
-        pass
-
-    # Unsloth auto-applies device_map='auto' for multimodal Gemma 4 (offloads
-    # audio_tower etc. to CPU). transformers Trainer + Accelerator then refuse
-    # with "You can't train a model that has been loaded with device_map='auto'
-    # in any distributed mode". Force everything to a single GPU and clear
-    # hf_device_map so Accelerator is happy. V100 32GB has ample headroom for
-    # the full multimodal model in fp16 (~10GB weights + LoRA + activations).
-    try:
-        if torch.cuda.is_available():
-            model.to("cuda:0")
-        if hasattr(model, "hf_device_map"):
-            try:
-                del model.hf_device_map
-            except Exception:
-                model.hf_device_map = None  # type: ignore[assignment]
-    except Exception:
-        pass
-
     # Set generation defaults on the model's generation_config so Unsloth/TRL's
-    # GRPO _generate_single_turn doesn't have to pass them as duplicate kwargs
-    # alongside generation_config. transformers >= 5.5 deprecated the dual-pass
-    # pattern; passing both raises:
-    #   "Passing generation_config together with generation-related arguments=
-    #    ({'disable_compile', 'pad_token_id'}) is deprecated"
-    # This silences the warning at the source and is what transformers wants.
+    # GRPO doesn't pass duplicate kwargs alongside generation_config (silences
+    # the transformers >= 5.5 deprecation warning).
     try:
         gc = getattr(model, "generation_config", None)
-        tok = tokenizer.tokenizer if hasattr(tokenizer, "tokenizer") else tokenizer
         if gc is not None:
-            pad_id = getattr(tok, "pad_token_id", None)
+            pad_id = getattr(tokenizer, "pad_token_id", None)
             if pad_id is not None:
                 gc.pad_token_id = pad_id
-            # Unsloth's GRPO path sets disable_compile=True at call time; mirror
-            # it on the generation_config so the kwarg becomes redundant.
-            try:
-                gc.disable_compile = True
-            except Exception:
-                pass
     except Exception:
         pass
 
-    peft_model = FastVisionModel.get_peft_model(
+    peft_model = FastLanguageModel.get_peft_model(
         model,
         r=cfg.lora_r,
         lora_alpha=cfg.lora_alpha,

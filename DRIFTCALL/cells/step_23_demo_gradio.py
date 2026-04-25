@@ -260,7 +260,7 @@ class ModelLoader:
     def __init__(
         self,
         *,
-        base_model_id: str = "unsloth/gemma-4-E2B-it",
+        base_model_id: str = "unsloth/gemma-3-4b-it",
         trained_adapter_id: str = "DGXAI/gemma-4-e2b-driftcall-lora",
         max_seq_length: int = 4096,
     ) -> None:
