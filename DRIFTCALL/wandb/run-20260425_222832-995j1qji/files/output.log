@@ -1,0 +1,5 @@
+wandb: Detected [huggingface_hub.inference] in use.
+wandb: Use W&B Weave for improved LLM call tracing. Weave is installed but not imported. Add `import weave` to the top of your script.
+wandb: For more information, check out the docs at: https://weave-docs.wandb.ai
+[train] step=   0 reward=0.200±0.000 loss=+0.0000 kl=+0.0000 beta=0.0054 lr=5.00e-06 grad=10822.553 ep_s=183.3
+[train] step=   1 reward=0.200±0.000 loss=+0.0000 kl=+0.0000 beta=0.0010 lr=3.75e-06 grad=877.386 ep_s=294.6

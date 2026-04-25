@@ -1,0 +1,13 @@
+wandb: Detected [huggingface_hub.inference] in use.
+wandb: Use W&B Weave for improved LLM call tracing. Weave is installed but not imported. Add `import weave` to the top of your script.
+wandb: For more information, check out the docs at: https://weave-docs.wandb.ai
+Traceback (most recent call last):
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 1217, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 1144, in main
+    kl_ctrl.update(metrics.kl)
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 840, in update
+    new_beta = self.beta * math.exp(self.kp * err)
+                           ^^^^^^^^^^^^^^^^^^^^^^^
+OverflowError: math range error

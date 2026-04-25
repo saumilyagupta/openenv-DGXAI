@@ -1,0 +1,129 @@
+wandb: Detected [huggingface_hub.inference] in use.
+wandb: Use W&B Weave for improved LLM call tracing. Weave is installed but not imported. Add `import weave` to the top of your script.
+wandb: For more information, check out the docs at: https://weave-docs.wandb.ai
+[train] step=   0 reward=0.200±0.000 loss=+0.0000 kl=+0.0000 beta=0.0054 lr=5.00e-06 grad=10822.553 ep_s=246.6
+[train] step=   1 reward=0.200±0.000 loss=+0.0000 kl=+0.0000 beta=0.0010 lr=3.75e-06 grad=877.386 ep_s=279.4
+Traceback (most recent call last):
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 1190, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 1106, in main
+    metrics = grpo_step(
+              ^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 718, in grpo_step
+    new_lp = _action_logprobs(model, prompt, action)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 615, in _action_logprobs
+    out = model(
+          ^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/peft/peft_model.py", line 1993, in forward
+    return self.base_model(
+           ^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/peft/tuners/tuners_utils.py", line 330, in forward
+    return self.model.forward(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/transformers/utils/generic.py", line 876, in wrapper
+    output = func(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/transformers/models/gemma3n/modeling_gemma3n.py", line 2245, in forward
+    outputs = self.model(
+              ^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/transformers/utils/generic.py", line 876, in wrapper
+    output = func(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/transformers/models/gemma3n/modeling_gemma3n.py", line 2110, in forward
+    outputs = self.language_model(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/unsloth_compiled_cache/unsloth_compiled_module_gemma3n.py", line 1430, in forward
+    return Gemma3nTextModel_forward(self, input_ids=input_ids, per_layer_inputs=per_layer_inputs, attention_mask=attention_mask, position_ids=position_ids, past_key_values=past_key_values, inputs_embeds=inputs_embeds, use_cache=use_cache, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_dynamo/external_utils.py", line 203, in nonrecursive_disable_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/unsloth_compiled_cache/unsloth_compiled_module_gemma3n.py", line 1334, in Gemma3nTextModel_forward
+    hidden_states = decoder_layer(
+                    ^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/transformers/modeling_layers.py", line 93, in __call__
+    return super().__call__(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/transformers/models/gemma3n/modeling_gemma3n.py", line 1331, in forward
+    corrected_predictions = self.altup.correct(predictions, attn_ffw_laurel_gated)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 953, in compile_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/unsloth_compiled_cache/unsloth_compiled_module_gemma3n.py", line 1013, in correct
+    def correct(self, predictions: torch.Tensor, activated: torch.Tensor) -> torch.Tensor:
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1181, in _fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_functorch/aot_autograd.py", line 1148, in forward
+    return compiled_fn(full_args)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 1962, in __call__
+    return self.compiled_fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 343, in runtime_wrapper
+    all_outs = call_func_at_runtime_with_args(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py", line 134, in call_func_at_runtime_with_args
+    out = normalize_as_list(f(args))
+                            ^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py", line 108, in g
+    return f(*args)
+           ^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/autograd/function.py", line 583, in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 2152, in forward
+    fw_outs = call_func_at_runtime_with_args(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py", line 134, in call_func_at_runtime_with_args
+    out = normalize_as_list(f(args))
+                            ^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 531, in wrapper
+    return compiled_fn(runtime_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 729, in inner_fn
+    outs = compiled_fn(args)
+           ^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_inductor/output_code.py", line 638, in __call__
+    return self.current_callable(inputs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/.venv/lib/python3.12/site-packages/torch/_inductor/utils.py", line 3220, in run
+    out = model(new_inputs)
+          ^^^^^^^^^^^^^^^^^
+  File "/tmp/torchinductor_root/gh/cghaxk75n6arqgi6uwsnpgbgrviiafuq4ewmijrovcviksow3un2.py", line 347, in call
+    buf8 = empty_strided_cuda((4, 1, s27, 2048), (2048*s27, 2048*s27, 2048, 1), torch.float16)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 12.00 MiB. GPU 0 has a total capacity of 31.73 GiB of which 384.00 KiB is free. Process 19392 has 4.58 GiB memory in use. Process 21189 has 27.15 GiB memory in use. Of the allocated memory 26.70 GiB is allocated by PyTorch, and 52.54 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

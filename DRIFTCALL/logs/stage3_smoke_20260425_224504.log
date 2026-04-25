@@ -1,0 +1,74 @@
+/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py:72: UserWarning: WARNING: Unsloth should be imported before [transformers] to ensure all optimizations are applied. Your code may run slower or encounter memory issues without these optimizations.
+
+Please restructure your imports with 'import unsloth' at the top of your file.
+  import unsloth  # noqa: F401, E402  # type: ignore[import-untyped]
+🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
+🦥 Unsloth Zoo will now patch everything to make training faster!
+[train] stage=3 num_steps=1 hardware=v100
+[train] CUDA_VISIBLE_DEVICES=3
+[train] load_in_4bit=False (False bypasses the broken bnb-4bit checkpoint)
+==((====))==  Unsloth 2026.4.8: Fast Gemma3N patching. Transformers: 5.5.0.
+   \\   /|    Tesla V100-SXM2-32GB. Num GPUs = 1. Max memory: 31.733 GB. Platform: Linux.
+O^O/ \_/ \    Torch: 2.10.0+cu128. CUDA: 7.0. CUDA Toolkit: 12.8. Triton: 3.6.0
+\        /    Bfloat16 = FALSE. FA [Xformers = 0.0.35. FA2 = False]
+ "-____-"     Free license: http://github.com/unslothai/unsloth
+Unsloth: Fast downloading is enabled - ignore downloading bars which are red colored!
+Unsloth: Using float16 precision for gemma3n won't work! Using float32.
+Unsloth: QLoRA and full finetuning all not selected. Switching to 16bit LoRA.
+Loading weights:   0%|          | 0/1556 [00:00<?, ?it/s]Loading weights:   4%|▎         | 57/1556 [00:00<00:02, 518.56it/s]Loading weights:   7%|▋         | 109/1556 [00:00<00:03, 376.58it/s]Loading weights:  10%|▉         | 149/1556 [00:00<00:04, 347.53it/s]Loading weights:  12%|█▏        | 185/1556 [00:00<00:03, 345.36it/s]Loading weights:  14%|█▍        | 221/1556 [00:00<00:04, 332.21it/s]Loading weights:  16%|█▋        | 255/1556 [00:00<00:04, 317.45it/s]Loading weights:  18%|█▊        | 287/1556 [00:03<00:38, 33.14it/s] Loading weights:  20%|██        | 318/1556 [00:03<00:28, 44.18it/s]Loading weights:  22%|██▏       | 344/1556 [00:04<00:21, 55.62it/s]Loading weights:  24%|██▎       | 369/1556 [00:04<00:17, 69.57it/s]Loading weights:  26%|██▌       | 404/1556 [00:04<00:12, 95.50it/s]Loading weights:  28%|██▊       | 438/1556 [00:04<00:09, 121.42it/s]Loading weights:  30%|██▉       | 466/1556 [00:04<00:07, 137.80it/s]Loading weights:  32%|███▏      | 496/1556 [00:04<00:06, 163.96it/s]Loading weights:  34%|███▍      | 531/1556 [00:04<00:05, 198.66it/s]Loading weights:  36%|███▌      | 561/1556 [00:04<00:05, 198.48it/s]Loading weights:  38%|███▊      | 596/1556 [00:04<00:04, 230.72it/s]Loading weights:  41%|████      | 631/1556 [00:05<00:03, 253.47it/s]Loading weights:  42%|████▏     | 661/1556 [00:05<00:03, 245.99it/s]Loading weights:  44%|████▍     | 692/1556 [00:05<00:03, 260.19it/s]Loading weights:  47%|████▋     | 727/1556 [00:05<00:03, 247.66it/s]Loading weights:  49%|████▉     | 770/1556 [00:05<00:02, 290.77it/s]Loading weights:  52%|█████▏    | 802/1556 [00:05<00:02, 265.81it/s]Loading weights:  54%|█████▍    | 837/1556 [00:05<00:02, 285.91it/s]Loading weights:  56%|█████▌    | 871/1556 [00:05<00:02, 297.00it/s]Loading weights:  58%|█████▊    | 903/1556 [00:06<00:02, 278.34it/s]Loading weights:  60%|█████▉    | 933/1556 [00:06<00:02, 283.77it/s]Loading weights:  62%|██████▏   | 967/1556 [00:06<00:02, 291.59it/s]Loading weights:  64%|██████▍   | 997/1556 [00:06<00:02, 272.66it/s]Loading weights:  70%|███████   | 1093/1556 [00:06<00:01, 453.48it/s]Loading weights:  78%|███████▊  | 1209/1556 [00:06<00:00, 646.72it/s]Loading weights:  86%|████████▌ | 1341/1556 [00:06<00:00, 833.58it/s]Loading weights:  92%|█████████▏| 1428/1556 [00:06<00:00, 784.77it/s]Loading weights:  97%|█████████▋| 1510/1556 [00:06<00:00, 756.95it/s]Loading weights: 100%|██████████| 1556/1556 [00:07<00:00, 221.22it/s]
+Image processor SiglipImageProcessor: kwargs ['padding_side'] were applied for backward compatibility. To avoid this warning, add them to valid_kwargs: create a custom TypedDict extending ImagesKwargs with these keys and set it as the `valid_kwargs` class attribute.
+Unsloth: Dropout = 0 is supported for fast patching. You are using dropout = 0.05.
+Unsloth will patch all other layers, except LoRA matrices, causing a performance hit.
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from WANDB_API_KEY.
+wandb: Currently logged in as: vasudeo118 (vasudeo118-lnmiit) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run bp09734f
+wandb: Tracking run with wandb version 0.26.1
+wandb: Run data is saved locally in /workspace/openenv-DGXAI/DRIFTCALL/wandb/run-20260425_224611-bp09734f
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run driftcall-stage3-seed3407-20260425-224611
+wandb: ⭐️ View project at https://wandb.ai/vasudeo118-lnmiit/driftcall
+wandb: 🚀 View run at https://wandb.ai/vasudeo118-lnmiit/driftcall/runs/bp09734f
+wandb: Detected [huggingface_hub.inference] in use.
+wandb: Use W&B Weave for improved LLM call tracing. Weave is installed but not imported. Add `import weave` to the top of your script.
+wandb: For more information, check out the docs at: https://weave-docs.wandb.ai
+Unsloth: Restored added_tokens_decoder metadata in /workspace/openenv-DGXAI/DRIFTCALL/checkpoints/stage3_smoke/final/tokenizer_config.json.
+Unsloth: Preserved sentencepiece asset `tokenizer.model` in /workspace/openenv-DGXAI/DRIFTCALL/checkpoints/stage3_smoke/final.
+wandb: updating run metadata
+wandb: uploading config.yaml; uploading output.log; uploading wandb-summary.json
+wandb: uploading config.yaml; uploading output.log
+wandb: uploading history steps 0-0, summary
+wandb: 
+wandb: Run history:
+wandb:                     step ▁
+wandb:     train/advantage_mean ▁
+wandb:      train/advantage_std ▁
+wandb:      train/beta_adaptive ▁
+wandb: train/clipped_ratio_frac ▁
+wandb:    train/episode_seconds ▁
+wandb:    train/gen_length_mean ▁
+wandb:          train/grad_norm ▁
+wandb:      train/learning_rate ▁
+wandb:               train/loss ▁
+wandb:                      +10 ...
+wandb: 
+wandb: Run summary:
+wandb:                     step 0
+wandb:     train/advantage_mean -0.0
+wandb:      train/advantage_std 1.0
+wandb:      train/beta_adaptive 0.00541
+wandb: train/clipped_ratio_frac 0.01562
+wandb:    train/episode_seconds 56.75795
+wandb:    train/gen_length_mean 32
+wandb:          train/grad_norm 1115341.25
+wandb:      train/learning_rate 0
+wandb:               train/loss 0.19234
+wandb:                      +10 ...
+wandb: 
+wandb: 🚀 View run driftcall-stage3-seed3407-20260425-224611 at: https://wandb.ai/vasudeo118-lnmiit/driftcall/runs/bp09734f
+wandb: ⭐️ View project at: https://wandb.ai/vasudeo118-lnmiit/driftcall
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260425_224611-bp09734f/logs
+[train] device=cuda:0 dtype=torch.float16
+[train] step=   0 reward=0.238±0.038 loss=+0.1923 kl=+0.0000 beta=0.0054 lr=0.00e+00 grad=1115341.250 ep_s=56.8
+[train] saving final adapter -> /workspace/openenv-DGXAI/DRIFTCALL/checkpoints/stage3_smoke/final
+[train] done. Wall time: 67.5s

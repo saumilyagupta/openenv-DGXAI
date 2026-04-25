@@ -1,0 +1,62 @@
+/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py:66: UserWarning: WARNING: Unsloth should be imported before [transformers] to ensure all optimizations are applied. Your code may run slower or encounter memory issues without these optimizations.
+
+Please restructure your imports with 'import unsloth' at the top of your file.
+  import unsloth  # noqa: F401, E402  # type: ignore[import-untyped]
+🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
+🦥 Unsloth Zoo will now patch everything to make training faster!
+[train] stage=1 num_steps=3 hardware=v100
+[train] CUDA_VISIBLE_DEVICES=3
+[train] load_in_4bit=False (False bypasses the broken bnb-4bit checkpoint)
+==((====))==  Unsloth 2026.4.8: Fast Gemma3N patching. Transformers: 5.5.0.
+   \\   /|    Tesla V100-SXM2-32GB. Num GPUs = 1. Max memory: 31.733 GB. Platform: Linux.
+O^O/ \_/ \    Torch: 2.10.0+cu128. CUDA: 7.0. CUDA Toolkit: 12.8. Triton: 3.6.0
+\        /    Bfloat16 = FALSE. FA [Xformers = 0.0.35. FA2 = False]
+ "-____-"     Free license: http://github.com/unslothai/unsloth
+Unsloth: Fast downloading is enabled - ignore downloading bars which are red colored!
+Unsloth: Using float16 precision for gemma3n won't work! Using float32.
+Unsloth: QLoRA and full finetuning all not selected. Switching to 16bit LoRA.
+Loading weights:   0%|          | 0/1556 [00:00<?, ?it/s]Loading weights:   4%|▎         | 57/1556 [00:00<00:02, 542.14it/s]Loading weights:   7%|▋         | 112/1556 [00:00<00:03, 402.57it/s]Loading weights:  10%|▉         | 155/1556 [00:00<00:03, 360.64it/s]Loading weights:  12%|█▏        | 193/1556 [00:00<00:03, 343.98it/s]Loading weights:  15%|█▍        | 230/1556 [00:00<00:03, 345.61it/s]Loading weights:  17%|█▋        | 265/1556 [00:00<00:03, 344.06it/s]Loading weights:  19%|█▉        | 300/1556 [00:03<00:34, 36.30it/s] Loading weights:  22%|██▏       | 343/1556 [00:03<00:23, 52.69it/s]Loading weights:  24%|██▍       | 372/1556 [00:03<00:18, 64.87it/s]Loading weights:  27%|██▋       | 415/1556 [00:04<00:12, 90.68it/s]Loading weights:  29%|██▊       | 445/1556 [00:04<00:10, 107.15it/s]Loading weights:  30%|███       | 473/1556 [00:04<00:08, 127.12it/s]Loading weights:  33%|███▎      | 511/1556 [00:04<00:06, 160.54it/s]Loading weights:  35%|███▍      | 541/1556 [00:04<00:05, 179.43it/s]Loading weights:  37%|███▋      | 582/1556 [00:04<00:04, 217.81it/s]Loading weights:  39%|███▉      | 613/1556 [00:04<00:04, 230.39it/s]Loading weights:  42%|████▏     | 655/1556 [00:04<00:03, 263.56it/s]Loading weights:  44%|████▍     | 687/1556 [00:05<00:03, 264.58it/s]Loading weights:  46%|████▋     | 722/1556 [00:05<00:02, 285.13it/s]Loading weights:  48%|████▊     | 754/1556 [00:05<00:03, 260.04it/s]Loading weights:  51%|█████▏    | 798/1556 [00:05<00:02, 280.04it/s]Loading weights:  53%|█████▎    | 828/1556 [00:05<00:02, 281.30it/s]Loading weights:  55%|█████▌    | 858/1556 [00:05<00:02, 286.00it/s]Loading weights:  58%|█████▊    | 895/1556 [00:05<00:02, 299.46it/s]Loading weights:  60%|█████▉    | 926/1556 [00:05<00:02, 287.36it/s]Loading weights:  62%|██████▏   | 966/1556 [00:05<00:01, 304.17it/s]Loading weights:  64%|██████▍   | 997/1556 [00:06<00:01, 293.22it/s]Loading weights:  72%|███████▏  | 1124/1556 [00:06<00:00, 552.00it/s]Loading weights:  85%|████████▍ | 1316/1556 [00:06<00:00, 929.82it/s]Loading weights:  91%|█████████ | 1415/1556 [00:06<00:00, 883.63it/s]Loading weights:  97%|█████████▋| 1508/1556 [00:06<00:00, 829.27it/s]Loading weights: 100%|██████████| 1556/1556 [00:06<00:00, 236.18it/s]
+Image processor SiglipImageProcessor: kwargs ['padding_side'] were applied for backward compatibility. To avoid this warning, add them to valid_kwargs: create a custom TypedDict extending ImagesKwargs with these keys and set it as the `valid_kwargs` class attribute.
+Unsloth: Dropout = 0 is supported for fast patching. You are using dropout = 0.05.
+Unsloth will patch all other layers, except LoRA matrices, causing a performance hit.
+[train] device=cuda:0 dtype=torch.float16
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from WANDB_API_KEY.
+wandb: Currently logged in as: vasudeo118 (vasudeo118-lnmiit) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run 0cuc8ho6
+wandb: Tracking run with wandb version 0.25.1
+wandb: Run data is saved locally in /workspace/openenv-DGXAI/DRIFTCALL/wandb/run-20260425_214744-0cuc8ho6
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run driftcall-stage1-seed3407-20260425-214743
+wandb: ⭐️ View project at https://wandb.ai/vasudeo118-lnmiit/driftcall
+wandb: 🚀 View run at https://wandb.ai/vasudeo118-lnmiit/driftcall/runs/0cuc8ho6
+wandb: Initializing weave.
+[36m[1mweave[0m: wandb version 0.26.1 is available!  To upgrade, please run:
+[36m[1mweave[0m:  $ pip install wandb --upgrade
+[weave.trace.init_message|INFO]wandb version 0.26.1 is available!  To upgrade, please run:
+ $ pip install wandb --upgrade
+[36m[1mweave[0m: Logged in as Weights & Biases user: vasudeo118.
+[36m[1mweave[0m: View Weave data at https://wandb.ai/vasudeo118-lnmiit/driftcall/weave
+[weave.trace.init_message|INFO]Logged in as Weights & Biases user: vasudeo118.
+View Weave data at https://wandb.ai/vasudeo118-lnmiit/driftcall/weave
+[train] step=   0 reward=0.188±0.022 loss=-0.3627 kl=+0.0000 beta=0.0054 lr=5.00e-06 grad=130815.750 ep_s=196.5
+[train] step=   1 reward=0.188±0.022 loss=+0.8913 kl=+0.0000 beta=0.0010 lr=2.50e-06 grad=447887.344 ep_s=67.5
+Traceback (most recent call last):
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 1167, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 1084, in main
+    metrics = grpo_step(
+              ^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 697, in grpo_step
+    new_lp = _action_logprobs(model, prompt, action)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 615, in _action_logprobs
+    log_probs = F.log_softmax(pred_logits.float(), dim=-1)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/conda/lib/python3.12/site-packages/torch/nn/functional.py", line 2265, in log_softmax
+    ret = input.log_softmax(dim)
+          ^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 514.00 MiB. GPU 0 has a total capacity of 31.73 GiB of which 468.38 MiB is free. Process 1917 has 31.27 GiB memory in use. Of the allocated memory 30.74 GiB is allocated by PyTorch, and 139.81 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+[1;34mwandb[0m: 
+[1;34mwandb[0m: 🚀 View run [33mdriftcall-stage1-seed3407-20260425-214743[0m at: [34mhttps://wandb.ai/vasudeo118-lnmiit/driftcall/runs/0cuc8ho6[0m
+[1;34mwandb[0m: Find logs at: [1;35mwandb/run-20260425_214744-0cuc8ho6/logs[0m

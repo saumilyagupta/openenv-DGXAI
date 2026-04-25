@@ -1,0 +1,19 @@
+wandb: Initializing weave.
+[36m[1mweave[0m: wandb version 0.26.1 is available!  To upgrade, please run:
+[36m[1mweave[0m:  $ pip install wandb --upgrade
+[36m[1mweave[0m: Logged in as Weights & Biases user: vasudeo118.
+[36m[1mweave[0m: View Weave data at https://wandb.ai/vasudeo118-lnmiit/driftcall/weave
+Traceback (most recent call last):
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 1165, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 1082, in main
+    metrics = grpo_step(
+              ^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 695, in grpo_step
+    new_lp = _action_logprobs(model, prompt, action)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py", line 614, in _action_logprobs
+    return log_probs.gather(-1, action_ids.unsqueeze(-1)).squeeze(-1)  # [A]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Inference tensors cannot be saved for backward. Please do not use Tensors created in inference mode in computation tracked by autograd. To work around this, you can make a clone to get a normal tensor and use it in autograd, or use `torch.no_grad()` instead of `torch.inference_mode()`.

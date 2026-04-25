@@ -1,0 +1,149 @@
+_wandb:
+    value:
+        cli_version: 0.26.1
+        e:
+            afm7bsfi1p36orv4sglxnnvwywqtyyyf:
+                args:
+                    - --stage
+                    - "1"
+                    - --num-steps
+                    - "4"
+                    - --num-generations
+                    - "4"
+                    - --hardware
+                    - v100
+                    - --output-dir
+                    - /workspace/openenv-DGXAI/DRIFTCALL/checkpoints/smoke2/final
+                codePath: DRIFTCALL/scripts/train_driftcall_grpo.py
+                codePathLocal: scripts/train_driftcall_grpo.py
+                cpu_count: 40
+                cpu_count_logical: 80
+                cudaVersion: "12.4"
+                disk:
+                    /:
+                        total: "473747988480"
+                        used: "469212938240"
+                email: vasudeo118@gmail.com
+                executable: /workspace/openenv-DGXAI/DRIFTCALL/.venv/bin/python3
+                git:
+                    commit: ebba1e4b6a37ba954baef7ad29fad19b4e189ba1
+                    remote: git@github.com:saumilyagupta/openenv-DGXAI.git
+                gpu: Tesla V100-SXM2-32GB
+                gpu_count: 8
+                gpu_nvidia:
+                    - architecture: Volta
+                      cudaCores: 5120
+                      memoryTotal: "34359738368"
+                      name: Tesla V100-SXM2-32GB
+                      uuid: GPU-644d7eaf-2c29-5dca-fecd-f57be953d096
+                    - architecture: Volta
+                      cudaCores: 5120
+                      memoryTotal: "34359738368"
+                      name: Tesla V100-SXM2-32GB
+                      uuid: GPU-9ad7647f-2ff6-1bc1-3d16-fcf7142bbf69
+                    - architecture: Volta
+                      cudaCores: 5120
+                      memoryTotal: "34359738368"
+                      name: Tesla V100-SXM2-32GB
+                      uuid: GPU-7f5e484e-6bd5-136c-7f52-917c12ad7b39
+                    - architecture: Volta
+                      cudaCores: 5120
+                      memoryTotal: "34359738368"
+                      name: Tesla V100-SXM2-32GB
+                      uuid: GPU-c1a962b1-af65-fe67-1878-5558cb103dc6
+                    - architecture: Volta
+                      cudaCores: 5120
+                      memoryTotal: "34359738368"
+                      name: Tesla V100-SXM2-32GB
+                      uuid: GPU-5cbad30d-644c-bd40-5fe8-1fc353a25e8c
+                    - architecture: Volta
+                      cudaCores: 5120
+                      memoryTotal: "34359738368"
+                      name: Tesla V100-SXM2-32GB
+                      uuid: GPU-91c6a52c-37cf-a53c-bdb2-852b0cb3de40
+                    - architecture: Volta
+                      cudaCores: 5120
+                      memoryTotal: "34359738368"
+                      name: Tesla V100-SXM2-32GB
+                      uuid: GPU-cbb470d1-f432-db33-f64d-afd802077fe9
+                    - architecture: Volta
+                      cudaCores: 5120
+                      memoryTotal: "34359738368"
+                      name: Tesla V100-SXM2-32GB
+                      uuid: GPU-c6d8e7a3-2575-e5cc-acfa-0670b8388c9d
+                host: 15efc1fa43db
+                memory:
+                    total: "540414738432"
+                os: Linux-3.10.0-1160.119.1.el7.x86_64-x86_64-with-glibc2.35
+                program: /workspace/openenv-DGXAI/DRIFTCALL/scripts/train_driftcall_grpo.py
+                python: CPython 3.12.13
+                root: /workspace/openenv-DGXAI/DRIFTCALL
+                startedAt: "2026-04-25T22:28:32.457990Z"
+                writerId: afm7bsfi1p36orv4sglxnnvwywqtyyyf
+        m: []
+        python_version: 3.12.13
+        t:
+            "1":
+                - 1
+                - 11
+                - 41
+                - 49
+                - 51
+                - 53
+                - 63
+                - 71
+                - 83
+                - 84
+                - 98
+            "2":
+                - 1
+                - 11
+                - 41
+                - 49
+                - 51
+                - 53
+                - 63
+                - 71
+                - 83
+                - 84
+                - 98
+            "3":
+                - 13
+                - 15
+                - 16
+                - 61
+            "4": 3.12.13
+            "5": 0.26.1
+            "6": 5.5.0
+            "12": 0.26.1
+            "13": linux-x86_64
+adaptive_kl:
+    value: true
+beta_initial:
+    value: 0.04
+h100_mode:
+    value: false
+learning_rate:
+    value: 5e-06
+loop:
+    value: native_grpo_v1
+lora_alpha:
+    value: 32
+lora_dropout:
+    value: 0.05
+lora_r:
+    value: 16
+max_completion_length:
+    value: 2048
+max_prompt_length:
+    value: 1024
+num_generations:
+    value: 8
+num_steps:
+    value: 4
+seed:
+    value: 3407
+stage:
+    value: 1
+target_kl:
+    value: 0.04

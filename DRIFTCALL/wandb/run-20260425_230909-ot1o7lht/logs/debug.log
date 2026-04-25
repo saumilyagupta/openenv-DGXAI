@@ -1,0 +1,24 @@
+2026-04-25 23:09:09,777 INFO    MainThread:56549 [wandb_setup.py:_flush():81] Current SDK version is 0.26.1
+2026-04-25 23:09:09,778 INFO    MainThread:56549 [wandb_setup.py:_flush():81] Configure stats pid to 56549
+2026-04-25 23:09:09,778 INFO    MainThread:56549 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2026-04-25 23:09:09,778 INFO    MainThread:56549 [wandb_init.py:setup_run_log_directory():723] Logging user logs to /workspace/openenv-DGXAI/DRIFTCALL/wandb/run-20260425_230909-ot1o7lht/logs/debug.log
+2026-04-25 23:09:09,778 INFO    MainThread:56549 [wandb_init.py:setup_run_log_directory():724] Logging internal logs to /workspace/openenv-DGXAI/DRIFTCALL/wandb/run-20260425_230909-ot1o7lht/logs/debug-internal.log
+2026-04-25 23:09:09,778 INFO    MainThread:56549 [wandb_init.py:init():850] calling init triggers
+2026-04-25 23:09:09,778 INFO    MainThread:56549 [wandb_init.py:init():855] wandb.init called with sweep_config: {}
+config: {'stage': 1, 'seed': 3407, 'h100_mode': False, 'adaptive_kl': True, 'beta_initial': 0.04, 'target_kl': 0.04, 'learning_rate': 5e-06, 'num_generations': 8, 'max_prompt_length': 1024, 'max_completion_length': 2048, 'lora_r': 16, 'lora_alpha': 32, 'lora_dropout': 0.05, 'num_steps': 1, 'loop': 'native_grpo_v1', '_wandb': {}}
+2026-04-25 23:09:09,778 INFO    MainThread:56549 [wandb_init.py:init():898] starting backend
+2026-04-25 23:09:10,005 INFO    MainThread:56549 [wandb_init.py:init():913] sending inform_init request
+2026-04-25 23:09:10,583 INFO    MainThread:56549 [wandb_init.py:init():918] backend started and connected
+2026-04-25 23:09:10,587 INFO    MainThread:56549 [wandb_init.py:init():988] updated telemetry
+2026-04-25 23:09:10,594 INFO    MainThread:56549 [wandb_init.py:init():1011] communicating run to backend with 90.0 second timeout
+2026-04-25 23:09:11,116 INFO    MainThread:56549 [wandb_init.py:init():1056] starting run threads in backend
+2026-04-25 23:09:11,338 INFO    MainThread:56549 [wandb_run.py:_console_start():2554] atexit reg
+2026-04-25 23:09:11,338 INFO    MainThread:56549 [wandb_run.py:_redirect():2403] redirect: wrap_raw
+2026-04-25 23:09:11,338 INFO    MainThread:56549 [wandb_run.py:_redirect():2472] Wrapping output streams.
+2026-04-25 23:09:11,339 INFO    MainThread:56549 [wandb_run.py:_redirect():2495] Redirects installed.
+2026-04-25 23:09:11,344 INFO    MainThread:56549 [wandb_init.py:init():1094] run started, returning control to user process
+2026-04-25 23:11:39,161 INFO    MainThread:56549 [wandb_run.py:_finish():2321] finishing run vasudeo118-lnmiit/driftcall/ot1o7lht
+2026-04-25 23:11:39,163 INFO    MainThread:56549 [wandb_run.py:_atexit_cleanup():2520] got exitcode: 0
+2026-04-25 23:11:39,164 INFO    MainThread:56549 [wandb_run.py:_restore():2502] restore
+2026-04-25 23:11:39,164 INFO    MainThread:56549 [wandb_run.py:_restore():2508] restore done
+2026-04-25 23:11:42,294 INFO    MainThread:56549 [wandb_run.py:_footer_sync_info():3889] logging synced files

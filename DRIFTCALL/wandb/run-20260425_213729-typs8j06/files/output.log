@@ -1,0 +1,7 @@
+wandb: Initializing weave.
+[36m[1mweave[0m: wandb version 0.26.1 is available!  To upgrade, please run:
+[36m[1mweave[0m:  $ pip install wandb --upgrade
+[36m[1mweave[0m: Logged in as Weights & Biases user: vasudeo118.
+[36m[1mweave[0m: View Weave data at https://wandb.ai/vasudeo118-lnmiit/driftcall/weave
+[train] step=   0 reward=0.188±0.022 loss=-0.3627 kl=+0.0000 beta=0.0054 lr=3.33e-07 grad=130815.750 ep_s=195.5
+[train] step=   1 reward=0.188±0.022 loss=+0.8913 kl=+0.0000 beta=0.0010 lr=6.67e-07 grad=447887.344 ep_s=72.9
