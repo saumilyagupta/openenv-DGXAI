@@ -34,3 +34,6 @@ nbformat>=5.10
 PyYAML>=6.0
 cachetools>=5.3
 huggingface_hub>=0.25
+
+# Experiment tracking (training.md §3.3.3)
+wandb>=0.18

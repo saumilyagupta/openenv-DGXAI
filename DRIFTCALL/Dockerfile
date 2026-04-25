@@ -37,7 +37,9 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     HF_HOME=/root/.cache/huggingface \
     TRANSFORMERS_OFFLINE=1 \
-    HF_HUB_OFFLINE=1
+    HF_HUB_OFFLINE=1 \
+    WANDB_PROJECT=driftcall \
+    WANDB_MODE=disabled
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libsndfile1 \

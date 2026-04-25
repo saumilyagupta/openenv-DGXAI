@@ -63,6 +63,38 @@ openenv validate http://localhost:7860 --auth-bearer "$DRIFTCALL_ENV_TOKEN"
 python3 notebooks/build_notebook.py
 ```
 
+## Weights & Biases (optional)
+
+Training runs auto-log to wandb. Configure via env vars (override priority
+highest-to-lowest):
+
+1. **Environment variables** — set on the host or in your shell:
+   ```bash
+   export WANDB_API_KEY=<your-key-from-wandb.ai/authorize>
+   export WANDB_PROJECT=driftcall              # default
+   export WANDB_ENTITY=<your-team>             # optional
+   export WANDB_MODE=online                    # online | offline | disabled
+   ```
+2. **`cells/_secrets.py` hardcoded fallback** — used when env vars are unset.
+   Edit the constant in that file to rotate the key (private repo).
+3. **None** — `init_wandb()` raises at run time if `WANDB_MODE != "disabled"`
+   and no API key is reachable.
+
+Disable for local dev / CI:
+```bash
+export WANDB_MODE=disabled
+```
+
+Custom metrics logged each training step (training.md §3.3.3):
+- `train/beta_adaptive` — current KL coefficient (mutated by `AdaptiveKLCallback`)
+- `train/kl_measured` — measured KL between policy and reference
+- `train/kl_target` — target KL (default = `BETA_KL` = 0.04)
+- `train/beta_clamped_to_min` — 1 if β was floored at `beta_min` this step
+- `train/beta_clamped_to_max` — 1 if β was ceilinged at `beta_max` this step
+
+Run tags (set at `wandb.init`): `stage{N}`, `gemma-4-e2b`, `bf16` or `fp16`,
+`adaptive-kl` or `static-kl`, `seed{N}`.
+
 ## License
 
 Apache License 2.0. See [`LICENSE`](./LICENSE) (included at repo root when

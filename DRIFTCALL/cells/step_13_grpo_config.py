@@ -73,6 +73,12 @@ REPORT_TO: str = "wandb"
 WARMUP_RATIO_STAGE1: float = 0.1
 WARMUP_RATIO_STAGE2_3: float = 0.0
 
+# WandB integration (training.md §3.3.3 — env-var contract).
+WANDB_PROJECT_DEFAULT: str = "driftcall"
+WANDB_ENTITY_DEFAULT: str | None = None
+WANDB_RUN_NAME_TEMPLATE: str = "driftcall-stage{stage}-seed{seed}-{timestamp}"
+WANDB_MODE_DEFAULT: str = "online"
+
 
 @dataclass(frozen=True)
 class _ConfigInvariants:
@@ -347,6 +353,101 @@ def reward_fn(
     return out
 
 
+def init_wandb(
+    *,
+    stage: StageT,
+    seed: int,
+    h100_mode: bool = False,
+    enable_adaptive_kl: bool = True,
+    extra_config: dict[str, Any] | None = None,
+) -> Any:
+    """Initialize a WandB run for a training stage (training.md §3.3.3).
+
+    Override priority for credentials:
+      1. ``os.environ`` values set by the caller (highest)
+      2. ``cells._secrets.export_to_env()`` hardcoded fallback
+      3. None — caller must set ``WANDB_MODE=disabled`` or run will fail
+
+    Returns the active ``wandb.run`` object, or ``None`` when
+    ``WANDB_MODE`` resolves to ``"disabled"``. Idempotent — if a run is
+    already active for this process, returns it unchanged.
+    """
+    import os
+    import time
+
+    # Step 1: populate env from cells/_secrets.py if a key is missing.
+    try:
+        from cells._secrets import export_to_env
+
+        export_to_env()
+    except ImportError:
+        pass
+
+    mode = os.environ.get("WANDB_MODE", WANDB_MODE_DEFAULT).strip().lower()
+    if mode == "disabled":
+        return None
+
+    import wandb
+
+    if getattr(wandb, "run", None) is not None:
+        return wandb.run
+
+    project = os.environ.get("WANDB_PROJECT", WANDB_PROJECT_DEFAULT)
+    entity = os.environ.get("WANDB_ENTITY", WANDB_ENTITY_DEFAULT)
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    run_name = WANDB_RUN_NAME_TEMPLATE.format(
+        stage=stage, seed=seed, timestamp=timestamp
+    )
+
+    tags = [
+        f"stage{stage}",
+        "gemma-4-e2b",
+        "bf16" if h100_mode else "fp16",
+        "adaptive-kl" if enable_adaptive_kl else "static-kl",
+        f"seed{seed}",
+    ]
+
+    # Lazy LoRA constants — step_12 imports unsloth at module top, so guard
+    # against CPU-only CI environments where unsloth is unavailable.
+    try:
+        from cells.step_12_gemma_boot import LORA_ALPHA, LORA_DROPOUT, LORA_R
+    except ImportError:
+        LORA_R = 16
+        LORA_ALPHA = 32
+        LORA_DROPOUT = 0.05
+
+    # target_kl default matches AdaptiveKLCallback(target_kl=BETA_KL) in step_14.
+    config: dict[str, Any] = {
+        "stage": stage,
+        "seed": seed,
+        "h100_mode": h100_mode,
+        "adaptive_kl": enable_adaptive_kl,
+        "beta_initial": BETA_KL,
+        "target_kl": BETA_KL,
+        "learning_rate": LEARNING_RATE,
+        "num_generations": DEFAULT_NUM_GENERATIONS,
+        "max_prompt_length": MAX_PROMPT_LENGTH,
+        "max_completion_length": MAX_COMPLETION_LENGTH,
+        "lora_r": LORA_R,
+        "lora_alpha": LORA_ALPHA,
+        "lora_dropout": LORA_DROPOUT,
+    }
+    if extra_config:
+        config.update(extra_config)
+
+    init_kwargs: dict[str, Any] = {
+        "project": project,
+        "name": run_name,
+        "tags": tags,
+        "config": config,
+        "mode": mode,
+    }
+    if entity is not None:
+        init_kwargs["entity"] = entity
+
+    return wandb.init(**init_kwargs)
+
+
 __all__ = [
     "ALLOWED_HARDWARE",
     "ALLOWED_NUM_GENERATIONS",
@@ -363,9 +464,14 @@ __all__ = [
     "PER_DEVICE_TRAIN_BATCH_SIZE",
     "REPORT_TO",
     "StageT",
+    "WANDB_ENTITY_DEFAULT",
+    "WANDB_MODE_DEFAULT",
+    "WANDB_PROJECT_DEFAULT",
+    "WANDB_RUN_NAME_TEMPLATE",
     "WARMUP_RATIO_STAGE1",
     "WARMUP_RATIO_STAGE2_3",
     "assert_config_invariants",
     "build_grpo_config",
+    "init_wandb",
     "reward_fn",
 ]
