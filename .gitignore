@@ -11,3 +11,5 @@ data/evidence_medium.json
 data/evidence_hard.json
 groundloop/kb/
 .coverage
+
+DRIFTCALL/akasha_config/akasha_deployment.sdl
