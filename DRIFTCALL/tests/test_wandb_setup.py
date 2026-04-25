@@ -305,6 +305,42 @@ class TestInitWandbIdempotent:
 
 
 # ---------------------------------------------------------------------------
+# init_wandb — hardcoded _secrets.py fallback
+# ---------------------------------------------------------------------------
+
+
+class TestInitWandbSecretsFallback:
+    def test_hardcoded_secrets_fallback(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """When WANDB_API_KEY is unset in env, ``cells._secrets.export_to_env``
+        populates it so ``wandb.init`` still runs without the caller setting
+        any env var."""
+        import os
+
+        from cells.step_13_grpo_config import init_wandb
+
+        # Strip any env-provided creds so the fallback is the only source.
+        monkeypatch.delenv("WANDB_API_KEY", raising=False)
+        monkeypatch.delenv("WANDB_PROJECT", raising=False)
+        monkeypatch.delenv("WANDB_ENTITY", raising=False)
+        monkeypatch.setenv("WANDB_MODE", "online")
+        init = _install_fake_wandb(monkeypatch)
+
+        init_wandb(stage=1, seed=99)
+
+        # export_to_env ran → WANDB_API_KEY should now be populated from the
+        # hardcoded fallback (or be an empty string on systems where
+        # cells/_secrets.py is absent; either way, no exception propagated).
+        api_key_after = os.environ.get("WANDB_API_KEY", "")
+        assert api_key_after != "", (
+            "cells/_secrets.py fallback should have populated WANDB_API_KEY "
+            "(or the test environment is missing the file — skip via pytest.skip)"
+        )
+        init.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
 # AdaptiveKLCallback — extra log fields pushed back into logs dict
 # ---------------------------------------------------------------------------
 
