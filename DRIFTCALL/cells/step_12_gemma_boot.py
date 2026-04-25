@@ -119,6 +119,89 @@ def assert_fp16_dtype(model: Any) -> None:
         )
 
 
+def _patch_gemma4_return_hidden_states() -> None:
+    """Make Gemma 4 forward honor ``UNSLOTH_RETURN_HIDDEN_STATES=1``.
+
+    ROOT CAUSE for the chunked-log-softmax shape mismatch:
+    Unsloth's GRPOTrainer uses a env-var trick to ask the model to return
+    the residual hidden states (shape ``[B, S, hidden_dim=1536]``) instead
+    of LM-head logits (``[B, S, vocab=262144]``). The Llama/Mistral forward
+    methods are patched upstream (``unsloth/models/llama.py`` L1509-1521)
+    to honor this env var. Gemma 4's forward methods are NOT — both
+    ``Gemma4ForCausalLM`` and ``Gemma4ForConditionalGeneration`` always run
+    ``logits = self.lm_head(hidden_states)``. The trainer then mistakes
+    those vocab-shaped logits for hidden states and crashes:
+
+        RuntimeError: mat1 and mat2 shapes cannot be multiplied
+                      (BS, 262144) and (1536, 262144)
+
+    Mirror the Llama pattern on both Gemma 4 forward methods. Idempotent
+    via ``_DRIFTCALL_RHS_PATCHED`` sentinel. Branch ONLY fires when the
+    env var is explicitly "1" (set by GRPO's _get_per_token_logps_and_
+    entropies block); inference and standard training pass through the
+    original forward unchanged, so audio + vision capability is preserved.
+    """
+    import os as _os
+
+    try:
+        from transformers.modeling_outputs import CausalLMOutputWithPast
+        from transformers.models.gemma4 import modeling_gemma4 as _g4
+    except Exception:
+        return
+
+    _Causal = getattr(_g4, "Gemma4ForCausalLM", None)
+    _CondGen = getattr(_g4, "Gemma4ForConditionalGeneration", None)
+
+    def _wrap(target_cls):
+        if target_cls is None or getattr(target_cls, "_DRIFTCALL_RHS_PATCHED", False):
+            return
+        original = target_cls.forward
+
+        def patched(self, *args, **kwargs):
+            if _os.environ.get("UNSLOTH_RETURN_HIDDEN_STATES", "0") != "1":
+                return original(self, *args, **kwargs)
+
+            inner = getattr(self, "model", None) or getattr(self, "language_model", None)
+            if inner is None:
+                return original(self, *args, **kwargs)
+
+            backbone_kwargs = {
+                k: v for k, v in kwargs.items()
+                if k in {
+                    "input_ids", "attention_mask", "position_ids",
+                    "past_key_values", "inputs_embeds", "use_cache",
+                    "output_attentions", "output_hidden_states",
+                    "return_dict", "cache_position",
+                    # Multimodal kwargs the backbone accepts:
+                    "pixel_values", "pixel_values_videos", "input_features",
+                    "input_features_mask", "image_position_ids",
+                    "video_position_ids", "mm_token_type_ids",
+                }
+            }
+            outputs = inner(*args, **backbone_kwargs)
+            hidden_states = getattr(outputs, "last_hidden_state", None)
+            if hidden_states is None:
+                return original(self, *args, **kwargs)
+
+            logits_to_keep = kwargs.get("logits_to_keep", 0)
+            if isinstance(logits_to_keep, int) and logits_to_keep > 0:
+                hidden_states = hidden_states[:, -logits_to_keep:, :]
+
+            return CausalLMOutputWithPast(
+                loss=None,
+                logits=hidden_states,  # ← key: hidden states stuffed into logits
+                past_key_values=getattr(outputs, "past_key_values", None),
+                hidden_states=getattr(outputs, "hidden_states", None),
+                attentions=getattr(outputs, "attentions", None),
+            )
+
+        target_cls.forward = patched
+        target_cls._DRIFTCALL_RHS_PATCHED = True
+
+    _wrap(_Causal)
+    _wrap(_CondGen)
+
+
 def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
     """Load Gemma 4 E2B in 16-bit LoRA + return (model, tokenizer).
 
@@ -152,6 +235,12 @@ def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
 
     import torch
     from unsloth import FastVisionModel
+
+    # ROOT CAUSE FIX: patch Gemma 4 forward to honor UNSLOTH_RETURN_HIDDEN_STATES.
+    # Must run BEFORE FastVisionModel.from_pretrained so the patch is on the
+    # bare class before Unsloth wraps it. See _patch_gemma4_return_hidden_states
+    # for the full explanation.
+    _patch_gemma4_return_hidden_states()
 
     model, tokenizer = FastVisionModel.from_pretrained(
         model_name=cfg.base_model_id,
