@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 StageT = Literal[1, 2, 3]
+HardwareT = Literal["v100", "h100"]
 
 
 LEARNING_RATE: float = 5e-6
@@ -38,7 +39,16 @@ ADAM_BETA1: float = 0.9
 ADAM_BETA2: float = 0.99
 WEIGHT_DECAY: float = 0.01
 LR_SCHEDULER_TYPE: str = "cosine"
-OPTIM: str = "paged_adamw_8bit"
+
+# V100 path (default) — fp16 + 8-bit paged AdamW (sm_70 safe).
+OPTIM_V100: str = "paged_adamw_8bit"
+# H100 path — bf16 + fused torch AdamW (sm_90 tensor cores).
+OPTIM_H100: str = "adamw_torch_fused"
+# For backwards compatibility with callers that read ``OPTIM`` directly.
+OPTIM: str = OPTIM_V100
+# Kernel request passed to the model at load time on H100.
+H100_ATTN_IMPLEMENTATION: str = "flash_attention_3"
+ALLOWED_HARDWARE: tuple[HardwareT, ...] = ("v100", "h100")
 
 PER_DEVICE_TRAIN_BATCH_SIZE: int = 1
 EFFECTIVE_ROLLOUTS_PER_UPDATE: int = 32
@@ -110,11 +120,19 @@ def _validate_stage(stage: int) -> None:
         raise AssertionError(f"stage in {{1, 2, 3}} required; got {stage}")
 
 
+def _validate_hardware(hardware: str) -> None:
+    if hardware not in ALLOWED_HARDWARE:
+        raise AssertionError(
+            f"hardware in {ALLOWED_HARDWARE} required; got {hardware!r}"
+        )
+
+
 def build_grpo_config(
     stage: StageT,
     *,
     num_generations: int = DEFAULT_NUM_GENERATIONS,
     resume_output_dir: Path | None = None,
+    hardware: HardwareT = "v100",
 ) -> Any:
     """Build a TRL ``GRPOConfig`` matching training.md §2.4 exactly.
 
@@ -123,13 +141,31 @@ def build_grpo_config(
     """
     _validate_stage(stage)
     _validate_num_generations(num_generations)
+    _validate_hardware(hardware)
 
     warmup_ratio = _warmup_ratio_for_stage(stage)
     grad_accum = _derive_grad_accum(num_generations)
     output_dir = str(resume_output_dir) if resume_output_dir is not None else f"checkpoints/stage{stage}"
     run_name = f"driftcall-stage{stage}"
 
+    # Hardware-specific knobs — V100 stays fp16 + 8-bit paged AdamW, H100
+    # switches to bf16 + fused torch AdamW + flash_attention_3 (training.md §3.1).
+    if hardware == "h100":
+        fp16_flag = False
+        bf16_flag = True
+        optim_choice = OPTIM_H100
+        attn_implementation: str | None = H100_ATTN_IMPLEMENTATION
+    else:
+        fp16_flag = True
+        bf16_flag = False
+        optim_choice = OPTIM_V100
+        attn_implementation = None
+
     from trl import GRPOConfig
+
+    extra_kwargs: dict[str, Any] = {}
+    if attn_implementation is not None:
+        extra_kwargs["attn_implementation"] = attn_implementation
 
     config = GRPOConfig(
         learning_rate=LEARNING_RATE,
@@ -138,7 +174,7 @@ def build_grpo_config(
         weight_decay=WEIGHT_DECAY,
         warmup_ratio=warmup_ratio,
         lr_scheduler_type=LR_SCHEDULER_TYPE,
-        optim=OPTIM,
+        optim=optim_choice,
         per_device_train_batch_size=PER_DEVICE_TRAIN_BATCH_SIZE,
         gradient_accumulation_steps=grad_accum,
         num_generations=num_generations,
@@ -148,7 +184,8 @@ def build_grpo_config(
         use_bias_correction_kl=True,
         temperature=SAMPLING_TEMPERATURE,
         top_p=SAMPLING_TOP_P,
-        fp16=True,
+        fp16=fp16_flag,
+        bf16=bf16_flag,
         gradient_checkpointing=True,
         logging_steps=LOGGING_STEPS,
         save_steps=SAVE_STEPS,
@@ -156,9 +193,12 @@ def build_grpo_config(
         output_dir=output_dir,
         report_to=REPORT_TO,
         run_name=run_name,
+        **extra_kwargs,
     )
 
-    assert_config_invariants(config, stage=stage, num_generations=num_generations)
+    assert_config_invariants(
+        config, stage=stage, num_generations=num_generations, hardware=hardware,
+    )
     return config
 
 
@@ -167,20 +207,37 @@ def assert_config_invariants(
     *,
     stage: StageT,
     num_generations: int,
+    hardware: HardwareT | None = None,
 ) -> _ConfigInvariants:
     """Post-construction field checks — training.md §2.4 invariants.
 
     Returns a frozen :class:`_ConfigInvariants` snapshot so callers (tests)
     can introspect without re-reading the mutable TRL config object.
+
+    When ``hardware`` is ``None`` it is auto-detected from the precision
+    flags on ``config`` (``bf16=True`` → ``"h100"``, else ``"v100"``).
     """
+    if hardware is None:
+        hardware = "h100" if getattr(config, "bf16", False) else "v100"
+    _validate_hardware(hardware)
     if getattr(config, "use_bias_correction_kl", None) is not True:
         raise AssertionError(
             "use_bias_correction_kl must be True (TRL issue #4637; training.md §3.3)"
         )
-    if getattr(config, "fp16", None) is not True:
-        raise AssertionError("fp16 must be True on V100 (training.md §3.1)")
-    if getattr(config, "bf16", False) is True:
-        raise AssertionError("bf16 must be False on V100 (training.md §3.1)")
+    if hardware == "v100":
+        if getattr(config, "fp16", None) is not True:
+            raise AssertionError("fp16 must be True on V100 (training.md §3.1)")
+        if getattr(config, "bf16", False) is True:
+            raise AssertionError("bf16 must be False on V100 (training.md §3.1)")
+    else:  # hardware == "h100"
+        if getattr(config, "bf16", None) is not True:
+            raise AssertionError("bf16 must be True on H100 (training.md §3.1)")
+        if getattr(config, "fp16", False) is True:
+            raise AssertionError("fp16 must be False on H100 (training.md §3.1)")
+        if getattr(config, "attn_implementation", None) != H100_ATTN_IMPLEMENTATION:
+            raise AssertionError(
+                f"attn_implementation must be {H100_ATTN_IMPLEMENTATION!r} on H100"
+            )
     if getattr(config, "gradient_checkpointing", None) is not True:
         raise AssertionError("gradient_checkpointing must be True")
     if config.per_device_train_batch_size != PER_DEVICE_TRAIN_BATCH_SIZE:
@@ -291,13 +348,18 @@ def reward_fn(
 
 
 __all__ = [
+    "ALLOWED_HARDWARE",
     "ALLOWED_NUM_GENERATIONS",
     "BETA_KL",
     "DEFAULT_NUM_GENERATIONS",
     "EFFECTIVE_ROLLOUTS_PER_UPDATE",
+    "H100_ATTN_IMPLEMENTATION",
+    "HardwareT",
     "LEARNING_RATE",
     "MAX_COMPLETION_LENGTH",
     "MAX_PROMPT_LENGTH",
+    "OPTIM_H100",
+    "OPTIM_V100",
     "PER_DEVICE_TRAIN_BATCH_SIZE",
     "REPORT_TO",
     "StageT",

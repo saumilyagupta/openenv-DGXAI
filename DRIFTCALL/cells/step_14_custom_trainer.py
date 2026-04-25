@@ -26,12 +26,14 @@ can be verified on CPU-only CI.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, Protocol, cast
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from collections.abc import Callable, Iterator
 
+from cells.step_13_grpo_config import BETA_KL
 
 PINNED_SYSTEM_PROMPT: str = (
     "You are a concierge assistant. Use the provided tools. "
@@ -302,8 +304,102 @@ def driftcall_grpo_trainer_methods() -> tuple[str, ...]:
     return ("__init__", "_generate_and_score_completions")
 
 
+# ---------------------------------------------------------------------------
+# Adaptive KL controller (training.md §3.3 — retarget β from measured KL)
+# ---------------------------------------------------------------------------
+
+
+DEFAULT_BETA_MIN: float = 0.001
+DEFAULT_BETA_MAX: float = 1.0
+DEFAULT_KP: float = 2.0
+
+
+class AdaptiveKLCallback:
+    """Retarget β each step based on the ratio of measured KL to ``target_kl``.
+
+    Proportional controller with symmetric log-space update:
+
+        err     = (kl - target_kl) / target_kl
+        new_beta = beta * exp(kp * err)
+        new_beta = clamp(new_beta, beta_min, beta_max)
+
+    When ``kl`` matches ``target_kl``, ``err == 0`` and β is left unchanged.
+    Safe on missing / NaN / non-numeric KL signals (no-op, no exception).
+
+    Inherits from :class:`transformers.trainer_callback.TrainerCallback` when
+    available (production path); falls back to ``object`` on CPU-only CI so
+    the class can be exercised without installing transformers.
+    """
+
+    def __init__(
+        self,
+        target_kl: float = BETA_KL,
+        *,
+        kp: float = DEFAULT_KP,
+        beta_min: float = DEFAULT_BETA_MIN,
+        beta_max: float = DEFAULT_BETA_MAX,
+    ) -> None:
+        if target_kl <= 0.0:
+            raise ValueError(f"target_kl must be > 0; got {target_kl}")
+        if beta_min <= 0.0 or beta_max <= 0.0:
+            raise ValueError(
+                f"beta bounds must be > 0; got min={beta_min}, max={beta_max}"
+            )
+        if beta_min > beta_max:
+            raise ValueError(
+                f"beta_min ({beta_min}) must be <= beta_max ({beta_max})"
+            )
+        self.target_kl = float(target_kl)
+        self.kp = float(kp)
+        self.beta_min = float(beta_min)
+        self.beta_max = float(beta_max)
+
+    def _coerce_kl(self, raw: Any) -> float | None:
+        """Return a finite float or ``None`` — propagates no-op on bad input."""
+        try:
+            value = float(raw)
+        except (TypeError, ValueError):
+            return None
+        if math.isnan(value) or math.isinf(value):
+            return None
+        return value
+
+    def _next_beta(self, beta: float, kl: float) -> float:
+        err = (kl - self.target_kl) / self.target_kl
+        # Clamp the exponent so extreme KL spikes don't overflow math.exp;
+        # the result is clamped anyway and exp(±50) easily saturates either bound.
+        exponent = max(-50.0, min(50.0, self.kp * err))
+        scaled = beta * math.exp(exponent)
+        return max(self.beta_min, min(self.beta_max, scaled))
+
+    def on_log(
+        self,
+        args: Any,
+        state: Any,
+        control: Any,
+        *,
+        logs: dict[str, Any] | None = None,
+        **_kwargs: Any,
+    ) -> Any:
+        """TRL hook — called with every `trainer.log(...)` dict."""
+        if logs is None:
+            return control
+        if "kl" not in logs:
+            return control
+        kl = self._coerce_kl(logs["kl"])
+        if kl is None:
+            return control
+        beta = float(getattr(args, "beta", BETA_KL))
+        args.beta = self._next_beta(beta, kl)
+        return control
+
+
 __all__ = [
     "AdapterRecord",
+    "AdaptiveKLCallback",
+    "DEFAULT_BETA_MAX",
+    "DEFAULT_BETA_MIN",
+    "DEFAULT_KP",
     "EnvFactory",
     "EpisodeDatasetAdapter",
     "EpisodeSampler",

@@ -23,6 +23,7 @@ BASE_MODEL_ID: str = "unsloth/gemma-4-E2B-it-bnb-4bit"
 MAX_SEQ_LENGTH: int = 4096
 LORA_R: int = 16
 LORA_ALPHA: int = 32
+LORA_DROPOUT: float = 0.05
 LORA_RANDOM_STATE: int = 3407
 LORA_TARGET_MODULES: tuple[str, ...] = (
     "q_proj",
@@ -53,6 +54,7 @@ class BootConfig:
     load_in_4bit: bool = True
     lora_r: int = LORA_R
     lora_alpha: int = LORA_ALPHA
+    lora_dropout: float = LORA_DROPOUT
     lora_target_modules: tuple[str, ...] = LORA_TARGET_MODULES
     lora_random_state: int = LORA_RANDOM_STATE
     use_gradient_checkpointing: str = "unsloth"
@@ -118,6 +120,7 @@ def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
         model,
         r=cfg.lora_r,
         lora_alpha=cfg.lora_alpha,
+        lora_dropout=cfg.lora_dropout,
         target_modules=list(cfg.lora_target_modules),
         use_gradient_checkpointing=cfg.use_gradient_checkpointing,
         random_state=cfg.lora_random_state,
@@ -131,6 +134,7 @@ __all__ = [
     "BF16SlippageError",
     "BootConfig",
     "LORA_ALPHA",
+    "LORA_DROPOUT",
     "LORA_R",
     "LORA_RANDOM_STATE",
     "LORA_TARGET_MODULES",
