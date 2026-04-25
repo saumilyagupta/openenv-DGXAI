@@ -91,7 +91,7 @@
   detection_hints:
     - BOOKING_WINDOW_CLOSED
     - booking_window
-    - 14:00
+    - "14:00"
     - same-day
 
 - id: cab.school_hours_mini_reject
@@ -106,7 +106,7 @@
     - SCHOOL_HOURS_MINI_REJECTED
     - school_hours
     - mini
-    - 07:00
+    - "07:00"
 
 - id: restaurant.min_order_bump
   drift_type: policy
@@ -207,7 +207,7 @@
   detection_hints:
     - early_checkin
     - 50%
-    - 12:00
+    - "12:00"
     - nightly
 
 - id: airline.reschedule_tnc
@@ -286,8 +286,8 @@
   drift_type: auth
   domain: payment
   from_version: v2
-  to_version: v3
-  description: "transactions > 5000 INR now require mfa_code; auth_error with MFA_REQUIRED"
+  to_version: v2
+  description: "transactions > 5000 INR now require mfa_code; auth_error with MFA_REQUIRED (policy flip on payment v2)"
   mutation:
     policy_flag_flip: {mfa_required: true}
     numeric_bump: {mfa_threshold_inr: 5000}
