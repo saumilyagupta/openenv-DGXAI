@@ -51,7 +51,16 @@ _MAX_UTTERANCE_LEN: int = 280
 # override by declaring slot_distributions explicitly; otherwise these
 # name-based defaults apply.
 _DATE_SLOT_NAMES: frozenset[str] = frozenset(
-    {"when", "checkin", "checkout", "date", "departure", "arrival"}
+    {
+        "when",
+        "checkin",
+        "checkout",
+        "date",
+        "departure",
+        "arrival",
+        "return_when",
+        "new_when",
+    }
 )
 _INTER_CITY_SLOT_NAMES: frozenset[str] = frozenset(
     {"from", "to", "city", "origin", "destination"}
