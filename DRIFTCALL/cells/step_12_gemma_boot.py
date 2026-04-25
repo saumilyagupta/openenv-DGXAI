@@ -201,6 +201,28 @@ def _patch_gemma4_return_hidden_states() -> None:
     _wrap(_Causal)
     _wrap(_CondGen)
 
+    # Second patch: drop multimodal kwargs that transformers' validator
+    # rejects with "model_kwargs are not used by the model" because its
+    # introspection doesn't honor Unpack[TransformersKwargs]. The model's
+    # forward accepts these via **kwargs but the validator can't see that.
+    _MM_DROP = ("mm_token_type_ids", "pixel_values_lengths", "image_sizes")
+
+    def _wrap_validate(target_cls):
+        if target_cls is None or getattr(target_cls, "_DRIFTCALL_VAL_PATCHED", False):
+            return
+        original = target_cls._validate_model_kwargs
+
+        def patched_validate(self, model_kwargs):
+            for k in _MM_DROP:
+                model_kwargs.pop(k, None)
+            return original(self, model_kwargs)
+
+        target_cls._validate_model_kwargs = patched_validate
+        target_cls._DRIFTCALL_VAL_PATCHED = True
+
+    _wrap_validate(_Causal)
+    _wrap_validate(_CondGen)
+
 
 def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
     """Load Gemma 4 E2B in 16-bit LoRA + return (model, tokenizer).
