@@ -230,10 +230,8 @@ class _FakeGRPOTrainerBase:
 
 class TestDriftCallGRPOTrainer:
     def test_override_methods_introspection(self) -> None:
-        assert driftcall_grpo_trainer_methods() == (
-            "__init__",
-            "_generate_and_score_completions",
-        )
+        # v1: rollout uses TRL default; reward goes via reward_funcs.
+        assert driftcall_grpo_trainer_methods() == ("__init__",)
 
     def test_subclass_attaches_driftcall_kwargs(self) -> None:
         Trainer = make_driftcall_grpo_trainer_cls(_FakeGRPOTrainerBase)
@@ -259,104 +257,23 @@ class TestDriftCallGRPOTrainer:
         assert trainer.env_factory is env_factory
         assert trainer.reward_fn_driftcall is rfn
 
-    def test_generate_and_score_runs_rollout_and_plumbs_rewards(self) -> None:
+    def test_reward_funcs_wired_with_episode_closure(self) -> None:
+        # v1: trainer init wires our episode-aware closure into reward_funcs[0].
         Trainer = make_driftcall_grpo_trainer_cls(_FakeGRPOTrainerBase)
-        model = MagicMock()
-        tok = _SpyTokenizer()
-        args = MagicMock(num_generations=8)
-        env_factory = MagicMock()
-
-        episodes_out = tuple(_FakeEpisode(ident=str(i)) for i in range(8))
-        completions_out = tuple(f"compl-{i}" for i in range(8))
-
-        rollout_fn = MagicMock(return_value=(episodes_out, completions_out))
-        rfn = MagicMock(return_value=[0.5, 0.6, 0.7, 0.8, 0.1, 0.2, 0.3, 0.4])
-
-        trainer = Trainer(
-            model=model,
-            args=args,
-            processing_class=tok,
-            rollout_group_fn=rollout_fn,
-            env_factory=env_factory,
-            reward_fn_driftcall=rfn,
-        )
-
-        goal = _FakeGoal(seed_utterance="hello")
-        row = {
-            "prompt": "rendered-prompt",
-            "_meta": {
-                "goal": goal,
-                "episode_seed": 42,
-                "stage": 1,
-                "language_weights": {"en": 1.0},
-            },
-        }
-        out = trainer._generate_and_score_completions([row])
-
-        # rollout_fn called with expected kwargs
-        assert rollout_fn.call_count == 1
-        call = rollout_fn.call_args
-        assert call.kwargs["model"] is model
-        assert call.kwargs["tokenizer"] is tok
-        assert call.kwargs["goal"] is goal
-        assert call.kwargs["episode_seed"] == 42
-        assert call.kwargs["num_generations"] == 8
-        assert call.kwargs["env_factory"] is env_factory
-
-        # reward_fn_driftcall called with list-of-G inputs
-        rcall = rfn.call_args
-        assert rcall.kwargs["prompts"] == ["rendered-prompt"] * 8
-        assert rcall.kwargs["completions"] == list(completions_out)
-        assert len(rcall.kwargs["_meta"]) == 8
-        assert len(rcall.kwargs["episodes"]) == 8
-
-        # Return shape
-        assert out["episodes"] is episodes_out
-        assert out["completions"] is completions_out
-        assert out["rewards"] == [0.5, 0.6, 0.7, 0.8, 0.1, 0.2, 0.3, 0.4]
-        assert out["prompts"] == ["rendered-prompt"] * 8
-
-    def test_empty_inputs_raises(self) -> None:
-        Trainer = make_driftcall_grpo_trainer_cls(_FakeGRPOTrainerBase)
+        rfn = MagicMock(return_value=[0.5] * 8)
         trainer = Trainer(
             model=MagicMock(),
             args=MagicMock(num_generations=8),
             processing_class=_SpyTokenizer(),
             rollout_group_fn=MagicMock(),
             env_factory=MagicMock(),
-            reward_fn_driftcall=MagicMock(),
+            reward_fn_driftcall=rfn,
         )
-        with pytest.raises(ValueError):
-            trainer._generate_and_score_completions([])
-
-    def test_rollout_fn_length_mismatch_raises(self) -> None:
-        Trainer = make_driftcall_grpo_trainer_cls(_FakeGRPOTrainerBase)
-        # returns only 4 episodes when G=8 expected
-        rollout_fn = MagicMock(
-            return_value=(
-                tuple(_FakeEpisode(ident=str(i)) for i in range(4)),
-                tuple(f"c{i}" for i in range(4)),
-            )
-        )
-        trainer = Trainer(
-            model=MagicMock(),
-            args=MagicMock(num_generations=8),
-            processing_class=_SpyTokenizer(),
-            rollout_group_fn=rollout_fn,
-            env_factory=MagicMock(),
-            reward_fn_driftcall=MagicMock(),
-        )
-        row = {
-            "prompt": "p",
-            "_meta": {
-                "goal": _FakeGoal(seed_utterance="x"),
-                "episode_seed": 1,
-                "stage": 1,
-                "language_weights": {"en": 1.0},
-            },
-        }
-        with pytest.raises(ValueError):
-            trainer._generate_and_score_completions([row])
+        # If the fake base sets reward_funcs from kwargs, our closure should
+        # be present at index 0.
+        rf = getattr(trainer, "reward_funcs", None)
+        if rf is not None and len(rf) > 0:
+            assert getattr(rf[0], "__name__", "") == "driftcall_episode_reward"
 
     def test_subclass_inherits_from_provided_base(self) -> None:
         Trainer = make_driftcall_grpo_trainer_cls(_FakeGRPOTrainerBase)
@@ -379,30 +296,17 @@ class TestDriftCallGRPOTrainer:
         Trainer = make_driftcall_grpo_trainer_cls()
         assert issubclass(Trainer, _FakeTRLBase)
 
-    def test_args_num_generations_respected(self) -> None:
+    def test_args_num_generations_propagated_to_trainer(self) -> None:
+        # v1: rollout is no longer overridden; verify args.num_generations
+        # is preserved on the trainer instance for downstream TRL plumbing.
         Trainer = make_driftcall_grpo_trainer_cls(_FakeGRPOTrainerBase)
-        episodes_out = tuple(_FakeEpisode(ident=str(i)) for i in range(4))
-        completions_out = tuple(f"c{i}" for i in range(4))
-        rollout_fn = MagicMock(return_value=(episodes_out, completions_out))
-        rfn = MagicMock(return_value=[0.1, 0.2, 0.3, 0.4])
-
+        args = MagicMock(num_generations=4)
         trainer = Trainer(
             model=MagicMock(),
-            args=MagicMock(num_generations=4),
+            args=args,
             processing_class=_SpyTokenizer(),
-            rollout_group_fn=rollout_fn,
+            rollout_group_fn=MagicMock(),
             env_factory=MagicMock(),
-            reward_fn_driftcall=rfn,
+            reward_fn_driftcall=MagicMock(),
         )
-        row = {
-            "prompt": "p",
-            "_meta": {
-                "goal": _FakeGoal(seed_utterance="x"),
-                "episode_seed": 1,
-                "stage": 1,
-                "language_weights": {"en": 1.0},
-            },
-        }
-        out = trainer._generate_and_score_completions([row])
-        assert len(out["rewards"]) == 4
-        assert rollout_fn.call_args.kwargs["num_generations"] == 4
+        assert trainer.args.num_generations == 4

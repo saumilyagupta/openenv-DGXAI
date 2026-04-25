@@ -231,15 +231,40 @@ def _make_driftcall_init(
         adaptive_kl_beta_max: float = DEFAULT_BETA_MAX,
         **kwargs: Any,
     ) -> None:
-        # TRL >=0.24 GRPOTrainer requires `reward_funcs`. DriftCall overrides
-        # the scoring path via _driftcall_generate_and_score_completions and
-        # uses ``reward_fn_driftcall`` instead. Pass a no-op stub so the base
-        # ``__init__`` signature is satisfied; it is never actually invoked.
+        # TRL >=0.24 GRPOTrainer requires `reward_funcs`. We wrap our
+        # episode-aware reward_fn into a TRL-compatible closure that runs
+        # the multi-turn DriftCall env rollout (training.md §2.3 §3.2.3) and
+        # hands the terminal Episode to ``reward_fn_driftcall``. TRL's
+        # standard generation produces the gradient-bearing first turn;
+        # subsequent env interactions inside the closure determine the
+        # final reward signal.
         if "reward_funcs" not in kwargs:
             kwargs["reward_funcs"] = [
-                lambda completions=None, **_kw: [0.0] * (len(completions or []) or 1)
+                make_episode_reward_func(
+                    env_factory=env_factory,
+                    reward_fn_driftcall=reward_fn_driftcall,
+                    model=kwargs.get("model"),
+                    tokenizer=kwargs.get("processing_class"),
+                )
             ]
         base_cls.__init__(self, *args, **kwargs)
+        # If TRL's __init__ unwrapped/replaced the reward_funcs list and our
+        # closure was constructed without model/tokenizer references (e.g.,
+        # they came from base_cls internals), rebuild it now with the actual
+        # trainer-bound references.
+        rf = getattr(self, "reward_funcs", None)
+        if (
+            rf
+            and len(rf) > 0
+            and getattr(rf[0], "__name__", "") == "driftcall_episode_reward"
+            and (kwargs.get("model") is None or kwargs.get("processing_class") is None)
+        ):
+            rf[0] = make_episode_reward_func(
+                env_factory=env_factory,
+                reward_fn_driftcall=reward_fn_driftcall,
+                model=getattr(self, "model", None),
+                tokenizer=getattr(self, "processing_class", None),
+            )
         self.rollout_group_fn = rollout_group_fn
         self.env_factory = env_factory
         self.reward_fn_driftcall = reward_fn_driftcall
@@ -316,24 +341,6 @@ def _driftcall_generate_and_score_completions(
         _meta=metas,
         episodes=list(episodes),
     )
-
-    # Rich wandb logging — fires once per training step. Captures everything
-    # the trainer's report_to=wandb path doesn't already cover: full sample
-    # table (prompt+completion+reward+episode), per-step reward distribution,
-    # episode-level stats (turn count, budget remaining, tool calls), drift
-    # event counters, and per-language reward breakdown.
-    try:
-        _log_rollout_to_wandb(
-            self,
-            prompts=prompts,
-            completions=completions,
-            rewards=rewards,
-            episodes=episodes,
-            metas=metas,
-            goal=goal,
-        )
-    except Exception:  # pragma: no cover — never let wandb break a training step
-        pass
 
     return {
         "episodes": episodes,
@@ -612,23 +619,229 @@ def make_driftcall_grpo_trainer_cls(base_cls: type[Any] | None = None) -> type[A
     resolved_base: type[Any] = (
         base_cls if base_cls is not None else _import_grpo_trainer()
     )
+    # NOTE: Multi-turn rollout override (_driftcall_generate_and_score_completions)
+    # is INTENTIONALLY NOT installed for the v1 smoke. TRL >=0.24 expects the
+    # function to return torch tensors (prompt_ids, completion_ids, advantages,
+    # ...) but our implementation returned text lists, producing
+    # `AttributeError: 'list' object has no attribute 'shape'` at the first
+    # training step. For v1 we let TRL handle generation single-turn and feed
+    # rewards via the standard `reward_funcs` plumbing — see
+    # `reward_fn_for_trl` below. Multi-turn re-integration is a follow-up
+    # (training.md §3.2.3).
     return type(
         "DriftCallGRPOTrainer",
         (resolved_base,),
         {
             "__init__": _make_driftcall_init(resolved_base),
-            "_generate_and_score_completions": _driftcall_generate_and_score_completions,
-            "__doc__": "GRPOTrainer subclass with multi-turn rollout override.",
+            "__doc__": "GRPOTrainer subclass — rollout uses TRL default; reward via reward_funcs.",
         },
     )
+
+
+def make_episode_reward_func(
+    *,
+    env_factory: EnvFactory,
+    reward_fn_driftcall: Callable[..., list[float]],
+    model: Any,
+    tokenizer: Any,
+    max_turns: int = 6,
+) -> Callable[..., list[float]]:
+    """Build a TRL-compatible reward_func closure that runs real multi-turn
+    DriftCall env rollouts and scores them with the real reward_fn.
+
+    TRL's standard ``GRPOTrainer`` produces (prompt_ids, completion_ids,
+    advantages, old_per_token_logps, ref_per_token_logps) tensors as the
+    first generation step — the gradient flows through that first turn. We
+    take that first completion as the agent's *first* action, then continue
+    the multi-turn loop inside this reward closure: parse the action, step
+    the env, generate the next turn with ``model.generate``, repeat until
+    ``done`` or ``max_turns`` is reached. The terminal :class:`Episode` is
+    handed to ``reward_fn_driftcall`` (training.md §2.3) for the real
+    DriftCall reward.
+
+    The returned function matches TRL's reward_funcs signature:
+        ``(prompts, completions, completion_ids=None, **reward_kwargs) -> list[float]``
+
+    where ``reward_kwargs`` contains all non-prompt/completion fields from
+    the dataset rows (here: ``_meta``).
+    """
+    from cells.step_10_env import DriftCallEnvError
+
+    def _reward(
+        prompts: list[str],
+        completions: list[str],
+        completion_ids: list[list[int]] | None = None,
+        _meta: list[dict[str, Any]] | None = None,
+        **kwargs: Any,
+    ) -> list[float]:
+        n = len(prompts)
+        metas = _meta if _meta is not None else [{} for _ in range(n)]
+        episodes: list[Any] = []
+
+        for i in range(n):
+            prompt = prompts[i]
+            completion = completions[i]
+            meta = metas[i] if i < len(metas) else {}
+            episode_seed = int(meta.get("episode_seed", 0)) + i
+
+            env = env_factory()
+            try:
+                obs = env.reset(seed=episode_seed)
+            except Exception:
+                episodes.append(None)
+                continue
+
+            generated_text = completion
+            running_prompt = prompt
+            for _turn in range(max_turns):
+                action = _parse_action_from_completion(generated_text)
+                try:
+                    obs = env.step(action)
+                except DriftCallEnvError:
+                    break
+                if obs is None or getattr(obs, "_done", False) or getattr(obs, "done", False):
+                    break
+                # Build next prompt from observation and generate next turn.
+                running_prompt = (
+                    f"{running_prompt}\n{generated_text}\n"
+                    f"[turn={obs.turn}] {obs.last_transcript}"
+                )
+                try:
+                    generated_text = _generate_one_turn(model, tokenizer, running_prompt)
+                except Exception:
+                    break
+
+            episode = getattr(env, "_episode", None)
+            if episode is None:
+                try:
+                    episode = env.state()
+                except Exception:
+                    episode = None
+            episodes.append(episode)
+            try:
+                env.close()
+            except Exception:
+                pass
+
+        rewards = reward_fn_driftcall(
+            prompts=list(prompts),
+            completions=list(completions),
+            _meta=list(metas),
+            episodes=episodes,
+        )
+
+        # Best-effort rich wandb logging (never breaks training).
+        try:
+            _log_episode_rollouts_to_wandb(
+                prompts=list(prompts),
+                completions=list(completions),
+                rewards=list(rewards),
+                episodes=episodes,
+                metas=list(metas),
+            )
+        except Exception:
+            pass
+
+        return rewards
+
+    _reward.__name__ = "driftcall_episode_reward"
+    return _reward
+
+
+def _log_episode_rollouts_to_wandb(
+    *,
+    prompts: list[str],
+    completions: list[str],
+    rewards: list[float],
+    episodes: list[Any],
+    metas: list[dict[str, Any]],
+) -> None:
+    """Log per-call rollout stats + sample table — silent no-op without wandb."""
+    try:
+        import wandb
+    except ImportError:
+        return
+    if getattr(wandb, "run", None) is None:
+        return
+
+    rewards_list = [float(r) for r in rewards]
+    if not rewards_list:
+        return
+
+    import statistics as _stats
+    payload: dict[str, Any] = {
+        "rewards/mean": _stats.fmean(rewards_list),
+        "rewards/min": min(rewards_list),
+        "rewards/max": max(rewards_list),
+        "rewards/std": (
+            _stats.pstdev(rewards_list) if len(rewards_list) > 1 else 0.0
+        ),
+        "rewards/count_zero": sum(1 for r in rewards_list if r == 0.0),
+        "rewards/count_nonzero": sum(1 for r in rewards_list if r != 0.0),
+    }
+    comp_lens = [len(c) for c in completions]
+    if comp_lens:
+        payload.update({
+            "completion/length_mean": sum(comp_lens) / len(comp_lens),
+            "completion/length_max": max(comp_lens),
+        })
+
+    # Episode-level stats.
+    turn_counts: list[int] = []
+    budgets: list[int] = []
+    tool_calls: list[int] = []
+    drift_events: list[int] = []
+    for ep in episodes:
+        if ep is None:
+            continue
+        if isinstance(getattr(ep, "turn", None), int):
+            turn_counts.append(ep.turn)
+        if isinstance(getattr(ep, "budget_remaining", None), int):
+            budgets.append(ep.budget_remaining)
+        tool_calls.append(len(getattr(ep, "tool_results", None) or ()))
+        drift_events.append(len(getattr(ep, "drift_log", None) or ()))
+
+    def _mean(xs: list[int]) -> float:
+        return sum(xs) / len(xs) if xs else 0.0
+
+    payload.update({
+        "episode/turn_count_mean": _mean(turn_counts),
+        "episode/budget_remaining_mean": _mean(budgets),
+        "episode/tool_calls_mean": _mean(tool_calls),
+        "episode/drift_events_mean": _mean(drift_events),
+    })
+
+    # Sample table — small, capped to first 4 rows.
+    rows = []
+    for i, (p, c, r, m) in enumerate(
+        zip(prompts[:4], completions[:4], rewards_list[:4], metas[:4])
+    ):
+        goal = m.get("goal") if isinstance(m, dict) else None
+        rows.append([
+            i,
+            str(getattr(goal, "language", "?")) if goal is not None else "?",
+            str(getattr(goal, "intent", "?")) if goal is not None else "?",
+            (p or "")[:512],
+            (c or "")[:1024],
+            float(r),
+        ])
+    if rows:
+        payload["samples/rollouts"] = wandb.Table(
+            columns=["g_idx", "language", "intent", "prompt", "completion", "reward"],
+            data=rows,
+        )
+
+    wandb.log(payload)
 
 
 def driftcall_grpo_trainer_methods() -> tuple[str, ...]:
     """Return the method names the subclass overrides (introspection helper).
 
     Used by the shape test (U in §1.x) to verify the override surface.
+    v1 smoke: only ``__init__`` is overridden (multi-turn rollout override
+    is held out — see ``make_driftcall_grpo_trainer_cls`` for the rationale).
     """
-    return ("__init__", "_generate_and_score_completions")
+    return ("__init__",)
 
 
 # ---------------------------------------------------------------------------
