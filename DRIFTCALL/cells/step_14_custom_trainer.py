@@ -408,13 +408,18 @@ class AdaptiveKLCallback:
             return None
         return value
 
-    def _next_beta(self, beta: float, kl: float) -> float:
+    def _next_beta(self, beta: float, kl: float) -> tuple[float, bool, bool]:
+        """Return ``(new_beta, clamped_to_min, clamped_to_max)``."""
         err = (kl - self.target_kl) / self.target_kl
         # Clamp the exponent so extreme KL spikes don't overflow math.exp;
         # the result is clamped anyway and exp(±50) easily saturates either bound.
         exponent = max(-50.0, min(50.0, self.kp * err))
         scaled = beta * math.exp(exponent)
-        return max(self.beta_min, min(self.beta_max, scaled))
+        if scaled <= self.beta_min:
+            return self.beta_min, True, False
+        if scaled >= self.beta_max:
+            return self.beta_max, False, True
+        return scaled, False, False
 
     def on_log(
         self,
@@ -425,7 +430,18 @@ class AdaptiveKLCallback:
         logs: dict[str, Any] | None = None,
         **_kwargs: Any,
     ) -> Any:
-        """TRL hook — called with every `trainer.log(...)` dict."""
+        """TRL hook — called with every ``trainer.log(...)`` dict.
+
+        On a well-formed KL signal: mutates ``args.beta`` with the new
+        coefficient and writes five diagnostic fields back into ``logs``
+        so TRL's default reporter forwards them to wandb / CSV / etc.:
+
+        - ``train/beta_adaptive``       current KL coefficient
+        - ``train/kl_measured``         sanitised KL input
+        - ``train/kl_target``           constant — aids chart-by-reference
+        - ``train/beta_clamped_to_min`` 0/1 — fires on collapse
+        - ``train/beta_clamped_to_max`` 0/1 — fires on runaway divergence
+        """
         if logs is None:
             return control
         if "kl" not in logs:
@@ -434,7 +450,13 @@ class AdaptiveKLCallback:
         if kl is None:
             return control
         beta = float(getattr(args, "beta", BETA_KL))
-        args.beta = self._next_beta(beta, kl)
+        new_beta, clamped_lo, clamped_hi = self._next_beta(beta, kl)
+        args.beta = new_beta
+        logs["train/beta_adaptive"] = new_beta
+        logs["train/kl_measured"] = kl
+        logs["train/kl_target"] = self.target_kl
+        logs["train/beta_clamped_to_min"] = 1 if clamped_lo else 0
+        logs["train/beta_clamped_to_max"] = 1 if clamped_hi else 0
         return control
 
 
