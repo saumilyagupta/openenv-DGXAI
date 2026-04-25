@@ -1,9 +1,9 @@
 """Gemma 4 E2B boot via Unsloth FastModel (docs/modules/training.md §3.1).
 
 Contract:
-  - Base model: ``unsloth/gemma-4-E2B-it-bnb-4bit`` (4-bit NF4 quantization).
-  - Precision: explicit FP16 (V100-safe; Gemma 4 is BF16-native so explicit
-    ``dtype=torch.float16`` at load time prevents Unsloth auto-picking BF16).
+  - Base model: ``unsloth/gemma-4-E2B-it-unsloth-bnb-4bit`` (4-bit NF4).
+  - Precision: explicit FP16 (V100-safe; explicit ``dtype=torch.float16``
+    at load prevents Unsloth auto-picking BF16).
   - LoRA: r=16, α=32, 7 target modules (q/k/v/o + gate/up/down), Unsloth
     gradient checkpointing, ``random_state=3407``.
   - Hard halt: ``next(model.parameters()).dtype`` MUST be ``torch.float16``;
@@ -96,62 +96,93 @@ def assert_fp16_dtype(model: Any) -> None:
         )
 
 
-def _patch_chunked_log_softmax_for_gemma4_audio() -> None:
-    """Make Unsloth's chunked_hidden_states_selective_log_softmax tolerant
-    of a Gemma 4 audio-tower hook fallback that returns logits where the
-    function expects hidden states. Idempotent — only patches once."""
-    import torch
+def _patch_gemma4_for_unsloth_return_hidden_states() -> None:
+    """Make Gemma 4 forward methods honor ``UNSLOTH_RETURN_HIDDEN_STATES=1``.
+
+    Root cause of the chunked log-softmax shape mismatch we hit before:
+    ``unsloth/models/llama.py`` line 1509-1521 patches the LM-head forward to
+    short-circuit and return ``hidden_states`` (stuffed into the ``logits``
+    field of ``CausalLMOutputWithPast``) whenever the env var is set. This
+    is what TRL/Unsloth's GRPOTrainer relies on to compute per-token logps.
+
+    Gemma 4 (incl. the multimodal E2B/E4B variants) doesn't get this patch
+    upstream, so the model returns ACTUAL logits in ``logits``. Then the
+    chunked log-softmax tries ``logits @ lm_head.T`` and the matmul fails:
+
+        RuntimeError: mat1 and mat2 shapes cannot be multiplied
+                      (BS, vocab=262144) and (hidden=1536, vocab=262144).
+
+    Apply the same return-hidden-states branch to both
+    ``Gemma4ForCausalLM.forward`` (text-only variant) and
+    ``Gemma4ForConditionalGeneration.forward`` (multimodal — used by the
+    ``-it`` 4-bit checkpoint with audio + vision towers). Idempotent.
+    """
+    import os as _os
+    import torch  # noqa: F401  (kept for type clarity)
+
     try:
-        import unsloth_compiled_cache.UnslothGRPOTrainer as _ugrpo  # type: ignore
+        from transformers.modeling_outputs import CausalLMOutputWithPast
+        from transformers.models.gemma4 import modeling_gemma4 as _g4
     except Exception:
         return
-    if getattr(_ugrpo, "_DRIFTCALL_PATCHED", False):
-        return
-    original = _ugrpo.chunked_hidden_states_selective_log_softmax
 
-    def _patched(
-        hidden_states: torch.Tensor,
-        lm_head: torch.Tensor,
-        index: torch.Tensor,
-        chunks: int = 4,
-        logit_scale_multiply: float = 0.0,
-        logit_scale_divide: float = 0.0,
-        logit_softcapping: float = 0.0,
-        temperature: float = 1.0,
-    ) -> torch.Tensor:
-        # Standard path: hidden_states.shape[-1] == hidden_dim == lm_head.shape[1].
-        # Audio-tower fallback path: hidden_states.shape[-1] == vocab == lm_head.shape[0].
-        if hidden_states.shape[-1] == lm_head.shape[0]:
-            # Already-projected logits — skip the matmul and proceed.
-            flat_logits = hidden_states.reshape(-1, hidden_states.shape[-1])
-            flat_index = index.reshape(-1)
-            chunked_logits = torch.chunk(flat_logits, chunks=chunks, dim=0)
-            chunked_index = torch.chunk(flat_index, chunks=chunks, dim=0)
-            all_lps: list[torch.Tensor] = []
-            for chunk_logits, chunk_index in zip(chunked_logits, chunked_index):
-                cl = chunk_logits
-                if logit_scale_multiply != 0.0:
-                    cl = cl * logit_scale_multiply
-                if logit_scale_divide != 0.0:
-                    cl = cl / logit_scale_divide
-                if logit_softcapping != 0.0:
-                    cl = logit_softcapping * torch.tanh(cl / logit_softcapping)
-                cl = cl.to(torch.float32)
-                if temperature != 1.0:
-                    cl = cl / temperature
-                selected = torch.gather(cl, dim=-1, index=chunk_index.unsqueeze(-1)).squeeze(-1)
-                lse = torch.logsumexp(cl, dim=-1)
-                all_lps.append(selected - lse)
-            out = torch.concat(all_lps)
-            return out.reshape((hidden_states.shape[0], hidden_states.shape[1]))
-        return original(
-            hidden_states, lm_head, index, chunks,
-            logit_scale_multiply, logit_scale_divide,
-            logit_softcapping, temperature,
-        )
+    _Causal = getattr(_g4, "Gemma4ForCausalLM", None)
+    _CondGen = getattr(_g4, "Gemma4ForConditionalGeneration", None)
 
-    _ugrpo.chunked_hidden_states_selective_log_softmax = _patched
-    _ugrpo._DRIFTCALL_PATCHED = True
+    def _wrap_forward(target_cls, output_cls):
+        if target_cls is None or getattr(target_cls, "_DRIFTCALL_RHS_PATCHED", False):
+            return
+        original = target_cls.forward
+
+        def patched(self, *args, **kwargs):
+            if _os.environ.get("UNSLOTH_RETURN_HIDDEN_STATES", "0") != "1":
+                return original(self, *args, **kwargs)
+
+            # Run the inner model body to get hidden states without the
+            # lm_head projection. Different Gemma 4 classes expose the
+            # backbone under different attribute names.
+            inner = getattr(self, "model", None) or getattr(self, "language_model", None)
+            if inner is None:
+                # Unknown layout — fall back to the original forward (will
+                # produce logits, but at least won't crash).
+                return original(self, *args, **kwargs)
+
+            # Strip kwargs the backbone doesn't accept.
+            backbone_kwargs = {
+                k: v for k, v in kwargs.items()
+                if k in {
+                    "input_ids", "attention_mask", "position_ids",
+                    "past_key_values", "inputs_embeds", "use_cache",
+                    "output_attentions", "output_hidden_states",
+                    "return_dict", "cache_position", "labels",
+                    "logits_to_keep",
+                }
+            }
+            outputs = inner(*args, **backbone_kwargs)
+            hidden_states = getattr(outputs, "last_hidden_state", None)
+            if hidden_states is None:
+                # Unknown output type — fall back to original.
+                return original(self, *args, **kwargs)
+
+            logits_to_keep = kwargs.get("logits_to_keep", 0)
+            if isinstance(logits_to_keep, int) and logits_to_keep > 0:
+                hidden_states = hidden_states[:, -logits_to_keep:, :]
+
+            return output_cls(
+                loss=None,
+                logits=hidden_states,  # ← key trick: hidden states in logits
+                past_key_values=getattr(outputs, "past_key_values", None),
+                hidden_states=getattr(outputs, "hidden_states", None),
+                attentions=getattr(outputs, "attentions", None),
+            )
+
+        target_cls.forward = patched
+        target_cls._DRIFTCALL_RHS_PATCHED = True
+
+    _wrap_forward(_Causal, CausalLMOutputWithPast)
+    # Multimodal output type may differ; reuse CausalLMOutputWithPast which
+    # GRPOTrainer reads via ``.logits``. Fields not set are ignored downstream.
+    _wrap_forward(_CondGen, CausalLMOutputWithPast)
 
 
 def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
@@ -183,14 +214,12 @@ def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
         pass
     from unsloth import FastModel
 
-    # Patch Unsloth's chunked log-softmax for Gemma 4 audio-tower incompatibility.
-    # The Unsloth audio-tower hook fallback (warning logged at boot) causes
-    # the wrapped model to return logits with shape [..., vocab] instead of
-    # hidden states with shape [..., hidden_dim]. The chunked path then tries
-    # `logits @ lm_head.T` and fails the matmul (vocab != hidden_dim).
-    # Detect that case and short-circuit: when input dim already matches the
-    # vocab size, treat it as logits and run log_softmax directly.
-    _patch_chunked_log_softmax_for_gemma4_audio()
+    # ROOT CAUSE FIX: Gemma 4 forward methods don't honor
+    # UNSLOTH_RETURN_HIDDEN_STATES=1 (the env var Unsloth/TRL's GRPOTrainer
+    # uses to ask for hidden states without an lm_head projection). Without
+    # this patch, GRPO's chunked log-softmax tries to do `logits @ lm_head.T`
+    # and crashes with a matmul shape mismatch.
+    _patch_gemma4_for_unsloth_return_hidden_states()
 
     model, tokenizer = FastModel.from_pretrained(
         cfg.base_model_id,
