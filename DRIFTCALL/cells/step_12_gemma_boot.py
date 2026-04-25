@@ -96,6 +96,64 @@ def assert_fp16_dtype(model: Any) -> None:
         )
 
 
+def _patch_chunked_log_softmax_for_gemma4_audio() -> None:
+    """Make Unsloth's chunked_hidden_states_selective_log_softmax tolerant
+    of a Gemma 4 audio-tower hook fallback that returns logits where the
+    function expects hidden states. Idempotent — only patches once."""
+    import torch
+    try:
+        import unsloth_compiled_cache.UnslothGRPOTrainer as _ugrpo  # type: ignore
+    except Exception:
+        return
+    if getattr(_ugrpo, "_DRIFTCALL_PATCHED", False):
+        return
+    original = _ugrpo.chunked_hidden_states_selective_log_softmax
+
+    def _patched(
+        hidden_states: torch.Tensor,
+        lm_head: torch.Tensor,
+        index: torch.Tensor,
+        chunks: int = 4,
+        logit_scale_multiply: float = 0.0,
+        logit_scale_divide: float = 0.0,
+        logit_softcapping: float = 0.0,
+        temperature: float = 1.0,
+    ) -> torch.Tensor:
+        # Standard path: hidden_states.shape[-1] == hidden_dim == lm_head.shape[1].
+        # Audio-tower fallback path: hidden_states.shape[-1] == vocab == lm_head.shape[0].
+        if hidden_states.shape[-1] == lm_head.shape[0]:
+            # Already-projected logits — skip the matmul and proceed.
+            flat_logits = hidden_states.reshape(-1, hidden_states.shape[-1])
+            flat_index = index.reshape(-1)
+            chunked_logits = torch.chunk(flat_logits, chunks=chunks, dim=0)
+            chunked_index = torch.chunk(flat_index, chunks=chunks, dim=0)
+            all_lps: list[torch.Tensor] = []
+            for chunk_logits, chunk_index in zip(chunked_logits, chunked_index):
+                cl = chunk_logits
+                if logit_scale_multiply != 0.0:
+                    cl = cl * logit_scale_multiply
+                if logit_scale_divide != 0.0:
+                    cl = cl / logit_scale_divide
+                if logit_softcapping != 0.0:
+                    cl = logit_softcapping * torch.tanh(cl / logit_softcapping)
+                cl = cl.to(torch.float32)
+                if temperature != 1.0:
+                    cl = cl / temperature
+                selected = torch.gather(cl, dim=-1, index=chunk_index.unsqueeze(-1)).squeeze(-1)
+                lse = torch.logsumexp(cl, dim=-1)
+                all_lps.append(selected - lse)
+            out = torch.concat(all_lps)
+            return out.reshape((hidden_states.shape[0], hidden_states.shape[1]))
+        return original(
+            hidden_states, lm_head, index, chunks,
+            logit_scale_multiply, logit_scale_divide,
+            logit_softcapping, temperature,
+        )
+
+    _ugrpo.chunked_hidden_states_selective_log_softmax = _patched
+    _ugrpo._DRIFTCALL_PATCHED = True
+
+
 def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
     """Load Gemma 4 E2B in 4-bit + attach LoRA; return (model, tokenizer).
 
@@ -124,6 +182,15 @@ def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
     except Exception:
         pass
     from unsloth import FastModel
+
+    # Patch Unsloth's chunked log-softmax for Gemma 4 audio-tower incompatibility.
+    # The Unsloth audio-tower hook fallback (warning logged at boot) causes
+    # the wrapped model to return logits with shape [..., vocab] instead of
+    # hidden states with shape [..., hidden_dim]. The chunked path then tries
+    # `logits @ lm_head.T` and fails the matmul (vocab != hidden_dim).
+    # Detect that case and short-circuit: when input dim already matches the
+    # vocab size, treat it as logits and run log_softmax directly.
+    _patch_chunked_log_softmax_for_gemma4_audio()
 
     model, tokenizer = FastModel.from_pretrained(
         cfg.base_model_id,

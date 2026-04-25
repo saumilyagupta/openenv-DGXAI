@@ -23,6 +23,19 @@ pulling the training stack.
 
 from __future__ import annotations
 
+# Unsloth must import before transformers/peft so it can monkey-patch them.
+# Set torch.compile/dynamo disable env vars first (Unsloth reads them at
+# import time). Wrap in try/except so CPU-only CI / --help still works.
+import os as _os_pre
+_os_pre.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
+_os_pre.environ.setdefault("TORCH_COMPILE_DISABLE", "1")
+_os_pre.environ.setdefault("UNSLOTH_COMPILE_DISABLE", "1")
+_os_pre.environ.setdefault("UNSLOTH_RETURN_LOGITS", "1")
+try:
+    import unsloth as _unsloth  # noqa: F401
+except ImportError:
+    pass
+
 import argparse
 import dataclasses
 import json
