@@ -18,8 +18,10 @@ version: "2.0"
 
 services:
   driftcall-train:
-    # Replace with your pushed image, e.g. krrishchoudhary109/driftcall-train:v1.
-    image: saumilyajj/dl-sam:2025
+    # Pushed via:
+    #   docker build -f Dockerfile.train -t krrishchoudhary109/driftcall-train:v1 .
+    #   docker push krrishchoudhary109/driftcall-train:v1
+    image: krrishchoudhary109/driftcall-train:v1
     expose:
       # SSH for tmux attach during training (optional; remove for headless).
       - port: 22
