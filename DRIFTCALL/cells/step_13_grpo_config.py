@@ -277,8 +277,11 @@ def assert_config_invariants(
         raise AssertionError(
             f"max_completion_length must be {MAX_COMPLETION_LENGTH}"
         )
-    if config.report_to != REPORT_TO:
-        raise AssertionError(f"report_to must be {REPORT_TO!r}")
+    # TRL >=0.24 normalizes report_to to a list, e.g. ["wandb"].
+    _rt = config.report_to
+    _rt_ok = _rt == REPORT_TO or (isinstance(_rt, (list, tuple)) and REPORT_TO in _rt)
+    if not _rt_ok:
+        raise AssertionError(f"report_to must include {REPORT_TO!r}; got {_rt!r}")
     expected_run_name = f"driftcall-stage{stage}"
     if config.run_name != expected_run_name:
         raise AssertionError(
