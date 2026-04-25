@@ -8,6 +8,7 @@ this test module independent of step_08's own implementation timeline.
 from __future__ import annotations
 
 import dataclasses
+import pathlib
 import sys
 import types
 from dataclasses import FrozenInstanceError
@@ -39,6 +40,14 @@ def _install_rewards_stub() -> types.ModuleType:
     name = "cells.step_08_rewards"
     if name in sys.modules:
         return sys.modules[name]
+
+    # If the real implementation is on disk, import it directly so we don't
+    # poison sys.modules for tests that run in the same pytest session and
+    # need the real symbols (e.g. AVAILABLE_TOOL_REGISTRY in test_step_08).
+    real_path = pathlib.Path(__file__).resolve().parent.parent / "cells" / "step_08_rewards.py"
+    if real_path.is_file():
+        import importlib
+        return importlib.import_module(name)
 
     mod = types.ModuleType(name)
 

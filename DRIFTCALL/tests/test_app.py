@@ -34,6 +34,11 @@ def _install_rewards_stub() -> types.ModuleType:
     name = "cells.step_08_rewards"
     if name in sys.modules:
         return sys.modules[name]
+    import pathlib
+    real_path = pathlib.Path(__file__).resolve().parent.parent / "cells" / "step_08_rewards.py"
+    if real_path.is_file():
+        import importlib
+        return importlib.import_module(name)
     mod = types.ModuleType(name)
 
     @dataclasses.dataclass(frozen=True)
