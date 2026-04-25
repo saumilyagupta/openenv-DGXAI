@@ -45,12 +45,25 @@ def test_build_creates_ipynb() -> None:
     assert isinstance(data["cells"], list)
 
 
-def test_cell_count() -> None:
+def test_cell_count(tmp_path: Path) -> None:
+    """Code cell count == py file count when no data/ injection happens."""
+    out = tmp_path / "no_data.ipynb"
+    build_notebook.build(output_path=out, data_dir=tmp_path / "missing_data")
+    data = json.loads(out.read_text(encoding="utf-8"))
+    py_sources = _py_cells()
+    code_cells = [c for c in data["cells"] if c["cell_type"] == "code"]
+    assert len(code_cells) == len(py_sources)
+
+
+def test_cell_count_with_data_injection() -> None:
+    """When data/ exists, exactly one extra fixtures code cell is injected."""
     build_notebook.build()
     data = json.loads(DEFAULT_OUT.read_text(encoding="utf-8"))
     py_sources = _py_cells()
     code_cells = [c for c in data["cells"] if c["cell_type"] == "code"]
-    assert len(code_cells) == len(py_sources)
+    assert len(code_cells) == len(py_sources) + 1
+    fixtures = [c for c in code_cells if "_FIXTURES" in "".join(c["source"])]
+    assert len(fixtures) == 1, "exactly one fixtures cell must be injected"
 
 
 def test_markdown_pairing() -> None:
@@ -84,9 +97,10 @@ def test_markdown_pairing() -> None:
             assert md_text in "".join(prev["source"])
 
 
-def test_numeric_ordering() -> None:
-    build_notebook.build()
-    data = json.loads(DEFAULT_OUT.read_text(encoding="utf-8"))
+def test_numeric_ordering(tmp_path: Path) -> None:
+    out = tmp_path / "ordered.ipynb"
+    build_notebook.build(output_path=out, data_dir=tmp_path / "missing")
+    data = json.loads(out.read_text(encoding="utf-8"))
     code_cells = [c for c in data["cells"] if c["cell_type"] == "code"]
     py_sources = _py_cells()
     assert len(code_cells) == len(py_sources)
@@ -117,7 +131,9 @@ def test_missing_md_ok(tmp_path: Path) -> None:
 
     out_dir = tmp_path / "notebooks"
     out_path = out_dir / "out.ipynb"
-    result = build_notebook.build(cells_dir=cells_src, output_path=out_path)
+    result = build_notebook.build(
+        cells_dir=cells_src, output_path=out_path, data_dir=tmp_path / "missing",
+    )
     assert result == out_path
     data = json.loads(out_path.read_text(encoding="utf-8"))
     cells = data["cells"]
@@ -149,7 +165,9 @@ def test_numeric_sort_not_lexicographic(tmp_path: Path) -> None:
     (cells_src / "step_01_a.py").write_text("a = 1\n", encoding="utf-8")
 
     out_path = tmp_path / "notebooks" / "out.ipynb"
-    build_notebook.build(cells_dir=cells_src, output_path=out_path)
+    build_notebook.build(
+        cells_dir=cells_src, output_path=out_path, data_dir=tmp_path / "missing",
+    )
     data = json.loads(out_path.read_text(encoding="utf-8"))
     code_sources = ["".join(c["source"]) for c in data["cells"] if c["cell_type"] == "code"]
     assert "a = 1" in code_sources[0]
