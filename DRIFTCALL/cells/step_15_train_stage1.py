@@ -268,18 +268,31 @@ def train(
         num_steps=plan.num_steps,
     )
 
+    # v1 pivot: use vanilla TRL GRPOTrainer + flat reward_funcs list + single-
+    # turn rollout, mirroring the official Unsloth Gemma 4 E2B Sudoku GRPO
+    # notebook 1:1. The DriftCall multi-turn rollout layer is added back as
+    # phase 2 once vanilla flow is verified working.
     from cells.step_13_grpo_config import reward_fn
-    from cells.step_14_custom_trainer import make_driftcall_grpo_trainer_cls
+    from cells.step_14_custom_trainer import make_episode_reward_func
+    from trl import GRPOTrainer
 
-    Trainer = make_driftcall_grpo_trainer_cls()
-    trainer = Trainer(
+    # Single-turn reward closure (max_turns=1): TRL generates one completion
+    # per prompt, our closure runs ONE env.step on the parsed action and hands
+    # the resulting Episode to reward_fn (training.md §2.3).
+    reward_func = make_episode_reward_func(
+        env_factory=env_factory,
+        reward_fn_driftcall=reward_fn,
+        model=model,
+        tokenizer=tokenizer,
+        max_turns=1,  # ← single-turn for v1; raise after vanilla flow works
+    )
+
+    trainer = GRPOTrainer(
         model=model,
         args=config,
         processing_class=tokenizer,
         train_dataset=dataset,
-        rollout_group_fn=rollout_group_fn,
-        env_factory=env_factory,
-        reward_fn_driftcall=reward_fn,
+        reward_funcs=[reward_func],
     )
 
     _wandb_init_or_raise(run_name=f"driftcall-stage{plan.stage}", output_dir=plan.output_dir)

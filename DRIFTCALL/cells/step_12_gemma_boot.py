@@ -299,6 +299,21 @@ def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
 
     assert_fp16_dtype(model)
 
+    # Bypass unsloth_base_fast_generate (vision.py:445) by binding generate
+    # directly to _old_generate. The vision wrapper force-applies static cache
+    # + compile_config to generation_config for multimodal models, which on
+    # Gemma 4 + transformers 5.5 + sampling produces 3D logits that break
+    # torch.multinomial inside _sample with "prob_dist must be 1 or 2 dim".
+    # Going through _old_generate (the underlying transformers Generate) gives
+    # the standard dynamic-cache path which produces correct [B, V] logits.
+    try:
+        if hasattr(model, "_old_generate"):
+            model.generate = model._old_generate
+        if hasattr(model, "base_model") and hasattr(model.base_model, "_old_generate"):
+            model.base_model.generate = model.base_model._old_generate
+    except Exception:
+        pass
+
     # Unsloth auto-applies device_map='auto' for multimodal Gemma 4 (offloads
     # audio_tower etc. to CPU). transformers Trainer + Accelerator then refuse
     # with "You can't train a model that has been loaded with device_map='auto'

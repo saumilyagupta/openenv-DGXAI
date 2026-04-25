@@ -306,18 +306,25 @@ def train(
         num_steps=plan.num_steps,
     )
 
+    # v1 pivot: vanilla TRL GRPOTrainer + flat reward_funcs + single-turn rollout
+    # (mirrors official Sudoku GRPO notebook). Multi-turn is phase 2.
     from cells.step_13_grpo_config import reward_fn
-    from cells.step_14_custom_trainer import make_driftcall_grpo_trainer_cls
+    from cells.step_14_custom_trainer import make_episode_reward_func
+    from trl import GRPOTrainer
 
-    Trainer = make_driftcall_grpo_trainer_cls()
-    trainer = Trainer(
+    reward_func = make_episode_reward_func(
+        env_factory=env_factory,
+        reward_fn_driftcall=reward_fn,
+        model=model,
+        tokenizer=tokenizer,
+        max_turns=1,
+    )
+    trainer = GRPOTrainer(
         model=model,
         args=config,
         processing_class=tokenizer,
         train_dataset=dataset,
-        rollout_group_fn=rollout_group_fn,
-        env_factory=env_factory,
-        reward_fn_driftcall=reward_fn,
+        reward_funcs=[reward_func],
     )
 
     _wandb_init_or_raise(run_name=f"driftcall-stage{plan.stage}", output_dir=plan.output_dir)
