@@ -58,14 +58,14 @@ def _install_fake_unsloth(
     FastModel.get_peft_model = MagicMock(return_value=peft_model)
 
     unsloth_mod = types.ModuleType("unsloth")
-    unsloth_mod.FastModel = FastModel  # type: ignore[attr-defined]
+    unsloth_mod.FastLanguageModel = FastModel  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "unsloth", unsloth_mod)
     return FastModel, base_model, peft_model
 
 
 class TestConstants:
     def test_base_model_id_is_pinned(self) -> None:
-        assert BASE_MODEL_ID == "unsloth/gemma-4-E2B-it-unsloth-bnb-4bit"
+        assert BASE_MODEL_ID == "unsloth/gemma-4-E2B-it"
 
     def test_max_seq_length_4096(self) -> None:
         assert MAX_SEQ_LENGTH == 4096
@@ -148,10 +148,13 @@ class TestBootGemma:
         boot_gemma()
 
         call = FastModel.from_pretrained.call_args
-        assert call.args == (BASE_MODEL_ID,)
+        # FastLanguageModel uses model_name= kwarg per Unsloth Gemma 4 GRPO guide.
+        assert call.kwargs["model_name"] == BASE_MODEL_ID
         assert call.kwargs["max_seq_length"] == MAX_SEQ_LENGTH
         assert call.kwargs["load_in_4bit"] is True
         assert call.kwargs["dtype"] is torch.float16
+        # fast_inference=False required for GRPO (Unsloth RL guide).
+        assert call.kwargs.get("fast_inference") is False
 
     def test_get_peft_model_called_with_lora_kwargs(
         self, monkeypatch: pytest.MonkeyPatch
@@ -197,7 +200,7 @@ class TestBootGemma:
         boot_gemma(cfg)
 
         call_from = FastModel.from_pretrained.call_args
-        assert call_from.args == ("custom/model",)
+        assert call_from.kwargs["model_name"] == "custom/model"
         assert call_from.kwargs["max_seq_length"] == 2048
         assert call_from.kwargs["load_in_4bit"] is False
 
@@ -225,7 +228,7 @@ class TestBootGemma:
         boot_gemma(None)
 
         call_from = FastModel.from_pretrained.call_args
-        assert call_from.args == (BASE_MODEL_ID,)
+        assert call_from.kwargs["model_name"] == BASE_MODEL_ID
 
     def test_module_importable_without_unsloth(self) -> None:
         """Reimport the module without unsloth in sys.modules — must not raise."""

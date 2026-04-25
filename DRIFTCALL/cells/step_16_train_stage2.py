@@ -232,9 +232,9 @@ def _load_base_model(boot_config: BootConfig | None) -> tuple[Any, Any]:
     cfg = boot_config if boot_config is not None else BootConfig()
 
     import torch
-    from unsloth import FastModel
+    from unsloth import FastLanguageModel
 
-    model, tokenizer = FastModel.from_pretrained(
+    model, tokenizer = FastLanguageModel.from_pretrained(
         cfg.base_model_id,
         max_seq_length=cfg.max_seq_length,
         load_in_4bit=cfg.load_in_4bit,

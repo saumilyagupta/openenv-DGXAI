@@ -71,7 +71,7 @@ def _install_fake_unsloth(
     FastModel.get_peft_model = MagicMock(return_value=peft_model)
 
     unsloth_mod: Any = types.ModuleType("unsloth")
-    unsloth_mod.FastModel = FastModel
+    unsloth_mod.FastLanguageModel = FastModel
     monkeypatch.setitem(sys.modules, "unsloth", unsloth_mod)
     return peft_model, tokenizer
 

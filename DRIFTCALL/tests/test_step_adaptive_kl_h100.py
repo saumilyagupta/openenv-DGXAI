@@ -185,7 +185,7 @@ class TestLoRADropout:
         FastModel.get_peft_model = MagicMock(return_value=peft_model)
 
         unsloth_mod = types.ModuleType("unsloth")
-        unsloth_mod.FastModel = FastModel  # type: ignore[attr-defined]
+        unsloth_mod.FastLanguageModel = FastModel  # type: ignore[attr-defined]
         monkeypatch.setitem(sys.modules, "unsloth", unsloth_mod)
 
         from cells.step_12_gemma_boot import BootConfig, boot_gemma

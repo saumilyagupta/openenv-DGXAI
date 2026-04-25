@@ -28,7 +28,7 @@ os.environ.setdefault("TORCH_COMPILE_DISABLE", "1")
 os.environ.setdefault("UNSLOTH_COMPILE_DISABLE", "1")
 os.environ.setdefault("UNSLOTH_RETURN_LOGITS", "1")
 
-BASE_MODEL_ID: str = "unsloth/gemma-4-E2B-it-unsloth-bnb-4bit"
+BASE_MODEL_ID: str = "unsloth/gemma-4-E2B-it"
 MAX_SEQ_LENGTH: int = 4096
 LORA_R: int = 16
 LORA_ALPHA: int = 32
@@ -96,133 +96,36 @@ def assert_fp16_dtype(model: Any) -> None:
         )
 
 
-def _patch_gemma4_for_unsloth_return_hidden_states() -> None:
-    """Make Gemma 4 forward methods honor ``UNSLOTH_RETURN_HIDDEN_STATES=1``.
-
-    Root cause of the chunked log-softmax shape mismatch we hit before:
-    ``unsloth/models/llama.py`` line 1509-1521 patches the LM-head forward to
-    short-circuit and return ``hidden_states`` (stuffed into the ``logits``
-    field of ``CausalLMOutputWithPast``) whenever the env var is set. This
-    is what TRL/Unsloth's GRPOTrainer relies on to compute per-token logps.
-
-    Gemma 4 (incl. the multimodal E2B/E4B variants) doesn't get this patch
-    upstream, so the model returns ACTUAL logits in ``logits``. Then the
-    chunked log-softmax tries ``logits @ lm_head.T`` and the matmul fails:
-
-        RuntimeError: mat1 and mat2 shapes cannot be multiplied
-                      (BS, vocab=262144) and (hidden=1536, vocab=262144).
-
-    Apply the same return-hidden-states branch to both
-    ``Gemma4ForCausalLM.forward`` (text-only variant) and
-    ``Gemma4ForConditionalGeneration.forward`` (multimodal — used by the
-    ``-it`` 4-bit checkpoint with audio + vision towers). Idempotent.
-    """
-    import os as _os
-    import torch  # noqa: F401  (kept for type clarity)
-
-    try:
-        from transformers.modeling_outputs import CausalLMOutputWithPast
-        from transformers.models.gemma4 import modeling_gemma4 as _g4
-    except Exception:
-        return
-
-    _Causal = getattr(_g4, "Gemma4ForCausalLM", None)
-    _CondGen = getattr(_g4, "Gemma4ForConditionalGeneration", None)
-
-    def _wrap_forward(target_cls, output_cls):
-        if target_cls is None or getattr(target_cls, "_DRIFTCALL_RHS_PATCHED", False):
-            return
-        original = target_cls.forward
-
-        def patched(self, *args, **kwargs):
-            if _os.environ.get("UNSLOTH_RETURN_HIDDEN_STATES", "0") != "1":
-                return original(self, *args, **kwargs)
-
-            # Run the inner model body to get hidden states without the
-            # lm_head projection. Different Gemma 4 classes expose the
-            # backbone under different attribute names.
-            inner = getattr(self, "model", None) or getattr(self, "language_model", None)
-            if inner is None:
-                # Unknown layout — fall back to the original forward (will
-                # produce logits, but at least won't crash).
-                return original(self, *args, **kwargs)
-
-            # Strip kwargs the backbone doesn't accept.
-            backbone_kwargs = {
-                k: v for k, v in kwargs.items()
-                if k in {
-                    "input_ids", "attention_mask", "position_ids",
-                    "past_key_values", "inputs_embeds", "use_cache",
-                    "output_attentions", "output_hidden_states",
-                    "return_dict", "cache_position", "labels",
-                    "logits_to_keep",
-                }
-            }
-            outputs = inner(*args, **backbone_kwargs)
-            hidden_states = getattr(outputs, "last_hidden_state", None)
-            if hidden_states is None:
-                # Unknown output type — fall back to original.
-                return original(self, *args, **kwargs)
-
-            logits_to_keep = kwargs.get("logits_to_keep", 0)
-            if isinstance(logits_to_keep, int) and logits_to_keep > 0:
-                hidden_states = hidden_states[:, -logits_to_keep:, :]
-
-            return output_cls(
-                loss=None,
-                logits=hidden_states,  # ← key trick: hidden states in logits
-                past_key_values=getattr(outputs, "past_key_values", None),
-                hidden_states=getattr(outputs, "hidden_states", None),
-                attentions=getattr(outputs, "attentions", None),
-            )
-
-        target_cls.forward = patched
-        target_cls._DRIFTCALL_RHS_PATCHED = True
-
-    _wrap_forward(_Causal, CausalLMOutputWithPast)
-    # Multimodal output type may differ; reuse CausalLMOutputWithPast which
-    # GRPOTrainer reads via ``.logits``. Fields not set are ignored downstream.
-    _wrap_forward(_CondGen, CausalLMOutputWithPast)
-
-    # Second root-cause patch: Gemma 4's processor emits multimodal-only
-    # kwargs (mm_token_type_ids, pixel_values_lengths, image_sizes) that
-    # generate()'s _validate_model_kwargs rejects with a ValueError because
-    # they aren't in the forward() signature. For text-only training those
-    # kwargs are either all-zero or absent semantically — drop them before
-    # validation. Audio/vision codepaths still emit input_features /
-    # pixel_values which ARE in the forward signature and pass through.
-    _MM_KWARGS_TO_DROP = (
-        "mm_token_type_ids",
-        "pixel_values_lengths",
-        "image_sizes",
-    )
-
-    def _wrap_validate(target_cls):
-        if target_cls is None or getattr(target_cls, "_DRIFTCALL_VAL_PATCHED", False):
-            return
-        original = target_cls._validate_model_kwargs
-
-        def patched_validate(self, model_kwargs):
-            for k in _MM_KWARGS_TO_DROP:
-                model_kwargs.pop(k, None)
-            return original(self, model_kwargs)
-
-        target_cls._validate_model_kwargs = patched_validate
-        target_cls._DRIFTCALL_VAL_PATCHED = True
-
-    _wrap_validate(_Causal)
-    _wrap_validate(_CondGen)
-
-
 def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
     """Load Gemma 4 E2B in 4-bit + attach LoRA; return (model, tokenizer).
 
-    Steps (training.md §3.1):
-      1. ``FastModel.from_pretrained(base_model_id, max_seq_length=...,
-         load_in_4bit=True, dtype=torch.float16)``.
+    Per the official Unsloth Gemma 4 GRPO guide
+    (https://unsloth.ai/docs/models/gemma-4/train#reinforcement-learning-rl):
+
+        from unsloth import FastLanguageModel
+        model, tokenizer = FastLanguageModel.from_pretrained(
+            model_name="unsloth/gemma-4-E2B-it",
+            fast_inference=False,
+        )
+
+    ``FastLanguageModel`` (the language-only loader) routes through
+    ``unsloth/models/llama.py`` which has all the GRPO-specific patches
+    baked in (UNSLOTH_RETURN_HIDDEN_STATES honoring at L1509, KV-shared-no-
+    cache fix, etc.). ``FastModel`` (the multimodal loader) routes through
+    ``unsloth/models/vision.py`` which lacks those patches and crashes
+    during the GRPO log-softmax / multinomial-sampling steps.
+
+    The audio + vision towers are still loaded as part of the checkpoint —
+    they're just not exercised during text-only RL training. Inference time
+    on the deployed env can use the audio capability separately via the
+    standard processor path.
+
+    Steps:
+      1. ``FastLanguageModel.from_pretrained(model_name=..., load_in_4bit=True,
+         dtype=torch.float16, fast_inference=False)``.
       2. ``assert_fp16_dtype(model)`` — raises :class:`BF16SlippageError`
          if any BF16 slipped through.
-      3. ``FastModel.get_peft_model(model, r=16, lora_alpha=32,
+      3. ``FastLanguageModel.get_peft_model(model, r=16, lora_alpha=32,
          target_modules=(...), use_gradient_checkpointing="unsloth",
          random_state=3407)``.
       4. Return ``(peft_model, tokenizer)``.
@@ -232,34 +135,19 @@ def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
     cfg = config if config is not None else BootConfig()
 
     import torch
-    # Programmatic dynamo disable in addition to the env vars set at module
-    # import. Required for V100 to avoid tracing failures inside Unsloth's
-    # chunked log-softmax path.
-    try:
-        import torch._dynamo as _dynamo
-        _dynamo.config.suppress_errors = True
-        _dynamo.config.disable = True
-    except Exception:
-        pass
-    from unsloth import FastModel
+    from unsloth import FastLanguageModel
 
-    # ROOT CAUSE FIX: Gemma 4 forward methods don't honor
-    # UNSLOTH_RETURN_HIDDEN_STATES=1 (the env var Unsloth/TRL's GRPOTrainer
-    # uses to ask for hidden states without an lm_head projection). Without
-    # this patch, GRPO's chunked log-softmax tries to do `logits @ lm_head.T`
-    # and crashes with a matmul shape mismatch.
-    _patch_gemma4_for_unsloth_return_hidden_states()
-
-    model, tokenizer = FastModel.from_pretrained(
-        cfg.base_model_id,
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name=cfg.base_model_id,
         max_seq_length=cfg.max_seq_length,
         load_in_4bit=cfg.load_in_4bit,
         dtype=torch.float16,
+        fast_inference=False,  # disables vLLM; uses Unsloth inference (RL guide)
     )
 
     assert_fp16_dtype(model)
 
-    peft_model = FastModel.get_peft_model(
+    peft_model = FastLanguageModel.get_peft_model(
         model,
         r=cfg.lora_r,
         lora_alpha=cfg.lora_alpha,
