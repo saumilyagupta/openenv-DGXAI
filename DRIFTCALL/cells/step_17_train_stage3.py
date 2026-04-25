@@ -303,6 +303,7 @@ def train(
         stage_base_seed=plan.stage_base_seed,
         language_weights=cast("dict[LanguageCode, float]", plan.language_weights),
         tokenizer=tokenizer,
+        num_steps=plan.num_steps,
     )
 
     from cells.step_13_grpo_config import reward_fn

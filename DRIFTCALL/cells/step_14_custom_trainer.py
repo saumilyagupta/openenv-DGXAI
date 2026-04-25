@@ -131,6 +131,7 @@ class EpisodeDatasetAdapter:
         stage_base_seed: int,
         language_weights: dict[LanguageCode, float],
         tokenizer: Any,
+        num_steps: int | None = None,
     ) -> None:
         self.task_gen = task_gen
         self.env_factory = env_factory
@@ -138,6 +139,11 @@ class EpisodeDatasetAdapter:
         self.stage_base_seed = stage_base_seed
         self.language_weights = dict(language_weights)
         self.tokenizer = tokenizer
+        # TRL GRPOTrainer's RepeatSampler calls len() on the dataset and
+        # __getitem__(idx) on it. Records are deterministic by step index, so
+        # we expose a finite map-style view. Default to 1_000_000 if the
+        # caller doesn't supply num_steps; trainer.max_steps caps actual usage.
+        self._virtual_length = num_steps if num_steps is not None else 1_000_000
 
     def _build_record(self, step: int) -> dict[str, Any]:
         episode_seed = self.stage_base_seed + step
@@ -162,6 +168,12 @@ class EpisodeDatasetAdapter:
         while True:
             yield self._build_record(step)
             step += 1
+
+    def __len__(self) -> int:
+        return self._virtual_length
+
+    def __getitem__(self, idx: int) -> dict[str, Any]:
+        return self._build_record(int(idx))
 
     def peek(self, step: int) -> AdapterRecord:
         """Materialize the record at ``step`` without advancing iteration.
