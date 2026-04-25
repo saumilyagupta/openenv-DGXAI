@@ -219,6 +219,14 @@ def _make_driftcall_init(
         adaptive_kl_beta_max: float = DEFAULT_BETA_MAX,
         **kwargs: Any,
     ) -> None:
+        # TRL >=0.24 GRPOTrainer requires `reward_funcs`. DriftCall overrides
+        # the scoring path via _driftcall_generate_and_score_completions and
+        # uses ``reward_fn_driftcall`` instead. Pass a no-op stub so the base
+        # ``__init__`` signature is satisfied; it is never actually invoked.
+        if "reward_funcs" not in kwargs:
+            kwargs["reward_funcs"] = [
+                lambda completions=None, **_kw: [0.0] * (len(completions or []) or 1)
+            ]
         base_cls.__init__(self, *args, **kwargs)
         self.rollout_group_fn = rollout_group_fn
         self.env_factory = env_factory
