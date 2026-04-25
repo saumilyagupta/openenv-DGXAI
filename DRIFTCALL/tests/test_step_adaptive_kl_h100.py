@@ -158,11 +158,14 @@ class TestHardwareMode:
 
 
 class TestLoRADropout:
-    def test_boot_config_lora_dropout_default_is_0_05(self) -> None:
+    def test_boot_config_lora_dropout_default_is_zero(self) -> None:
+        # 0.0 enables Unsloth's fast LoRA path required for multimodal
+        # Gemma 4 GRPO. Any non-zero dropout triggers the slow path that
+        # routes through the broken chunked log-softmax.
         from cells.step_12_gemma_boot import BootConfig
 
         cfg = BootConfig()
-        assert cfg.lora_dropout == 0.05
+        assert cfg.lora_dropout == 0.0
 
     def test_boot_config_lora_dropout_override(self) -> None:
         from cells.step_12_gemma_boot import BootConfig

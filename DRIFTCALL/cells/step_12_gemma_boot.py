@@ -17,8 +17,22 @@ cell loads on CPU-only CI runners where Unsloth is not installed. Tests mock
 from __future__ import annotations
 
 import os
+import warnings
 from dataclasses import dataclass
 from typing import Any
+
+# Suppress a noisy transformers >= 5.5 deprecation that fires from inside
+# Unsloth's compiled GRPOTrainer when it passes both `generation_config`
+# and duplicate kwargs (pad_token_id, disable_compile) to model.generate().
+# We mirror those values onto generation_config in boot_gemma() — the
+# warning is purely cosmetic; behavior is identical either way.
+warnings.filterwarnings(
+    "ignore",
+    message=(
+        r"Passing `generation_config` together with generation-related arguments.*"
+        r"is deprecated.*"
+    ),
+)
 
 # V100 + recent-torch + Unsloth chunked log-softmax has a known dynamo
 # shape-tracing bug. Disable torch.compile/dynamo before any Unsloth import.
@@ -32,7 +46,12 @@ BASE_MODEL_ID: str = "unsloth/gemma-4-E2B-it"
 MAX_SEQ_LENGTH: int = 4096
 LORA_R: int = 16
 LORA_ALPHA: int = 32
-LORA_DROPOUT: float = 0.05
+LORA_DROPOUT: float = 0.0  # 0 enables Unsloth's fast LoRA path that correctly
+# handles multimodal Gemma 4 hidden-state extraction. Any non-zero dropout
+# triggers Unsloth's "patch all other layers, except LoRA matrices, causing a
+# performance hit" slow path which routes through the broken
+# chunked_hidden_states_selective_log_softmax. The Sudoku GRPO notebook uses
+# dropout=0 explicitly for this reason.
 LORA_RANDOM_STATE: int = 3407
 LORA_TARGET_MODULES: tuple[str, ...] = (
     "q_proj",
@@ -143,6 +162,29 @@ def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
     )
 
     assert_fp16_dtype(model)
+
+    # Set generation defaults on the model's generation_config so Unsloth/TRL's
+    # GRPO _generate_single_turn doesn't have to pass them as duplicate kwargs
+    # alongside generation_config. transformers >= 5.5 deprecated the dual-pass
+    # pattern; passing both raises:
+    #   "Passing generation_config together with generation-related arguments=
+    #    ({'disable_compile', 'pad_token_id'}) is deprecated"
+    # This silences the warning at the source and is what transformers wants.
+    try:
+        gc = getattr(model, "generation_config", None)
+        tok = tokenizer.tokenizer if hasattr(tokenizer, "tokenizer") else tokenizer
+        if gc is not None:
+            pad_id = getattr(tok, "pad_token_id", None)
+            if pad_id is not None:
+                gc.pad_token_id = pad_id
+            # Unsloth's GRPO path sets disable_compile=True at call time; mirror
+            # it on the generation_config so the kwarg becomes redundant.
+            try:
+                gc.disable_compile = True
+            except Exception:
+                pass
+    except Exception:
+        pass
 
     peft_model = FastVisionModel.get_peft_model(
         model,
