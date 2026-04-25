@@ -8,11 +8,11 @@ inside :func:`training_eval` so this module loads on CPU-only CI.
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from collections.abc import Sequence
+    from pathlib import Path
 
 
 __all__ = ["training_eval"]

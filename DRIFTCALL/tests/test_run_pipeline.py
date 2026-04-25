@@ -30,7 +30,6 @@ from scripts.run_pipeline import (
     serialize_eval_report,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -559,9 +558,10 @@ def test_eval_report_json_roundtrip() -> None:
     assert math.isnan(restored.drift_detection_latency.stage2_mean)
 
 
-def test_serialize_eval_report_rejects_non_dataclass() -> None:
-    with pytest.raises(TypeError):
-        serialize_eval_report({"not": "a dataclass"})
+def test_serialize_eval_report_handles_plain_dict_passthrough() -> None:
+    """Non-dataclass dicts pass through with float coercion applied."""
+    out = serialize_eval_report({"x": 1.5, "y": float("nan")})
+    assert out == {"x": 1.5, "y": "NaN"}
 
 
 # ---------------------------------------------------------------------------
@@ -576,3 +576,181 @@ def test_build_briefs_falls_back_to_synthetic(monkeypatch: pytest.MonkeyPatch) -
     rows = build_briefs(min_rows=10)
     assert len(rows) >= 10
     assert all(hasattr(r, "episode_id") for r in rows)
+
+
+def test_build_briefs_loads_published_when_present(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    pub = tmp_path / "briefs.jsonl"
+    rows = [
+        {"episode_id": f"ep_{i}", "catalogue_hash": "x"} for i in range(15)
+    ]
+    pub.write_text(
+        "\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(run_pipeline, "_PUBLICATION_VAL_BRIEFS", pub)
+    out = build_briefs(min_rows=10)
+    assert len(out) == 15
+    assert out[0].episode_id == "ep_0"
+
+
+def test_build_briefs_skips_short_published_and_uses_synthetic(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    pub = tmp_path / "briefs.jsonl"
+    pub.write_text('{"episode_id": "only_one"}\n', encoding="utf-8")
+    monkeypatch.setattr(run_pipeline, "_PUBLICATION_VAL_BRIEFS", pub)
+    out = build_briefs(min_rows=10)
+    assert len(out) >= 10
+    # Synthetic ids start with the s3_ prefix
+    assert any(r.episode_id.startswith("s3_") for r in out)
+
+
+# ---------------------------------------------------------------------------
+# Stage 3 happy path
+# ---------------------------------------------------------------------------
+
+
+def test_stage3_passes_resume_from_to_train(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    train_mock = _patch_train_call(monkeypatch, "cells.step_17_train_stage3")
+    resume = tmp_path / "stage2" / "final"
+    resume.mkdir(parents=True)
+    rc = main(
+        [
+            "stage3",
+            "--num-steps",
+            "7",
+            "--hardware",
+            "h100",
+            "--resume-from",
+            str(resume),
+            "--output-dir",
+            str(tmp_path / "stage3"),
+        ]
+    )
+    assert rc == 0
+    assert train_mock.call_args.kwargs["resume_from"] == resume
+
+
+# ---------------------------------------------------------------------------
+# Eval-final happy path
+# ---------------------------------------------------------------------------
+
+
+def test_eval_final_writes_json_when_baseline_exists(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    base_path, _ = _write_baseline_and_final(tmp_path)
+    output = tmp_path / "final.json"  # baseline.json sits next to it
+
+    monkeypatch.setattr(run_pipeline, "build_training_eval", lambda: MagicMock())
+    monkeypatch.setattr(
+        run_pipeline, "build_briefs", lambda min_rows: _fake_briefs(60)
+    )
+
+    fake_final = _eval_report("/tmp/ckpt")
+    import cells.step_19_eval_final as ef
+
+    monkeypatch.setattr(ef, "eval_final", lambda *a, **k: fake_final)
+
+    rc = main(
+        [
+            "eval-final",
+            "--episodes",
+            "50",
+            "--checkpoint",
+            str(tmp_path / "ckpt"),
+            "--output",
+            str(output),
+        ]
+    )
+    assert rc == 0
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["model_path"] == "/tmp/ckpt"
+
+
+# ---------------------------------------------------------------------------
+# Deploy failure surface
+# ---------------------------------------------------------------------------
+
+
+def test_deploy_returns_nonzero_on_push_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    ckpt = tmp_path / "ckpt"
+    ckpt.mkdir()
+    eval_reports = tmp_path / "eval_reports"
+    eval_reports.mkdir()
+
+    import cells.step_24_deploy_hf as deploy_mod
+
+    push_mock = MagicMock(
+        return_value=SimpleNamespace(
+            success=False,
+            return_code=2,
+            stderr="bad token",
+        )
+    )
+    monkeypatch.setattr(deploy_mod, "push_lora_to_hub", push_mock)
+    monkeypatch.setenv("HF_TOKEN", "fake-token")
+
+    rc = main(
+        [
+            "deploy",
+            "--checkpoint",
+            str(ckpt),
+            "--eval-reports",
+            str(eval_reports),
+            "--repo",
+            "team/driftcall-lora",
+        ]
+    )
+    assert rc == 2
+
+
+def test_deploy_missing_eval_reports_dir_returns_one(tmp_path: Path) -> None:
+    ckpt = tmp_path / "ckpt"
+    ckpt.mkdir()
+    rc = main(
+        [
+            "deploy",
+            "--checkpoint",
+            str(ckpt),
+            "--eval-reports",
+            str(tmp_path / "missing_reports_dir"),
+            "--repo",
+            "team/driftcall-lora",
+        ]
+    )
+    assert rc == 1
+
+
+# ---------------------------------------------------------------------------
+# build_training_eval imports the production delegate
+# ---------------------------------------------------------------------------
+
+
+def test_build_training_eval_returns_callable() -> None:
+    from scripts.run_pipeline import build_training_eval
+
+    fn = build_training_eval()
+    assert callable(fn)
+
+
+def test_decode_float_handles_string_sentinels() -> None:
+    import math
+
+    assert run_pipeline._decode_float(1.5) == 1.5
+    assert run_pipeline._decode_float(2) == 2.0
+    assert math.isnan(run_pipeline._decode_float("NaN"))
+    assert run_pipeline._decode_float("Inf") == float("inf")
+    assert run_pipeline._decode_float("-Inf") == float("-inf")
+
+
+def test_read_json_rejects_non_object(tmp_path: Path) -> None:
+    bad = tmp_path / "bad.json"
+    bad.write_text("[1, 2, 3]", encoding="utf-8")
+    with pytest.raises(TypeError):
+        run_pipeline._read_json(bad)
