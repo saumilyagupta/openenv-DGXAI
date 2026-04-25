@@ -96,7 +96,7 @@ WORKDIR /app
 #   GITHUB_TOKEN — fine-grained PAT for private repo access (optional)
 #   SUBPATH      — path inside the repo containing the DriftCall package
 # ---------------------------------------------------------------------------
-ARG GIT_REPO_URL=https://github.com/krrishchoudhary109/openenv-DGXAI.git
+ARG GIT_REPO_URL=https://github.com/saumilyagupta/openenv-DGXAI.git
 ARG GIT_REF=main
 ARG GITHUB_TOKEN=""
 ARG SUBPATH=DRIFTCALL
