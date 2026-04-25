@@ -288,6 +288,7 @@ def train(
     model = _load_stage2_adapters(base_model, plan.resume_from)
 
     config = build_grpo_config(stage=plan.stage, resume_output_dir=plan.output_dir)
+    config.max_steps = plan.num_steps
 
     if task_gen is None or env_factory is None or rollout_group_fn is None:
         raise ValueError(

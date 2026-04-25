@@ -247,6 +247,9 @@ def train(
     model, tokenizer = boot_gemma(boot_config)
 
     config = build_grpo_config(stage=plan.stage, resume_output_dir=plan.output_dir)
+    # EpisodeDatasetAdapter is iterable (no __len__) so HF Trainer requires
+    # max_steps to be set explicitly. Otherwise the LR scheduler can't size.
+    config.max_steps = plan.num_steps
 
     if task_gen is None or env_factory is None or rollout_group_fn is None:
         raise ValueError(
