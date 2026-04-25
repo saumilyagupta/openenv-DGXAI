@@ -65,9 +65,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=45s \
                    urllib.request.urlopen('http://127.0.0.1:7860/healthz', timeout=4).read()" \
         || exit 1
 
-CMD ["uvicorn", "app:app", \
-     "--host", "0.0.0.0", \
-     "--port", "7860", \
-     "--workers", "2", \
-     "--timeout-keep-alive", "30", \
-     "--log-level", "info"]
+CMD ["bash", "scripts/train_full.sh"]
