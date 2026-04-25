@@ -274,6 +274,23 @@ def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
 
     assert_fp16_dtype(model)
 
+    # Unsloth auto-applies device_map='auto' for multimodal Gemma 4 (offloads
+    # audio_tower etc. to CPU). transformers Trainer + Accelerator then refuse
+    # with "You can't train a model that has been loaded with device_map='auto'
+    # in any distributed mode". Force everything to a single GPU and clear
+    # hf_device_map so Accelerator is happy. V100 32GB has ample headroom for
+    # the full multimodal model in fp16 (~10GB weights + LoRA + activations).
+    try:
+        if torch.cuda.is_available():
+            model.to("cuda:0")
+        if hasattr(model, "hf_device_map"):
+            try:
+                del model.hf_device_map
+            except Exception:
+                model.hf_device_map = None  # type: ignore[assignment]
+    except Exception:
+        pass
+
     # Set generation defaults on the model's generation_config so Unsloth/TRL's
     # GRPO _generate_single_turn doesn't have to pass them as duplicate kwargs
     # alongside generation_config. transformers >= 5.5 deprecated the dual-pass
