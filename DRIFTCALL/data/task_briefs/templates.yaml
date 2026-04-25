@@ -2,8 +2,9 @@
 # Copyright 2026 DriftCall Team
 # Derived-from: AmazonScience/MASSIVE (intent taxonomy, Apache-2.0); inspirations
 # from google/schema_guided_dstc8 and facebook/mtop (no verbatim rows).
-# Task brief templates for DriftCall. Each template provides ≥1 variant per LanguageCode.
-# All strings are NFC-normalized. Domain ∈ {airline,cab,restaurant,hotel}.
+# Task brief templates for DriftCall. Each template provides ≥ 2 variants per
+# LanguageCode (hi, ta, kn, en, hinglish). All strings are NFC-normalized.
+# Domain ∈ {airline,cab,restaurant,hotel}.
 
 - template_id: airline.book.budget_timewindow
   domain: airline
@@ -26,12 +27,16 @@
       - "{when} ko {from} se {to} ka ticket book kar de, under {budget_inr}, {time_window} ke baad"
     hi:
       - "मुझे {when} को {from} से {to} जाना है, {budget_inr} रुपये से कम में, {time_window} में"
+      - "{when} को {from} से {to} की सस्ती फ्लाइट चाहिए, {budget_inr} के अंदर, {time_window} वाली"
     ta:
       - "{when} அன்று {from} லிருந்து {to} க்கு டிக்கெட் வேண்டும், {budget_inr} ரூபாய்க்கு கீழ், {time_window} நேரத்தில்"
+      - "{when} அன்று {from} இல் இருந்து {to} க்கு மலிவான விமான டிக்கெட் புக் செய்யுங்கள், {budget_inr} ரூபாய்க்குள், {time_window} ல்"
     kn:
       - "{when} ರಂದು {from} ಇಂದ {to} ಗೆ ಅಗ್ಗದ ವಿಮಾನ ಟಿಕೆಟ್ ಬೇಕು, {budget_inr} ರೂಪಾಯಿಗಳ ಒಳಗೆ, {time_window}"
+      - "{when} ರಂದು {from} ಇಂದ {to} ಗೆ {time_window} ಫ್ಲೈಟ್ ಬುಕ್ ಮಾಡಿ, {budget_inr} ರೂಪಾಯಿಗಳ ಒಳಗೆ"
     en:
       - "Book the cheapest flight from {from} to {to} on {when}, budget under {budget_inr}, departing {time_window}"
+      - "I need a {time_window} flight from {from} to {to} on {when} for under {budget_inr}"
 
 - template_id: cab.book.airport_pickup
   domain: cab
@@ -51,14 +56,19 @@
   language_variants:
     hinglish:
       - "{when} ko {pickup} se {drop} cab book kar, {vehicle_class} chahiye, {budget_inr} ke andar"
+      - "Bhai {pickup} se {drop} drop chahiye {when} ko, {vehicle_class}, max {budget_inr}"
     hi:
       - "{when} को {pickup} से {drop} के लिए कैब बुक करो, {vehicle_class} चाहिए, {budget_inr} के अंदर"
+      - "{pickup} से {drop} {when} को कैब चाहिए, {vehicle_class}, {budget_inr} रुपये से कम"
     ta:
       - "{when} அன்று {pickup} லிருந்து {drop} க்கு கேப் வேண்டும், {vehicle_class}, {budget_inr} க்குள்"
+      - "{when} அன்று {pickup} இல் இருந்து {drop} க்கு கேப் புக் செய்யுங்கள், {vehicle_class}, அதிகபட்சம் {budget_inr}"
     kn:
       - "{when} ರಂದು {pickup} ಇಂದ {drop} ಗೆ ಕ್ಯಾಬ್ ಬುಕ್ ಮಾಡಿ, {vehicle_class}, {budget_inr} ಒಳಗೆ"
+      - "{pickup} ಇಂದ {drop} ಗೆ {when} ರಂದು ಕ್ಯಾಬ್ ಬೇಕು, {vehicle_class}, {budget_inr} ಒಳಗೆ"
     en:
       - "Book a cab from {pickup} to {drop} on {when}, {vehicle_class}, under {budget_inr}"
+      - "Need a {vehicle_class} cab from {pickup} to {drop} on {when}, max {budget_inr}"
 
 - template_id: restaurant.order.veg_budget
   domain: restaurant
@@ -81,14 +91,19 @@
   language_variants:
     hinglish:
       - "Bhai {when} {city} mein {cuisine} order karna hai, {budget_inr} rupees se kam, veg option {veg_only}"
+      - "{city} mein {cuisine} mangwana hai {when} ko, max {budget_inr}, veg {veg_only}"
     hi:
       - "{when} {city} में {cuisine} ऑर्डर करना है, {budget_inr} रुपये से कम में, veg_only={veg_only}"
+      - "{city} में {when} को {cuisine} मंगवाना है, अधिकतम {budget_inr}, शुद्ध शाकाहारी {veg_only}"
     ta:
       - "{when} {city} இல் {cuisine} ஆர்டர் செய்ய வேண்டும், {budget_inr} ரூபாய்க்கு கீழ், veg_only={veg_only}"
+      - "{city} இல் {when} அன்று {cuisine} ஆர்டர் செய்யுங்கள், அதிகபட்சம் {budget_inr}, சைவம் {veg_only}"
     kn:
       - "{when} {city} ನಲ್ಲಿ {cuisine} ಆರ್ಡರ್ ಮಾಡಬೇಕು, {budget_inr} ರೂಪಾಯಿಗಳ ಒಳಗೆ, veg_only={veg_only}"
+      - "{city} ನಲ್ಲಿ {when} ರಂದು {cuisine} ತರಿಸಬೇಕು, ಗರಿಷ್ಠ {budget_inr}, ಶುದ್ಧ ಸಸ್ಯಾಹಾರಿ {veg_only}"
     en:
       - "Order {cuisine} in {city} on {when}, budget under {budget_inr}, veg_only={veg_only}"
+      - "I need {cuisine} delivered in {city} on {when}, max {budget_inr}, vegetarian-only {veg_only}"
 
 - template_id: hotel.book.city_nights
   domain: hotel
@@ -106,14 +121,19 @@
   language_variants:
     hinglish:
       - "Bhai {city} mein hotel chahiye, {checkin} se {checkout} tak, under {budget_inr} per night"
+      - "{city} ka hotel book kar de {checkin}-{checkout}, max {budget_inr} per raat"
     hi:
       - "{city} में होटल चाहिए, {checkin} से {checkout} तक, {budget_inr} रुपये प्रति रात से कम में"
+      - "{checkin} से {checkout} तक {city} में होटल बुक करो, अधिकतम {budget_inr} प्रति रात"
     ta:
       - "{city} இல் ஹோட்டல் வேண்டும், {checkin} முதல் {checkout} வரை, ஒரு இரவுக்கு {budget_inr} ரூபாய்க்கு கீழ்"
+      - "{checkin} முதல் {checkout} வரை {city} இல் ஹோட்டல், ஒரு இரவுக்கு அதிகபட்சம் {budget_inr}"
     kn:
       - "{city} ನಲ್ಲಿ ಹೋಟೆಲ್ ಬೇಕು, {checkin} ಇಂದ {checkout} ವರೆಗೆ, ರಾತ್ರಿಗೆ {budget_inr} ರೂಪಾಯಿ ಒಳಗೆ"
+      - "{checkin} ಇಂದ {checkout} ವರೆಗೆ {city} ನಲ್ಲಿ ಹೋಟೆಲ್, ರಾತ್ರಿಗೆ ಗರಿಷ್ಠ {budget_inr}"
     en:
       - "Book a hotel in {city} from {checkin} to {checkout}, under {budget_inr} per night"
+      - "Need a hotel in {city} from {checkin} to {checkout}, max {budget_inr} per night"
 
 - template_id: airline.book.compound_passenger_budget
   domain: airline
@@ -135,11 +155,16 @@
   language_variants:
     hinglish:
       - "Bhai {when} ko {from} se {to} {passenger_count} log, {budget_inr} ke andar, {time_window} flight"
+      - "{passenger_count} passengers ke liye {when} ko {from}-{to} flight chahiye, {time_window} mein, {budget_inr} se kam"
     hi:
       - "{when} को {from} से {to} {passenger_count} यात्री, {budget_inr} रुपये से कम में, {time_window} में"
+      - "{passenger_count} लोगों के लिए {when} को {from} से {to} फ्लाइट बुक करो, {time_window}, {budget_inr} के अंदर"
     ta:
       - "{when} அன்று {from} லிருந்து {to} {passenger_count} பயணிகள், {budget_inr} ரூபாய்க்கு கீழ், {time_window}"
+      - "{passenger_count} பேருக்கு {when} அன்று {from} இல் இருந்து {to} விமானம் வேண்டும், {time_window}, {budget_inr} ரூபாய்க்குள்"
     kn:
       - "{when} ರಂದು {from} ಇಂದ {to} {passenger_count} ಪ್ರಯಾಣಿಕರು, {budget_inr} ಒಳಗೆ, {time_window}"
+      - "{passenger_count} ಜನರಿಗೆ {when} ರಂದು {from} ಇಂದ {to} ಫ್ಲೈಟ್ ಬೇಕು, {time_window}, {budget_inr} ಒಳಗೆ"
     en:
       - "Book flight from {from} to {to} on {when} for {passenger_count} passengers, under {budget_inr}, {time_window}"
+      - "Need {passenger_count}-passenger flight {from}-{to} on {when}, {time_window} departure, budget {budget_inr}"
