@@ -41,6 +41,10 @@ os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
 os.environ.setdefault("TORCH_COMPILE_DISABLE", "1")
 os.environ.setdefault("UNSLOTH_COMPILE_DISABLE", "1")
 os.environ.setdefault("UNSLOTH_RETURN_LOGITS", "1")
+# Explicitly start with hidden-states trick OFF; only Unsloth's GRPO
+# _get_per_token_logps_and_entropies block sets this to "1" temporarily.
+# Defensive reset prevents leaks across re-imports / test runs.
+os.environ["UNSLOTH_RETURN_HIDDEN_STATES"] = "0"
 
 BASE_MODEL_ID: str = "unsloth/gemma-4-E2B-it"
 MAX_SEQ_LENGTH: int = 4096
@@ -264,13 +268,28 @@ def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
     # for the full explanation.
     _patch_gemma4_return_hidden_states()
 
-    model, tokenizer = FastVisionModel.from_pretrained(
+    # NOTE: FastVisionModel.from_pretrained returns (model, processor) for
+    # multimodal checkpoints — `processor` is a Gemma4Processor wrapping image
+    # processor + audio processor + tokenizer. The downstream trainer expects
+    # a tokenizer, so we extract `processor.tokenizer` below.
+    model, processor = FastVisionModel.from_pretrained(
         model_name=cfg.base_model_id,
         max_seq_length=cfg.max_seq_length,
         load_in_4bit=cfg.load_in_4bit,
         dtype=torch.float16,
         fast_inference=False,  # disables vLLM; uses Unsloth inference (RL guide)
     )
+    # Unwrap to the actual tokenizer for trainer.processing_class.
+    # Only unwrap if `processor` is a real ProcessorMixin (production path).
+    # In tests `processor` is a Mock or PreTrainedTokenizer — keep as-is.
+    try:
+        from transformers.processing_utils import ProcessorMixin as _PM
+        if isinstance(processor, _PM) and hasattr(processor, "tokenizer"):
+            tokenizer = processor.tokenizer
+        else:
+            tokenizer = processor
+    except Exception:
+        tokenizer = processor
 
     assert_fp16_dtype(model)
 
