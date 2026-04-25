@@ -184,6 +184,7 @@ def build_grpo_config(
         per_device_train_batch_size=PER_DEVICE_TRAIN_BATCH_SIZE,
         gradient_accumulation_steps=grad_accum,
         num_generations=num_generations,
+        generation_batch_size=num_generations,
         max_prompt_length=MAX_PROMPT_LENGTH,
         max_completion_length=MAX_COMPLETION_LENGTH,
         beta=BETA_KL,
