@@ -343,3 +343,134 @@ class TestAdaptiveKLCallback:
 
         with pytest.raises((AssertionError, ValueError)):
             AdaptiveKLCallback(target_kl=-0.01)
+
+
+# ---------------------------------------------------------------------------
+# DriftCallGRPOTrainer integration — adaptive KL is auto-wired by default.
+# ---------------------------------------------------------------------------
+
+
+class _CallbackTrackingBase:
+    """Stub base class that mimics TRL's ``add_callback`` surface."""
+
+    def __init__(
+        self, *, model: Any, args: Any, processing_class: Any, **_: Any
+    ) -> None:
+        self.model = model
+        self.args = args
+        self.processing_class = processing_class
+        self.callbacks: list[Any] = []
+
+    def add_callback(self, cb: Any) -> None:
+        self.callbacks.append(cb)
+
+
+class TestAdaptiveKLWiring:
+    def _build_trainer(self, **overrides: Any) -> Any:
+        from cells.step_14_custom_trainer import make_driftcall_grpo_trainer_cls
+
+        Trainer = make_driftcall_grpo_trainer_cls(_CallbackTrackingBase)
+        kwargs: dict[str, Any] = dict(
+            model=MagicMock(),
+            args=MagicMock(num_generations=8, beta=0.04),
+            processing_class=MagicMock(),
+            rollout_group_fn=MagicMock(),
+            env_factory=MagicMock(),
+            reward_fn_driftcall=MagicMock(return_value=[0.5] * 8),
+        )
+        kwargs.update(overrides)
+        return Trainer(**kwargs)
+
+    def test_adaptive_kl_callback_wired_by_default(self) -> None:
+        from cells.step_14_custom_trainer import AdaptiveKLCallback
+
+        trainer = self._build_trainer()
+        has_adaptive = any(
+            isinstance(cb, AdaptiveKLCallback) for cb in trainer.callbacks
+        )
+        assert has_adaptive, "AdaptiveKLCallback must be added by default"
+
+    def test_adaptive_kl_can_be_disabled(self) -> None:
+        from cells.step_14_custom_trainer import AdaptiveKLCallback
+
+        trainer = self._build_trainer(enable_adaptive_kl=False)
+        has_adaptive = any(
+            isinstance(cb, AdaptiveKLCallback) for cb in trainer.callbacks
+        )
+        assert not has_adaptive, (
+            "AdaptiveKLCallback must not be added when enable_adaptive_kl=False"
+        )
+
+    def test_adaptive_kl_callback_exposed_on_trainer(self) -> None:
+        from cells.step_14_custom_trainer import AdaptiveKLCallback
+
+        trainer = self._build_trainer()
+        assert hasattr(trainer, "adaptive_kl_callback")
+        assert isinstance(trainer.adaptive_kl_callback, AdaptiveKLCallback)
+
+    def test_adaptive_kl_callback_none_when_disabled(self) -> None:
+        trainer = self._build_trainer(enable_adaptive_kl=False)
+        assert trainer.adaptive_kl_callback is None
+
+    def test_adaptive_kl_callback_target_defaults_to_beta_kl(self) -> None:
+        from cells.step_13_grpo_config import BETA_KL
+
+        trainer = self._build_trainer()
+        assert trainer.adaptive_kl_callback.target_kl == BETA_KL
+
+    def test_base_without_add_callback_falls_back(self) -> None:
+        """Bases lacking ``add_callback`` still receive the callback via a list attr."""
+        from cells.step_14_custom_trainer import (
+            AdaptiveKLCallback,
+            make_driftcall_grpo_trainer_cls,
+        )
+
+        class _NoAddCallbackBase:
+            def __init__(
+                self, *, model: Any, args: Any, processing_class: Any, **_: Any
+            ) -> None:
+                self.model = model
+                self.args = args
+                self.processing_class = processing_class
+
+        Trainer = make_driftcall_grpo_trainer_cls(_NoAddCallbackBase)
+        trainer = Trainer(
+            model=MagicMock(),
+            args=MagicMock(num_generations=8, beta=0.04),
+            processing_class=MagicMock(),
+            rollout_group_fn=MagicMock(),
+            env_factory=MagicMock(),
+            reward_fn_driftcall=MagicMock(return_value=[0.5] * 8),
+        )
+        assert hasattr(trainer, "_driftcall_callbacks")
+        assert any(
+            isinstance(cb, AdaptiveKLCallback)
+            for cb in trainer._driftcall_callbacks
+        )
+
+    def test_custom_target_kl_override(self) -> None:
+        trainer = self._build_trainer(adaptive_kl_target=0.07)
+        assert trainer.adaptive_kl_callback.target_kl == 0.07
+
+    def test_integration_simulated_50_steps(self) -> None:
+        """Drive the callback with a synthetic KL signal end-to-end."""
+        from cells.step_14_custom_trainer import AdaptiveKLCallback
+
+        @dataclass
+        class _Args:
+            beta: float = 0.04
+
+        @dataclass
+        class _State:
+            global_step: int = 0
+
+        cb = AdaptiveKLCallback(target_kl=0.04, kp=0.5)
+        args = _Args()
+        for step in range(1, 26):
+            cb.on_log(args, _State(global_step=step), None, logs={"kl": 0.12})
+        high_beta = args.beta
+        assert high_beta > 0.04
+        for step in range(26, 51):
+            cb.on_log(args, _State(global_step=step), None, logs={"kl": 0.01})
+        low_beta = args.beta
+        assert low_beta < high_beta
