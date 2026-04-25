@@ -191,7 +191,20 @@ def _make_driftcall_init(
     base_cls: type[Any],
 ) -> Callable[..., None]:
     """Build an ``__init__`` bound to ``base_cls``; avoids super() recursion
-    when the returned class is itself further subclassed."""
+    when the returned class is itself further subclassed.
+
+    DriftCall-specific kwargs added on top of ``GRPOTrainer.__init__``:
+
+    - ``rollout_group_fn``, ``env_factory``, ``reward_fn_driftcall`` — the
+      multi-turn rollout override surface (see class docstring).
+    - ``enable_adaptive_kl`` (default ``True``) — auto-attach an
+      :class:`AdaptiveKLCallback` so β retargets to the measured KL each
+      logging tick (training.md §3.3.1). Set ``False`` to disable.
+    - ``adaptive_kl_target`` — override the default ``target_kl=BETA_KL``.
+    - ``adaptive_kl_kp`` — override the proportional gain.
+    - ``adaptive_kl_beta_min`` / ``adaptive_kl_beta_max`` — override clamp
+      bounds.
+    """
 
     def _init(
         self: Any,
@@ -199,12 +212,43 @@ def _make_driftcall_init(
         rollout_group_fn: RolloutGroupFn,
         env_factory: EnvFactory,
         reward_fn_driftcall: Callable[..., list[float]],
+        enable_adaptive_kl: bool = True,
+        adaptive_kl_target: float | None = None,
+        adaptive_kl_kp: float = DEFAULT_KP,
+        adaptive_kl_beta_min: float = DEFAULT_BETA_MIN,
+        adaptive_kl_beta_max: float = DEFAULT_BETA_MAX,
         **kwargs: Any,
     ) -> None:
         base_cls.__init__(self, *args, **kwargs)
         self.rollout_group_fn = rollout_group_fn
         self.env_factory = env_factory
         self.reward_fn_driftcall = reward_fn_driftcall
+
+        if enable_adaptive_kl:
+            target = (
+                adaptive_kl_target if adaptive_kl_target is not None else BETA_KL
+            )
+            callback = AdaptiveKLCallback(
+                target_kl=target,
+                kp=adaptive_kl_kp,
+                beta_min=adaptive_kl_beta_min,
+                beta_max=adaptive_kl_beta_max,
+            )
+            self.adaptive_kl_callback = callback
+            add_callback = getattr(base_cls, "add_callback", None)
+            if callable(add_callback):
+                # Production path (TRL ≥ 0.23): register through the TRL
+                # callback handler so ``on_log`` fires alongside default
+                # loggers with the correct ``args``/``state``/``control``.
+                self.add_callback(callback)
+            else:
+                # Fallback: minimal bases in tests lack ``add_callback``.
+                # Keep a private list so callers can still invoke the hook.
+                if not hasattr(self, "_driftcall_callbacks"):
+                    self._driftcall_callbacks = []
+                self._driftcall_callbacks.append(callback)
+        else:
+            self.adaptive_kl_callback = None
 
     return _init
 
