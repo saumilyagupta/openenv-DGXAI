@@ -1,24 +1,30 @@
 # syntax=docker/dockerfile:1.6
 # DriftCall — full training image for Akash Network GPU rentals.
 #
-# Builds on saumilyajj/dl-sam:2025 (CUDA + PyTorch + Unsloth pre-baked) and
-# adds the DriftCall code, deps, and a one-shot training entrypoint that runs
-# Stage 1 → Stage 2 → Stage 3 → baseline eval → final eval → reward-hacking
-# probe → push trained LoRA + eval reports back to HF Hub.
+# Self-contained: clones the repo at build time (or run time), installs
+# dependencies, then runs Stage 1 → Stage 2 → Stage 3 → baseline eval →
+# final eval → reward-hacking probe → plots → summary → push to HF Hub.
 #
-# Usage on Akash:
-#   docker build -f Dockerfile.train -t driftcall-train:latest .
+# Built on saumilyajj/dl-sam:2025 (CUDA + PyTorch + Unsloth pre-baked).
+#
+# Usage:
+#   # Public repo:
+#   docker build -f Dockerfile.train -t driftcall-train:v1 .
+#
+#   # Private repo (passes a fine-grained PAT to the build):
+#   docker build -f Dockerfile.train \
+#     --build-arg GITHUB_TOKEN=$GITHUB_TOKEN \
+#     -t driftcall-train:v1 .
+#
 #   docker run --gpus all \
-#     -e WANDB_API_KEY=<key>           \
-#     -e HF_TOKEN=<hf-write-token>     \
+#     -e HF_TOKEN=<hf-write-token> \
 #     -e DRIFTCALL_HF_REPO=<user>/gemma-4-e2b-driftcall-lora \
-#     -e DRIFTCALL_HARDWARE=h100       \
-#     -v /tmp/checkpoints:/app/checkpoints \
-#     driftcall-train:latest
+#     -v /tmp/akash-data:/mnt/data \
+#     driftcall-train:v1
 #
-# The entrypoint script writes checkpoints to /app/checkpoints — mount it as
-# a host volume to keep adapters after the container exits. Logs stream to
-# WandB if WANDB_API_KEY is set; otherwise fall back to cells/_secrets.py.
+# On Akash, the SDL mounts a persistent volume at /mnt/data; checkpoints
+# survive pod restarts. Logs stream to WandB if WANDB_API_KEY is set;
+# otherwise the hardcoded fallback in cells/_secrets.py is used.
 
 FROM saumilyajj/dl-sam:2025
 
@@ -26,11 +32,15 @@ LABEL org.opencontainers.image.title="DriftCall Trainer"
 LABEL org.opencontainers.image.source="https://github.com/krrishchoudhary109/openenv-DGXAI"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
+# ---------------------------------------------------------------------------
+# Base environment
+# ---------------------------------------------------------------------------
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    HF_HOME=/root/.cache/huggingface \
+    HF_HOME=/mnt/data/hf_cache \
     HF_HUB_ENABLE_HF_TRANSFER=1 \
     WANDB_PROJECT=driftcall \
     WANDB_MODE=online \
@@ -40,67 +50,91 @@ ENV PYTHONUNBUFFERED=1 \
     DRIFTCALL_NUM_STEPS_STAGE3=150 \
     DRIFTCALL_EVAL_EPISODES=50 \
     DRIFTCALL_PROBE_EPISODES=200 \
-    DRIFTCALL_OUTPUT_DIR=/app/checkpoints \
+    DRIFTCALL_OUTPUT_DIR=/mnt/data/checkpoints \
     DRIFTCALL_HF_REPO="" \
     DRIFTCALL_PUSH_TO_HUB=true
 
-# Create the writable mount point upfront so volume mounts inherit perms.
-RUN mkdir -p /app/checkpoints /app/logs /app/eval_reports
-
-WORKDIR /app
-
-# Install system tools commonly missing from minimal CUDA bases.
+# ---------------------------------------------------------------------------
+# System tools (some of these may be in the base; harmless if so)
+# ---------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         curl \
+        ca-certificates \
         build-essential \
         libsndfile1 \
         ffmpeg \
-        ca-certificates \
         tini \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python deps. requirements.txt covers the core training stack
-# (unsloth, trl, torch, transformers, peft, bitsandbytes, accelerate,
-# wandb, kokoro, faster-whisper, etc.). hf_transfer accelerates pulls
-# from the HF Hub on Akash's bandwidth.
-COPY requirements.txt ./
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt \
-    && pip install hf_transfer
+# ---------------------------------------------------------------------------
+# Persistent + ephemeral mount points (SDL maps /mnt/data persistent)
+# ---------------------------------------------------------------------------
+RUN mkdir -p /mnt/data/checkpoints /mnt/data/hf_cache \
+             /app/logs /app/eval_reports
 
-# Application code — full repo so the entrypoint can call any cell.
-COPY cells/ ./cells/
-COPY tests/ ./tests/
-COPY app.py openenv.yaml pyproject.toml ./
-COPY data/ ./data/
-COPY scripts/ ./scripts/
-COPY notebooks/ ./notebooks/
-COPY server/ ./server/
-COPY README.md ./
-COPY DESIGN.md ./
-COPY CLAUDE.md ./
-COPY docs/ ./docs/
+WORKDIR /app
 
-# Pre-pull base model weights at build time so the container can run
-# offline if needed. Wrap in a try/except — Akash builders may not have
-# HF auth at build time; in that case the entrypoint pulls at run time
-# (HF_TOKEN must then be set on the docker run command).
+# ---------------------------------------------------------------------------
+# Clone the repo at build time
+#
+# Build args:
+#   GIT_REPO_URL — full HTTPS URL of the repo (default: public)
+#   GIT_REF      — branch / tag / commit SHA (default: main)
+#   GITHUB_TOKEN — fine-grained PAT for private repo access (optional)
+#   SUBPATH      — path inside the repo containing the DriftCall package
+# ---------------------------------------------------------------------------
+ARG GIT_REPO_URL=https://github.com/krrishchoudhary109/openenv-DGXAI.git
+ARG GIT_REF=main
+ARG GITHUB_TOKEN=""
+ARG SUBPATH=DRIFTCALL
+
+RUN if [ -n "$GITHUB_TOKEN" ]; then \
+        AUTHED_URL=$(echo "$GIT_REPO_URL" | sed "s|https://|https://${GITHUB_TOKEN}@|") ; \
+    else \
+        AUTHED_URL="$GIT_REPO_URL" ; \
+    fi && \
+    git clone --depth 1 --branch "$GIT_REF" "$AUTHED_URL" /tmp/repo && \
+    cp -r /tmp/repo/${SUBPATH}/. /app/ && \
+    rm -rf /tmp/repo
+
+# ---------------------------------------------------------------------------
+# Python deps
+#
+# Strategy:
+#   1. Install lightweight deps from requirements.txt without --deps (so
+#      we don't stomp on Unsloth/torch/CUDA already present in the base).
+#   2. Install hf_transfer for fast HF Hub pulls.
+#   3. Install the local package in editable mode so `from cells.* import`
+#      works from any CWD.
+#   4. Smoke-test imports to fail fast if the base image is incompatible.
+# ---------------------------------------------------------------------------
+RUN pip install --upgrade pip
+RUN pip install --no-deps -r requirements.txt || pip install -r requirements.txt
+RUN pip install hf_transfer
+RUN pip install --no-deps -e .
+
+RUN python3 -c "import torch, trl, peft, wandb, transformers; \
+                print(f'torch={torch.__version__} trl={trl.__version__} ' \
+                      f'wandb={wandb.__version__} transformers={transformers.__version__}')"
+
+# ---------------------------------------------------------------------------
+# Pre-pull base model weights at build time (optional — guarded by build arg)
+# ---------------------------------------------------------------------------
 ARG HF_TOKEN_BUILD=""
 RUN if [ -n "$HF_TOKEN_BUILD" ]; then \
-        HF_TOKEN="$HF_TOKEN_BUILD" python3 -c "from huggingface_hub import snapshot_download; \
-        snapshot_download('unsloth/gemma-4-E2B-it-bnb-4bit')" || true ; \
+        HF_TOKEN="$HF_TOKEN_BUILD" python3 -c \
+            "from huggingface_hub import snapshot_download; \
+             snapshot_download('unsloth/gemma-4-E2B-it-bnb-4bit')" || true ; \
     fi
 
-# Quick smoke check at build time — verify imports work.
-RUN python3 -c "import torch, trl, peft, wandb, transformers; \
-                print(f'torch {torch.__version__}, trl {trl.__version__}, wandb {wandb.__version__}')"
+# ---------------------------------------------------------------------------
+# Entrypoint — chained training pipeline (Stage 1 → 2 → 3 → eval → probe → push)
+# ---------------------------------------------------------------------------
+RUN cp /app/scripts/train_full.sh /usr/local/bin/train_full.sh && \
+    chmod +x /usr/local/bin/train_full.sh
 
-# Training entrypoint — runs the full 3-stage pipeline + eval + probe + push.
-COPY scripts/train_full.sh /usr/local/bin/train_full.sh
-RUN chmod +x /usr/local/bin/train_full.sh
-
-# tini handles SIGTERM cleanly so Akash can preempt without corrupting
+# tini handles SIGTERM cleanly so Akash spot preemption doesn't corrupt
 # checkpoints mid-write.
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["/usr/local/bin/train_full.sh"]

@@ -1,5 +1,6 @@
-# Never bake secrets, caches, or checkpoints into the image.
-cells/_secrets.py
+# cells/_secrets.py IS baked into the image — private-repo policy per
+# user direction. Override at runtime via -e WANDB_API_KEY=<other> to
+# bypass without rebuilding.
 cells/__pycache__
 **/__pycache__
 *.pyc
