@@ -515,7 +515,18 @@ DEFAULT_BETA_MAX: float = 1.0
 DEFAULT_KP: float = 2.0
 
 
-class AdaptiveKLCallback:
+# Resolve the callback base lazily: TrainerCallback when transformers is
+# importable (production), object otherwise (CPU-only CI). Inheriting from
+# TrainerCallback is required so the trainer's default callback handler can
+# call lifecycle hooks (on_train_begin, on_step_end, ...) — the base class
+# provides no-op implementations.
+try:
+    from transformers.trainer_callback import TrainerCallback as _CallbackBase
+except Exception:  # pragma: no cover — CPU-only CI fallback
+    _CallbackBase = object  # type: ignore[assignment,misc]
+
+
+class AdaptiveKLCallback(_CallbackBase):  # type: ignore[misc, valid-type]
     """Retarget β each step based on the ratio of measured KL to ``target_kl``.
 
     Proportional controller with symmetric log-space update:
