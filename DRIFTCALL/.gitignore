@@ -14,6 +14,8 @@ env/
 .env
 .env.*
 !.env.example
+# Local secrets fallback (wandb API key etc.) — never commit.
+cells/_secrets.py
 
 # Editor / OS
 .DS_Store
