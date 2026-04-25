@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 DriftCall Team
-# Localized lookup table for cities + weekdays used by task_generator.
-# All string values are NFC-normalized. Keys are LanguageCode = {hi,ta,kn,en,hinglish}.
-# City codes are IATA where applicable; otherwise domain-local neighborhood names.
+# Localized lookup table for cities, weekdays, months, time-of-day phrases,
+# and passenger labels used by task_generator. All values NFC-normalized.
+# Keys are LanguageCode = {hi,ta,kn,en,hinglish}. City codes are IATA where
+# applicable; otherwise domain-local neighborhood names. Every key that
+# appears in any language MUST appear in every language (enforced by
+# tests/test_data_consistency.py::test_i18n_keys_complete_across_langs).
 
 hi:
   # Cities (IATA / common name)
@@ -24,6 +27,29 @@ hi:
   Friday: शुक्रवार
   Saturday: शनिवार
   Sunday: रविवार
+  # Months
+  January: जनवरी
+  February: फरवरी
+  March: मार्च
+  April: अप्रैल
+  May: मई
+  June: जून
+  July: जुलाई
+  August: अगस्त
+  September: सितंबर
+  October: अक्टूबर
+  November: नवंबर
+  December: दिसंबर
+  # Time-of-day phrases
+  morning: सुबह
+  afternoon: दोपहर
+  evening: शाम
+  night: रात
+  late_night: देर रात
+  # Passenger labels
+  adult: वयस्क
+  child: बच्चा
+  infant: शिशु
 
 ta:
   BLR: பெங்களூர்
@@ -43,6 +69,26 @@ ta:
   Friday: வெள்ளி
   Saturday: சனி
   Sunday: ஞாயிறு
+  January: ஜனவரி
+  February: பிப்ரவரி
+  March: மார்ச்
+  April: ஏப்ரல்
+  May: மே
+  June: ஜூன்
+  July: ஜூலை
+  August: ஆகஸ்ட்
+  September: செப்டம்பர்
+  October: அக்டோபர்
+  November: நவம்பர்
+  December: டிசம்பர்
+  morning: காலை
+  afternoon: மதியம்
+  evening: மாலை
+  night: இரவு
+  late_night: நள்ளிரவு
+  adult: வயது வந்தோர்
+  child: குழந்தை
+  infant: சேய்
 
 kn:
   BLR: ಬೆಂಗಳೂರು
@@ -62,6 +108,26 @@ kn:
   Friday: ಶುಕ್ರವಾರ
   Saturday: ಶನಿವಾರ
   Sunday: ಭಾನುವಾರ
+  January: ಜನವರಿ
+  February: ಫೆಬ್ರವರಿ
+  March: ಮಾರ್ಚ್
+  April: ಏಪ್ರಿಲ್
+  May: ಮೇ
+  June: ಜೂನ್
+  July: ಜುಲೈ
+  August: ಆಗಸ್ಟ್
+  September: ಸೆಪ್ಟೆಂಬರ್
+  October: ಅಕ್ಟೋಬರ್
+  November: ನವೆಂಬರ್
+  December: ಡಿಸೆಂಬರ್
+  morning: ಬೆಳಿಗ್ಗೆ
+  afternoon: ಮಧ್ಯಾಹ್ನ
+  evening: ಸಂಜೆ
+  night: ರಾತ್ರಿ
+  late_night: ತಡರಾತ್ರಿ
+  adult: ವಯಸ್ಕ
+  child: ಮಗು
+  infant: ಶಿಶು
 
 en:
   BLR: Bangalore
@@ -81,6 +147,26 @@ en:
   Friday: Friday
   Saturday: Saturday
   Sunday: Sunday
+  January: January
+  February: February
+  March: March
+  April: April
+  May: May
+  June: June
+  July: July
+  August: August
+  September: September
+  October: October
+  November: November
+  December: December
+  morning: morning
+  afternoon: afternoon
+  evening: evening
+  night: night
+  late_night: late night
+  adult: adult
+  child: child
+  infant: infant
 
 hinglish:
   BLR: Bangalore
@@ -100,3 +186,23 @@ hinglish:
   Friday: Friday
   Saturday: Saturday
   Sunday: Sunday
+  January: January
+  February: February
+  March: March
+  April: April
+  May: May
+  June: June
+  July: July
+  August: August
+  September: September
+  October: October
+  November: November
+  December: December
+  morning: subah
+  afternoon: dopahar
+  evening: shaam
+  night: raat
+  late_night: late raat
+  adult: adult
+  child: bachcha
+  infant: chhota baby
