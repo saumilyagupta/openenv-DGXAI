@@ -1,17 +1,14 @@
 # syntax=docker/dockerfile:1.6
 # DriftCall — full training image for Akash Network GPU rentals.
 #
-# Self-contained: clones the repo at build time (or run time), installs
-# dependencies, then runs Stage 1 → Stage 2 → Stage 3 → baseline eval →
-# final eval → reward-hacking probe → plots → summary → push to HF Hub.
+# Self-contained: clones the repo at build time, installs all deps, then
+# runs Stage 1 → Stage 2 → Stage 3 → baseline eval → final eval →
+# reward-hacking probe → plots → summary → push to HF Hub.
 #
-# Built on saumilyajj/dl-sam:2025. The base provides:
-#   - Ubuntu + CUDA 12.3 (CUDA_VERSION=12.3.0, NV_CUDA_CUDART_VERSION=12.3.52-1)
-#   - Python 3.11
-#   - TensorFlow 2.19.0 (the only ML framework pre-installed — we don't use it)
-#   - git-all, openssh-server, tmux pre-installed
-#   - Default CMD: `sshd -D` on port 22 (we override to run training instead)
-# We install PyTorch + Unsloth + TRL + everything from requirements.txt fresh.
+# Built on official pytorch/pytorch (CUDA 12.4 + PyTorch 2.5 pre-baked).
+# We do NOT use saumilyajj/dl-sam:2025 — that image had TensorFlow but no
+# PyTorch, making the build ~3 GB heavier and slower. The official PyTorch
+# image gives us the right base for free.
 #
 # Usage:
 #   # Public repo:
@@ -23,29 +20,29 @@
 #     -t driftcall-train:v1 .
 #
 #   docker run --gpus all \
-#     -e HF_TOKEN=<hf-write-token> \
-#     -e DRIFTCALL_HF_REPO=<user>/gemma-4-e2b-driftcall-lora \
+#     --env-file .env \
 #     -v /tmp/akash-data:/mnt/data \
 #     driftcall-train:v1
 #
 # On Akash, the SDL mounts a persistent volume at /mnt/data; checkpoints
-# survive pod restarts. Logs stream to WandB if WANDB_API_KEY is set;
-# otherwise the hardcoded fallback in cells/_secrets.py is used.
+# survive pod restarts. SSH on :22 stays available for tmux attach.
 
-FROM saumilyajj/dl-sam:2025
+FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
 
 LABEL org.opencontainers.image.title="DriftCall Trainer"
-LABEL org.opencontainers.image.source="https://github.com/krrishchoudhary109/openenv-DGXAI"
+LABEL org.opencontainers.image.source="https://github.com/saumilyagupta/openenv-DGXAI"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 # ---------------------------------------------------------------------------
-# Base environment
+# Base environment — every value matches the SDL persistent volume layout
 # ---------------------------------------------------------------------------
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
     HF_HOME=/mnt/data/hf_cache \
     HF_HUB_ENABLE_HF_TRANSFER=1 \
     WANDB_PROJECT=driftcall \
@@ -57,44 +54,54 @@ ENV PYTHONUNBUFFERED=1 \
     DRIFTCALL_EVAL_EPISODES=50 \
     DRIFTCALL_PROBE_EPISODES=200 \
     DRIFTCALL_OUTPUT_DIR=/mnt/data/checkpoints \
+    DRIFTCALL_EVAL_DIR=/mnt/data/eval_reports \
+    DRIFTCALL_LOG_DIR=/app/logs \
+    DRIFTCALL_BRIEFS_PATH=/app/data/val/briefs.jsonl \
     DRIFTCALL_HF_REPO="" \
     DRIFTCALL_PUSH_TO_HUB=true
 
 # ---------------------------------------------------------------------------
-# System tools — base already has git, openssh-server, tmux, curl. Only
-# need libsndfile1 (Kokoro TTS), ffmpeg (whisper ASR), tini (SIGTERM
-# handling), build-essential (some Python wheels need a C compiler).
+# System tools — pytorch base is slim. Add what we need:
+#   git           — clone the repo
+#   curl, ca-cert — HF / wandb HTTPS pulls
+#   build-essential — some Python wheels (kokoro, faster-whisper) need a C compiler
+#   libsndfile1, ffmpeg — audio for Kokoro TTS / faster-whisper ASR
+#   openssh-server, tmux — SSH attach during training
+#   tini — clean SIGTERM handling on Akash spot preemption
 # ---------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        curl \
+        ca-certificates \
         build-essential \
         libsndfile1 \
         ffmpeg \
+        openssh-server \
+        tmux \
         tini \
     && rm -rf /var/lib/apt/lists/*
 
-# Start sshd in the background so the SDL's port-22 expose works for
-# tmux attach during long training runs (matches Akash dev-pod UX).
-# Detach the daemon — never block the trainer's main process.
+# Configure sshd for Akash port-22 expose. Default password is "akash" —
+# override at runtime via `-e ROOT_PASSWORD=<new>`.
 RUN mkdir -p /var/run/sshd && \
-    echo 'PermitRootLogin yes' > /etc/ssh/sshd_config.d/99-akash.conf && \
-    echo 'UsePAM yes' >> /etc/ssh/sshd_config.d/99-akash.conf
+    echo 'root:akash' | chpasswd && \
+    sed -i 's/#PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
 # ---------------------------------------------------------------------------
-# Persistent + ephemeral mount points (SDL maps /mnt/data persistent)
+# Mount points — /mnt/data is the SDL persistent volume; logs ephemeral.
 # ---------------------------------------------------------------------------
-RUN mkdir -p /mnt/data/checkpoints /mnt/data/hf_cache \
-             /app/logs /app/eval_reports
+RUN mkdir -p /mnt/data/checkpoints /mnt/data/hf_cache /mnt/data/eval_reports \
+             /app/logs
 
 WORKDIR /app
 
 # ---------------------------------------------------------------------------
-# Clone the repo at build time
-#
-# Build args:
-#   GIT_REPO_URL — full HTTPS URL of the repo (default: public)
+# Clone the repo at build time.
+#   GIT_REPO_URL — full HTTPS URL (default: saumilyagupta/openenv-DGXAI)
 #   GIT_REF      — branch / tag / commit SHA (default: main)
 #   GITHUB_TOKEN — fine-grained PAT for private repo access (optional)
-#   SUBPATH      — path inside the repo containing the DriftCall package
+#   SUBPATH      — directory inside the repo holding the DriftCall package
 # ---------------------------------------------------------------------------
 ARG GIT_REPO_URL=https://github.com/saumilyagupta/openenv-DGXAI.git
 ARG GIT_REF=main
@@ -111,28 +118,61 @@ RUN if [ -n "$GITHUB_TOKEN" ]; then \
     rm -rf /tmp/repo
 
 # ---------------------------------------------------------------------------
-# Python deps
+# Python deps.
 #
-# Base image only has TensorFlow 2.19. We install PyTorch + Unsloth + TRL
-# + everything else from requirements.txt fresh. CUDA 12.3 is already
-# installed — torch will pick the matching cu121/cu124 wheel automatically.
-#
-# This is a heavy step (~5 GB download). Layer is cached aggressively
-# because requirements.txt rarely changes.
+# Strategy:
+#   - PyTorch 2.5.1 + CUDA 12.4 already in base — keep them via --no-deps
+#     installation of packages that pin torch (unsloth, bitsandbytes, peft).
+#   - Everything else gets a normal install.
+#   - hf_transfer for fast HF Hub pulls.
+#   - Editable install of the local package so `from cells.* import` works
+#     from any CWD without PYTHONPATH side-effects.
 # ---------------------------------------------------------------------------
 RUN pip install --upgrade pip wheel setuptools
-RUN pip install -r requirements.txt
-RUN pip install hf_transfer
-# Install the project as a package so `from cells.* import` works from any
-# CWD without relying on PYTHONPATH side effects.
+
+# Install the core stack first — these depend on a specific torch ABI, so
+# install with --no-deps to keep the base image's torch + cuda intact.
+RUN pip install --no-deps \
+        "unsloth>=2026.4.5" \
+        "bitsandbytes>=0.43" \
+        "peft>=0.13" \
+        "trl>=0.23" \
+        "accelerate>=1.0" \
+        "transformers>=4.46"
+
+# Install everything else with full deps — pulls in numpy, scipy, etc.
+RUN pip install \
+        "fastapi>=0.115" \
+        "uvicorn[standard]>=0.32" \
+        "openenv>=0.1.10,<0.2" \
+        "pydantic>=2.7" \
+        "kokoro>=0.3,<0.4" \
+        "faster-whisper>=1.0,<2.0" \
+        "torchaudio>=2.5" \
+        "soundfile>=0.12" \
+        "numpy<2.0" \
+        "gradio>=5.8,<6" \
+        "jupytext>=1.16" \
+        "nbformat>=5.10" \
+        "PyYAML>=6.0" \
+        "cachetools>=5.3" \
+        "huggingface_hub>=0.25" \
+        "wandb>=0.18" \
+        "hf_transfer>=0.1"
+
+# Install the project as a package so `from cells.* import` works from any CWD.
 RUN pip install --no-deps -e .
 
-RUN python3 -c "import torch, trl, peft, wandb, transformers; \
-                print(f'torch={torch.__version__} trl={trl.__version__} ' \
-                      f'wandb={wandb.__version__} transformers={transformers.__version__}')"
+# ---------------------------------------------------------------------------
+# Smoke check at build time — fail fast if base image is incompatible.
+# ---------------------------------------------------------------------------
+RUN python3 -c "import torch, trl, peft, wandb, transformers, unsloth, bitsandbytes; \
+                print(f'torch={torch.__version__} cuda={torch.version.cuda} ' \
+                      f'trl={trl.__version__} wandb={wandb.__version__} ' \
+                      f'transformers={transformers.__version__}')"
 
 # ---------------------------------------------------------------------------
-# Pre-pull base model weights at build time (optional — guarded by build arg)
+# Pre-pull base model weights (optional — guarded by build arg).
 # ---------------------------------------------------------------------------
 ARG HF_TOKEN_BUILD=""
 RUN if [ -n "$HF_TOKEN_BUILD" ]; then \
@@ -142,12 +182,7 @@ RUN if [ -n "$HF_TOKEN_BUILD" ]; then \
     fi
 
 # ---------------------------------------------------------------------------
-# Entrypoint wrapper — start sshd in background, then run training pipeline.
-#
-# Akash exposes port 22 via the SDL so you can `ssh root@<pod>` during
-# training, attach to the tmux session running train_full.sh, and watch
-# progress live. Default root password is "root" (set by the base image).
-# Change it via -e ROOT_PASSWORD=<new> at run time if exposed publicly.
+# Entrypoint — start sshd in background, run training pipeline in tmux.
 # ---------------------------------------------------------------------------
 RUN cp /app/scripts/train_full.sh /usr/local/bin/train_full.sh && \
     chmod +x /usr/local/bin/train_full.sh
@@ -161,16 +196,15 @@ if [ -n "${ROOT_PASSWORD:-}" ]; then
 fi
 # Start sshd in background — port 22 stays accessible for tmux attach.
 /usr/sbin/sshd
-# Run the training pipeline inside a named tmux session so the user can
-# `tmux attach -t train` after ssh-ing in.
-exec tmux new-session -d -s train "/usr/local/bin/train_full.sh 2>&1 | tee -a /app/logs/train.log"
+# Run the training pipeline inside a named tmux session.
+tmux new-session -d -s train "/usr/local/bin/train_full.sh 2>&1 | tee -a /app/logs/train.log"
 # Hold the container open while tmux runs the training in detached mode.
-# Container exits when train_full.sh finishes (success or failure).
 while tmux has-session -t train 2>/dev/null; do sleep 30; done
 echo "[entrypoint] tmux session ended; container will exit"
-# Cat the final log line for visibility in `docker logs`.
 tail -50 /app/logs/train.log || true
 EOF
+
+EXPOSE 22 7860
 
 # tini handles SIGTERM cleanly so Akash spot preemption doesn't corrupt
 # checkpoints mid-write.

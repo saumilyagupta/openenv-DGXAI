@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# DriftCall full training pipeline — Stage 1 → 2 → 3 → eval → probe → push.
+# DriftCall full training pipeline — Stage 1 -> 2 -> 3 -> eval -> probe -> push.
 #
 # Thin wrapper over scripts/run_pipeline.py — the orchestrator wires
 # task_gen + env_factory + rollout_group_fn + training_eval from the
@@ -14,23 +14,19 @@
 #   WANDB_RUN_ID                   wandb run id for plot history fetch
 #   HF_TOKEN                       huggingface_hub write token (required if PUSH_TO_HUB=true)
 #   DRIFTCALL_HF_REPO              e.g. "krrishchoudhary109/gemma-4-e2b-driftcall-lora"
-#   DRIFTCALL_HARDWARE             "v100" | "h100" (informational only)
+#   DRIFTCALL_HARDWARE             "v100" | "h100" (default h100)
 #   DRIFTCALL_NUM_STEPS_STAGE{1,2,3}  per-stage GRPO step counts
 #   DRIFTCALL_EVAL_EPISODES        baseline + final eval episode count
 #   DRIFTCALL_PROBE_EPISODES       reward-hacking probe episode count
 #   DRIFTCALL_OUTPUT_DIR           where to write LoRA checkpoints
 #   DRIFTCALL_EVAL_DIR             where to write eval reports + plots
-#   DRIFTCALL_BRIEFS_PATH          path to val/briefs.jsonl
 #   DRIFTCALL_PUSH_TO_HUB          "true" | "false" (default true)
-#   DRIFTCALL_ROLLOUT_IMPL         dotted path "pkg.module:rollout_group_fn"
-#   DRIFTCALL_TRAINING_EVAL_IMPL   dotted path "pkg.module:training_eval"
 
 set -euo pipefail
 
 OUT="${DRIFTCALL_OUTPUT_DIR:-/app/checkpoints}"
 LOG_DIR="${DRIFTCALL_LOG_DIR:-/app/logs}"
 EVAL_DIR="${DRIFTCALL_EVAL_DIR:-/app/eval_reports}"
-BRIEFS_PATH="${DRIFTCALL_BRIEFS_PATH:-/app/data/val/briefs.jsonl}"
 HARDWARE="${DRIFTCALL_HARDWARE:-h100}"
 APP_DIR="${DRIFTCALL_APP_DIR:-/app}"
 
@@ -52,7 +48,7 @@ trap 'log "ERROR on line $LINENO; exiting with code $?"' ERR
 # 0. Pre-flight checks
 # ---------------------------------------------------------------------------
 log "DriftCall full training run starting on hardware=$HARDWARE"
-log "Output: $OUT  Eval: $EVAL_DIR  Briefs: $BRIEFS_PATH"
+log "Output: $OUT  Eval: $EVAL_DIR"
 
 if command -v nvidia-smi >/dev/null 2>&1; then
     log "GPU info:"
@@ -73,16 +69,9 @@ if [[ "$PUSH_TO_HUB" == "true" && -z "${HF_TOKEN:-}" ]]; then
     log "WARNING: PUSH_TO_HUB=true but HF_TOKEN unset; final push will fail. Set HF_TOKEN or set PUSH_TO_HUB=false."
 fi
 
-if [[ -z "${DRIFTCALL_ROLLOUT_IMPL:-}" ]]; then
-    log "WARNING: DRIFTCALL_ROLLOUT_IMPL unset; training stages will fail with RolloutImplementationMissingError."
-fi
-if [[ -z "${DRIFTCALL_TRAINING_EVAL_IMPL:-}" ]]; then
-    log "WARNING: DRIFTCALL_TRAINING_EVAL_IMPL unset; eval/probe stages will fail with TrainingEvalMissingError."
-fi
-
 cd "$APP_DIR"
 
-PIPELINE="python3 -m scripts.run_pipeline"
+PIPELINE="python3 scripts/run_pipeline.py"
 
 # ---------------------------------------------------------------------------
 # 1. Stage 1 — warmup, no drift
@@ -90,8 +79,8 @@ PIPELINE="python3 -m scripts.run_pipeline"
 log "=== Stage 1: $NUM_STEPS_STAGE1 GRPO steps (no drift) ==="
 $PIPELINE stage1 \
     --num-steps "$NUM_STEPS_STAGE1" \
+    --hardware "$HARDWARE" \
     --output-dir "$OUT/stage1" \
-    ${DRIFTCALL_ROLLOUT_IMPL:+--rollout-impl "$DRIFTCALL_ROLLOUT_IMPL"} \
     2>&1 | tee -a "$LOG_DIR/stage1.log"
 log "Stage 1 complete."
 
@@ -101,9 +90,9 @@ log "Stage 1 complete."
 log "=== Stage 2: $NUM_STEPS_STAGE2 GRPO steps (single drift) ==="
 $PIPELINE stage2 \
     --num-steps "$NUM_STEPS_STAGE2" \
-    --resume-from "$OUT/stage1" \
+    --hardware "$HARDWARE" \
+    --resume-from "$OUT/stage1/final" \
     --output-dir "$OUT/stage2" \
-    ${DRIFTCALL_ROLLOUT_IMPL:+--rollout-impl "$DRIFTCALL_ROLLOUT_IMPL"} \
     2>&1 | tee -a "$LOG_DIR/stage2.log"
 log "Stage 2 complete."
 
@@ -113,11 +102,11 @@ log "Stage 2 complete."
 log "=== Stage 3: $NUM_STEPS_STAGE3 GRPO steps (compound drift) ==="
 $PIPELINE stage3 \
     --num-steps "$NUM_STEPS_STAGE3" \
-    --resume-from "$OUT/stage2" \
+    --hardware "$HARDWARE" \
+    --resume-from "$OUT/stage2/final" \
     --output-dir "$OUT/stage3" \
-    ${DRIFTCALL_ROLLOUT_IMPL:+--rollout-impl "$DRIFTCALL_ROLLOUT_IMPL"} \
     2>&1 | tee -a "$LOG_DIR/stage3.log"
-log "Stage 3 complete. Final LoRA at $OUT/stage3"
+log "Stage 3 complete. Final LoRA at $OUT/stage3/final"
 
 # ---------------------------------------------------------------------------
 # 4. Baseline eval
@@ -125,9 +114,7 @@ log "Stage 3 complete. Final LoRA at $OUT/stage3"
 log "=== Baseline eval: $EVAL_EPISODES episodes ==="
 $PIPELINE eval-baseline \
     --episodes "$EVAL_EPISODES" \
-    --briefs "$BRIEFS_PATH" \
     --output "$EVAL_DIR/baseline.json" \
-    ${DRIFTCALL_TRAINING_EVAL_IMPL:+--training-eval-impl "$DRIFTCALL_TRAINING_EVAL_IMPL"} \
     2>&1 | tee -a "$LOG_DIR/eval_baseline.log"
 log "Baseline eval complete."
 
@@ -136,12 +123,9 @@ log "Baseline eval complete."
 # ---------------------------------------------------------------------------
 log "=== Final eval: $EVAL_EPISODES episodes ==="
 $PIPELINE eval-final \
-    --checkpoint "$OUT/stage3" \
     --episodes "$EVAL_EPISODES" \
-    --briefs "$BRIEFS_PATH" \
-    --baseline "$EVAL_DIR/baseline.json" \
+    --checkpoint "$OUT/stage3/final" \
     --output "$EVAL_DIR/final.json" \
-    ${DRIFTCALL_TRAINING_EVAL_IMPL:+--training-eval-impl "$DRIFTCALL_TRAINING_EVAL_IMPL"} \
     2>&1 | tee -a "$LOG_DIR/eval_final.log"
 log "Final eval complete."
 
@@ -150,14 +134,9 @@ log "Final eval complete."
 # ---------------------------------------------------------------------------
 log "=== Reward-hacking probe: $PROBE_EPISODES episodes ==="
 $PIPELINE probe \
-    --checkpoint "$OUT/stage3" \
     --episodes "$PROBE_EPISODES" \
-    --briefs "$BRIEFS_PATH" \
+    --checkpoint "$OUT/stage3/final" \
     --output "$EVAL_DIR/probe.json" \
-    --md-output "$EVAL_DIR/probe.md" \
-    --git-sha "$(git rev-parse --short HEAD 2>/dev/null || echo unknown)" \
-    --timestamp-ist "$(TZ='Asia/Kolkata' date -Iseconds)" \
-    ${DRIFTCALL_TRAINING_EVAL_IMPL:+--training-eval-impl "$DRIFTCALL_TRAINING_EVAL_IMPL"} \
     2>&1 | tee -a "$LOG_DIR/probe.log"
 log "Probe complete."
 
@@ -169,12 +148,12 @@ $PIPELINE plots \
     --baseline "$EVAL_DIR/baseline.json" \
     --final "$EVAL_DIR/final.json" \
     --output-dir "$EVAL_DIR/plots" \
-    ${WANDB_RUN_ID:+--wandb-run-id "$WANDB_RUN_ID"} \
     2>&1 | tee -a "$LOG_DIR/plots.log"
 
 $PIPELINE summary \
     --baseline "$EVAL_DIR/baseline.json" \
     --final "$EVAL_DIR/final.json" \
+    --probe "$EVAL_DIR/probe.json" \
     --output "$EVAL_DIR/summary.md" \
     2>&1 | tee -a "$LOG_DIR/summary.log"
 log "Reports written to $EVAL_DIR"
@@ -185,9 +164,9 @@ log "Reports written to $EVAL_DIR"
 if [[ "$PUSH_TO_HUB" == "true" && -n "${HF_TOKEN:-}" && -n "${DRIFTCALL_HF_REPO:-}" ]]; then
     log "=== Pushing trained LoRA to HF Hub: $DRIFTCALL_HF_REPO ==="
     $PIPELINE deploy \
-        --checkpoint "$OUT/stage3" \
-        --repo-id "$DRIFTCALL_HF_REPO" \
-        --hf-token-env HF_TOKEN \
+        --checkpoint "$OUT/stage3/final" \
+        --eval-reports "$EVAL_DIR" \
+        --repo "$DRIFTCALL_HF_REPO" \
         2>&1 | tee -a "$LOG_DIR/deploy.log"
     log "Push complete."
 else
@@ -198,7 +177,7 @@ fi
 # 9. Final summary
 # ---------------------------------------------------------------------------
 log "=== TRAINING RUN COMPLETE ==="
-log "Checkpoints:    $OUT/{stage1,stage2,stage3}"
+log "Checkpoints:    $OUT/{stage1,stage2,stage3}/final"
 log "Eval reports:   $EVAL_DIR/{baseline,final,probe}.json"
 log "Plots:          $EVAL_DIR/plots/"
 log "Summary:        $EVAL_DIR/summary.md"

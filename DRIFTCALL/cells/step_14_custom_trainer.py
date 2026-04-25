@@ -305,6 +305,143 @@ def _driftcall_generate_and_score_completions(
     }
 
 
+def _derive_rollout_seed(episode_seed: int, g_index: int) -> int:
+    """Stable per-rollout seed (training.md §3.2: ``derive_seed(goal, g_index)``).
+
+    Mixed deterministically so the drift schedule for rollout ``g`` is fixed
+    across runs but each of the G rollouts in a group sees different drift
+    timing.
+    """
+    return (episode_seed * 1_000_003 + g_index) & 0xFFFFFFFF
+
+
+def _parse_action_from_completion(text: str) -> Any:
+    """Parse the model's assistant turn into a :class:`DriftCallAction`.
+
+    Pulls the first JSON object from ``text`` (the chat template wraps the
+    assistant turn in code-fence-or-bare JSON; we accept either). Falls back
+    to an ``ABORT`` action when the completion is unparseable so the env
+    surfaces a format violation through R4 instead of crashing the rollout
+    (training.md §3.2 ``EpisodeParseError`` is logged, episode continues).
+    """
+    import json as _json
+
+    from cells.step_04_models import ActionType, DriftCallAction
+
+    snippet = text.strip()
+    start = snippet.find("{")
+    end = snippet.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        return DriftCallAction(action_type=ActionType.ABORT)
+    try:
+        payload = _json.loads(snippet[start : end + 1])
+    except _json.JSONDecodeError:
+        return DriftCallAction(action_type=ActionType.ABORT)
+    if not isinstance(payload, dict):
+        return DriftCallAction(action_type=ActionType.ABORT)
+
+    action_type_raw = payload.get("action_type")
+    try:
+        action_type = ActionType(action_type_raw) if action_type_raw is not None else ActionType.ABORT
+    except ValueError:
+        action_type = ActionType.ABORT
+    return DriftCallAction(
+        action_type=action_type,
+        tool_name=payload.get("tool_name"),
+        tool_args=payload.get("tool_args"),
+        message=payload.get("message"),
+        confidence=payload.get("confidence"),
+        rationale=payload.get("rationale"),
+    )
+
+
+def rollout_group(
+    *,
+    model: Any,
+    tokenizer: Any,
+    goal: Any,
+    episode_seed: int,
+    num_generations: int,
+    env_factory: EnvFactory,
+) -> tuple[tuple[Any, ...], tuple[str, ...]]:
+    """Run G=``num_generations`` independent multi-turn rollouts sharing one goal.
+
+    Implements the contract in training.md §2.2 ``rollout_group``:
+
+    1. For each ``g_index`` in ``[0, G)``: instantiate a fresh env via
+       ``env_factory()`` and reset with ``derive_seed(episode_seed, g_index)``
+       so the drift schedule is fixed per-rollout but variance comes from
+       policy sampling (DESIGN.md §6.2, §7.4).
+    2. Walk the multi-turn loop: render observation -> ``model.generate`` ->
+       parse :class:`DriftCallAction` JSON -> ``env.step`` until ``done``.
+    3. Return the tuple ``(episodes, completions)``: terminal :class:`Episode`
+       per rollout and the concatenated assistant text per rollout.
+
+    The function is intentionally minimal — model invocation happens through
+    the standard transformers ``model.generate`` interface so it works with
+    any HF-compatible policy. Heavy imports (``torch``) are deferred.
+    """
+    from cells.step_10_env import DriftCallEnvError
+
+    episodes: list[Any] = []
+    completions: list[str] = []
+
+    for g in range(num_generations):
+        env = env_factory()
+        seed = _derive_rollout_seed(episode_seed, g)
+        obs = env.reset(seed=seed)
+        prompt = render_initial_prompt(tokenizer, goal)
+        completion_chunks: list[str] = []
+
+        while True:
+            generated_text = _generate_one_turn(model, tokenizer, prompt)
+            completion_chunks.append(generated_text)
+            action = _parse_action_from_completion(generated_text)
+            try:
+                obs = env.step(action)
+            except DriftCallEnvError:
+                break
+            if obs is None or getattr(obs, "_done", False) or getattr(obs, "done", False):
+                break
+            # Append assistant turn + the next observation's user-facing fields
+            # to the running prompt so subsequent generations see history.
+            prompt = (
+                f"{prompt}\n{generated_text}\n"
+                f"[turn={obs.turn}] {obs.last_transcript}"
+            )
+
+        episode = getattr(env, "_episode", None)
+        if episode is None:
+            episode = env.state()
+        episodes.append(episode)
+        completions.append("\n".join(completion_chunks))
+        env.close()
+
+    return tuple(episodes), tuple(completions)
+
+
+def _generate_one_turn(model: Any, tokenizer: Any, prompt: str) -> str:
+    """Tokenize ``prompt``, invoke ``model.generate``, decode the new tokens.
+
+    Heavy imports (``torch``) deferred so this module loads on CPU-only CI.
+    """
+    import torch
+
+    inputs = tokenizer(prompt, return_tensors="pt")
+    if hasattr(model, "device"):
+        inputs = {k: v.to(model.device) for k, v in inputs.items()}
+    with torch.no_grad():
+        outputs = model.generate(
+            **inputs,
+            max_new_tokens=256,
+            do_sample=True,
+            temperature=0.9,
+            top_p=0.95,
+        )
+    new_tokens = outputs[0][inputs["input_ids"].shape[1] :]
+    return cast("str", tokenizer.decode(new_tokens, skip_special_tokens=True))
+
+
 def make_driftcall_grpo_trainer_cls(base_cls: type[Any] | None = None) -> type[Any]:
     """Build the :class:`DriftCallGRPOTrainer` class bound to ``base_cls``.
 
@@ -475,4 +612,5 @@ __all__ = [
     "driftcall_grpo_trainer_methods",
     "make_driftcall_grpo_trainer_cls",
     "render_initial_prompt",
+    "rollout_group",
 ]

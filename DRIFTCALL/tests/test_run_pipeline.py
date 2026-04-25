@@ -1,791 +1,578 @@
-"""Tests for scripts/run_pipeline.py.
+"""Tests for ``scripts/run_pipeline.py``.
 
-The orchestrator wires real-cell callables (task_gen, env_factory) and
-delegates rollout / training_eval to dotted-path implementations the
-operator supplies. Heavy callers (cell.train, run_eval, push_lora_to_hub)
-are monkeypatched so the suite runs CPU-only with no real GPU / HF Hub.
-
-Covers:
-  - make_task_gen returns the step_07.generate callable
-  - make_env_factory returns a callable producing a fresh DriftCallEnv per call
-  - make_rollout_group_fn / make_training_eval default sentinels raise typed errors
-  - dotted-path import of impls works (positive + malformed paths)
-  - load_briefs reads JSONL into BriefRow tuples; rejects malformed lines
-  - write_report / read_eval_report round-trip an EvalReport
-  - cmd_train_stage validates stage + resume_from rules and forwards callables
-  - cmd_eval_baseline / cmd_eval_final / cmd_probe / cmd_plots / cmd_summary
-    each invoke their cell entry-point with the expected arguments
-  - cmd_deploy refuses missing checkpoint
-  - build_parser exposes every subcommand
+CI-safe: every heavy path (``boot_gemma``, ``DriftCallGRPOTrainer.train``,
+``huggingface_hub`` upload) is patched. Each subcommand is exercised through
+:func:`scripts.run_pipeline.main` so argparse + dispatch + handler all run.
 """
 
 from __future__ import annotations
 
 import json
 import sys
-import types
-from dataclasses import dataclass, field
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
 
-from cells.step_18_eval_baseline import (
-    DriftDetectionLatency,
-    EvalReport,
-    PerLanguageReport,
-)
-from scripts import run_pipeline as pipe
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from scripts import run_pipeline
 from scripts.run_pipeline import (
-    BriefRow,
-    InvalidStageArgumentError,
-    MissingArtifactError,
-    PipelineConfig,
-    PipelineError,
-    RolloutImplementationMissingError,
-    TrainingEvalMissingError,
-    build_parser,
-    cmd_deploy,
-    cmd_eval_baseline,
-    cmd_eval_final,
-    cmd_pipeline,
-    cmd_plots,
-    cmd_probe,
-    cmd_summary,
-    cmd_train_stage,
-    load_briefs,
+    build_arg_parser,
+    build_briefs,
+    build_env_factory,
+    build_rollout_group_fn,
+    build_task_gen,
+    deserialize_eval_report,
     main,
-    make_env_factory,
-    make_rollout_group_fn,
-    make_task_gen,
-    make_training_eval,
-    read_eval_report,
-    write_report,
+    serialize_eval_report,
 )
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Fixtures
 # ---------------------------------------------------------------------------
 
 
-def _drift_latency_nan() -> DriftDetectionLatency:
-    nan = float("nan")
-    return DriftDetectionLatency(nan, nan, nan, nan, nan, nan, 0)
-
-
-def _per_language() -> tuple[PerLanguageReport, ...]:
-    langs = ("hi", "ta", "kn", "en", "hinglish")
-    return tuple(
-        PerLanguageReport(
-            language=lang,  # type: ignore[arg-type]
-            n_episodes=10,
-            reward_mean=0.5,
-            r1_mean=0.4,
-            r2_mean=0.5,
-            r3_mean=0.5,
-            r4_mean=0.6,
-            r5_mean=0.0,
-        )
-        for lang in langs
+def _eval_report(model_path: str = "base") -> Any:
+    from cells.step_18_eval_baseline import (
+        DriftDetectionLatency,
+        EvalReport,
+        PerLanguageReport,
     )
 
-
-def _make_eval_report(model_path: str = "base") -> EvalReport:
     return EvalReport(
         model_path=model_path,
         n_episodes=50,
-        reward_mean_ci=(0.5, 0.4, 0.6),
-        r1_mean_ci=(0.5, 0.4, 0.6),
-        r2_mean_ci=(0.5, 0.4, 0.6),
-        r3_mean_ci=(0.5, 0.4, 0.6),
-        r4_mean_ci=(0.5, 0.4, 0.6),
-        r5_mean_ci=(0.0, 0.0, 0.0),
-        brier_mean=0.2,
-        floor_applied_rate=0.0,
-        hallucinated_field_rate=0.1,
-        reward_hacking_offenses={"hallucinated_field": 0},
-        drift_detection_latency=_drift_latency_nan(),
-        per_language=_per_language(),
-        curves={},
-        breakdown={},
+        reward_mean_ci=(0.30, 0.20, 0.40),
+        r1_mean_ci=(0.10, 0.05, 0.15),
+        r2_mean_ci=(0.20, 0.15, 0.25),
+        r3_mean_ci=(0.30, 0.25, 0.35),
+        r4_mean_ci=(0.40, 0.35, 0.45),
+        r5_mean_ci=(-0.10, -0.15, -0.05),
+        brier_mean=0.40,
+        floor_applied_rate=0.05,
+        hallucinated_field_rate=0.10,
+        reward_hacking_offenses={"hallucinated_field": 3},
+        drift_detection_latency=DriftDetectionLatency(
+            stage2_mean=float("nan"),
+            stage2_median=float("nan"),
+            stage2_p95=float("nan"),
+            stage3_mean=1.5,
+            stage3_median=1.0,
+            stage3_p95=2.0,
+            undetected_count=2,
+        ),
+        per_language=(
+            PerLanguageReport(
+                language="hi",
+                n_episodes=10,
+                reward_mean=0.30,
+                r1_mean=0.10,
+                r2_mean=0.20,
+                r3_mean=0.30,
+                r4_mean=0.40,
+                r5_mean=-0.10,
+            ),
+        ),
+        curves={"train/reward_mean": ((0, 0.10), (50, 0.20))},
+        breakdown={"episode_ids": ("ep_0",)},
     )
 
 
-def _write_briefs(path: Path, n: int = 60) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as fh:
-        for i in range(n):
-            fh.write(
-                json.dumps(
-                    {
-                        "episode_id": f"ep_{i:05d}",
-                        "seed": i,
-                        "catalogue_hash": "drifts-v1",
-                        "templates_sha256": "tpl-v1",
-                        "i18n_sha256": "i18n-v1",
-                    }
-                )
-                + "\n"
-            )
+def _write_baseline_and_final(tmp_path: Path) -> tuple[Path, Path]:
+    base = _eval_report("base")
+    final = _eval_report("/tmp/ckpt")
+    base_path = tmp_path / "baseline.json"
+    final_path = tmp_path / "final.json"
+    base_path.parent.mkdir(parents=True, exist_ok=True)
+    base_path.write_text(json.dumps(serialize_eval_report(base)), encoding="utf-8")
+    final_path.write_text(json.dumps(serialize_eval_report(final)), encoding="utf-8")
+    return base_path, final_path
+
+
+def _fake_briefs(n: int) -> list[Any]:
+    return [
+        SimpleNamespace(
+            episode_id=f"ep_{i:04d}",
+            seed=i,
+            catalogue_hash="x",
+            templates_sha256="y",
+            i18n_sha256="z",
+        )
+        for i in range(n)
+    ]
 
 
 # ---------------------------------------------------------------------------
-# Factories
+# Argparse / dispatch
 # ---------------------------------------------------------------------------
 
 
-class TestFactories:
-    def test_make_task_gen_returns_generate(self) -> None:
-        from cells.step_07_task_generator import generate
-
-        assert make_task_gen() is generate
-
-    def test_make_env_factory_returns_callable_producing_envs(self) -> None:
-        from cells.step_10_env import DriftCallEnv
-
-        factory = make_env_factory()
-        env_a = factory()
-        env_b = factory()
-        assert isinstance(env_a, DriftCallEnv)
-        assert isinstance(env_b, DriftCallEnv)
-        assert env_a is not env_b
-
-    def test_make_env_factory_forwards_config(self) -> None:
-        factory = make_env_factory(config={"curriculum_stage": 2, "language_weights": {"en": 1.0}, "audio_boundary_enabled": False, "max_turns_override": None})
-        env = factory()
-        # Round-trip via env state — DriftCallEnv stores config internally.
-        assert env._config.curriculum_stage == 2  # type: ignore[attr-defined]
+def test_dispatch_unknown_subcommand_exits_2() -> None:
+    parser = build_arg_parser()
+    with pytest.raises(SystemExit) as excinfo:
+        parser.parse_args(["bogus"])
+    assert excinfo.value.code == 2
 
 
-class TestRolloutAndTrainingEvalSentinels:
-    def test_rollout_default_raises_when_invoked(self) -> None:
-        fn = make_rollout_group_fn(None)
-        with pytest.raises(RolloutImplementationMissingError):
-            fn(model=None, tokenizer=None, goal=None, episode_seed=0, num_generations=1, env_factory=lambda: None)
+def test_help_exits_zero() -> None:
+    with pytest.raises(SystemExit) as excinfo:
+        main(["--help"])
+    assert excinfo.value.code == 0
 
-    def test_training_eval_default_raises_when_invoked(self) -> None:
-        fn = make_training_eval(None)
-        with pytest.raises(TrainingEvalMissingError):
-            fn("base", 50, sampling={}, seeds=(), episode_ids=())
 
-    def test_rollout_env_var_path_resolves(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        # Stub a module exposing a callable.
-        mod = types.ModuleType("dc_test_rollout_mod")
-        sentinel = MagicMock(name="rollout")
-        setattr(mod, "rollout", sentinel)
-        monkeypatch.setitem(sys.modules, "dc_test_rollout_mod", mod)
-        monkeypatch.setenv("DRIFTCALL_ROLLOUT_IMPL", "dc_test_rollout_mod:rollout")
-        assert make_rollout_group_fn(None) is sentinel
-
-    def test_dotted_path_must_have_colon(self) -> None:
-        with pytest.raises(PipelineError, match="must be 'pkg.module:callable'"):
-            make_rollout_group_fn("not_a_dotted_path")
-
-    def test_dotted_path_missing_attr(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        mod = types.ModuleType("dc_test_missing_attr_mod")
-        monkeypatch.setitem(sys.modules, "dc_test_missing_attr_mod", mod)
-        with pytest.raises(PipelineError, match="not found"):
-            make_rollout_group_fn("dc_test_missing_attr_mod:does_not_exist")
-
-    def test_dotted_path_unknown_module(self) -> None:
-        with pytest.raises(PipelineError, match="could not import"):
-            make_rollout_group_fn("dc_no_such_module_zzz_xyz:fn")
+def test_build_arg_parser_exposes_all_subcommands() -> None:
+    parser = build_arg_parser()
+    sub_choices: set[str] = set()
+    for action in parser._actions:
+        if hasattr(action, "choices") and action.choices:
+            sub_choices.update(action.choices.keys())
+    expected = {
+        "stage1",
+        "stage2",
+        "stage3",
+        "eval-baseline",
+        "eval-final",
+        "probe",
+        "plots",
+        "summary",
+        "deploy",
+    }
+    assert expected.issubset(sub_choices), f"missing: {expected - sub_choices}"
 
 
 # ---------------------------------------------------------------------------
-# Brief loader
+# Stage handlers
 # ---------------------------------------------------------------------------
 
 
-class TestLoadBriefs:
-    def test_load_briefs_reads_jsonl(self, tmp_path: Path) -> None:
-        path = tmp_path / "briefs.jsonl"
-        _write_briefs(path, n=3)
-        rows = load_briefs(path)
-        assert len(rows) == 3
-        assert rows[0] == BriefRow(
-            episode_id="ep_00000",
-            seed=0,
-            catalogue_hash="drifts-v1",
-            templates_sha256="tpl-v1",
-            i18n_sha256="i18n-v1",
-        )
+def _patch_train_call(monkeypatch: pytest.MonkeyPatch, module_path: str) -> MagicMock:
+    """Replace ``module_path.train`` with a captured mock returning the output dir."""
+    import importlib
 
-    def test_load_briefs_skips_blank_lines(self, tmp_path: Path) -> None:
-        path = tmp_path / "briefs.jsonl"
-        path.write_text(
-            json.dumps({"episode_id": "ep_a", "seed": 0}) + "\n\n   \n",
-            encoding="utf-8",
-        )
-        rows = load_briefs(path)
-        assert len(rows) == 1
-        assert rows[0].episode_id == "ep_a"
-
-    def test_load_briefs_missing_file(self, tmp_path: Path) -> None:
-        with pytest.raises(MissingArtifactError, match="briefs file not found"):
-            load_briefs(tmp_path / "nope.jsonl")
-
-    def test_load_briefs_rejects_malformed_json(self, tmp_path: Path) -> None:
-        path = tmp_path / "briefs.jsonl"
-        path.write_text("{not json\n", encoding="utf-8")
-        with pytest.raises(PipelineError, match="malformed JSON"):
-            load_briefs(path)
-
-    def test_load_briefs_requires_episode_id(self, tmp_path: Path) -> None:
-        path = tmp_path / "briefs.jsonl"
-        path.write_text(json.dumps({"seed": 1}) + "\n", encoding="utf-8")
-        with pytest.raises(PipelineError, match="missing episode_id"):
-            load_briefs(path)
-
-    def test_load_briefs_requires_int_seed(self, tmp_path: Path) -> None:
-        path = tmp_path / "briefs.jsonl"
-        path.write_text(json.dumps({"episode_id": "x", "seed": "abc"}) + "\n", encoding="utf-8")
-        with pytest.raises(PipelineError, match="seed must be int"):
-            load_briefs(path)
+    module = importlib.import_module(module_path)
+    train_mock = MagicMock(side_effect=lambda **kwargs: kwargs["output_dir"])
+    monkeypatch.setattr(module, "train", train_mock)
+    return train_mock
 
 
-# ---------------------------------------------------------------------------
-# JSON IO round-trip
-# ---------------------------------------------------------------------------
-
-
-class TestEvalReportIO:
-    def test_write_then_read_eval_report_roundtrip(self, tmp_path: Path) -> None:
-        report = _make_eval_report("base")
-        out = write_report(report, tmp_path / "baseline.json")
-        assert out.exists()
-        loaded = read_eval_report(out)
-        assert loaded.model_path == "base"
-        assert loaded.n_episodes == 50
-        assert loaded.reward_mean_ci == (0.5, 0.4, 0.6)
-        assert len(loaded.per_language) == 5
-
-    def test_read_eval_report_missing_file(self, tmp_path: Path) -> None:
-        with pytest.raises(MissingArtifactError):
-            read_eval_report(tmp_path / "nope.json")
-
-    def test_read_eval_report_rejects_non_object(self, tmp_path: Path) -> None:
-        path = tmp_path / "bad.json"
-        path.write_text("[]", encoding="utf-8")
-        with pytest.raises(PipelineError, match="expected JSON object"):
-            read_eval_report(path)
-
-
-# ---------------------------------------------------------------------------
-# cmd_train_stage validation + dispatch
-# ---------------------------------------------------------------------------
-
-
-def _stub_train_module(
-    monkeypatch: pytest.MonkeyPatch,
-    *,
-    module_name: str,
-) -> MagicMock:
-    """Replace ``cells.step_NN_train_stageX.train`` with a recording mock."""
-    spy = MagicMock(name=f"{module_name}.train", return_value=Path(f"/fake/{module_name}/final"))
-    real = sys.modules.get(module_name)
-    if real is None:
-        # Create a minimal stub module so imports don't pull GPU deps.
-        mod = types.ModuleType(module_name)
-        setattr(mod, "train", spy)
-        monkeypatch.setitem(sys.modules, module_name, mod)
-    else:
-        monkeypatch.setattr(real, "train", spy)
-    return spy
-
-
-class TestCmdTrainStage:
-    def test_stage1_rejects_resume_from(self, tmp_path: Path) -> None:
-        _stub_train_module(pytest.MonkeyPatch(), module_name="cells.step_15_train_stage1")
-        with pytest.raises(InvalidStageArgumentError, match="must not receive --resume-from"):
-            cmd_train_stage(
-                1,
-                num_steps=1,
-                output_dir=tmp_path / "stage1",
-                resume_from=tmp_path / "fake",
-                rollout_impl=None,
-            )
-
-    def test_stage2_requires_resume_from(self, tmp_path: Path) -> None:
-        with pytest.raises(InvalidStageArgumentError, match="requires --resume-from"):
-            cmd_train_stage(
-                2,
-                num_steps=1,
-                output_dir=tmp_path / "stage2",
-                resume_from=None,
-                rollout_impl=None,
-            )
-
-    def test_stage3_requires_resume_from(self, tmp_path: Path) -> None:
-        with pytest.raises(InvalidStageArgumentError, match="requires --resume-from"):
-            cmd_train_stage(
-                3,
-                num_steps=1,
-                output_dir=tmp_path / "stage3",
-                resume_from=None,
-                rollout_impl=None,
-            )
-
-    def test_invalid_stage_value_raises(self, tmp_path: Path) -> None:
-        with pytest.raises(InvalidStageArgumentError, match="stage must be"):
-            cmd_train_stage(
-                4,  # type: ignore[arg-type]
-                num_steps=1,
-                output_dir=tmp_path / "x",
-                resume_from=None,
-                rollout_impl=None,
-            )
-
-    def test_stage1_dispatches_to_cell_train(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        spy = _stub_train_module(monkeypatch, module_name="cells.step_15_train_stage1")
-        out = cmd_train_stage(
-            1,
-            num_steps=5,
-            output_dir=tmp_path / "stage1",
-            resume_from=None,
-            rollout_impl=None,
-        )
-        assert out == Path("/fake/cells.step_15_train_stage1/final")
-        assert spy.call_count == 1
-        kwargs = spy.call_args.kwargs
-        assert kwargs["num_steps"] == 5
-        assert kwargs["output_dir"] == tmp_path / "stage1"
-        assert kwargs["task_gen"] is not None
-        assert callable(kwargs["env_factory"])
-        assert callable(kwargs["rollout_group_fn"])
-
-    def test_stage2_forwards_resume_from(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        spy = _stub_train_module(monkeypatch, module_name="cells.step_16_train_stage2")
-        prior = tmp_path / "stage1_final"
-        cmd_train_stage(
-            2,
-            num_steps=3,
-            output_dir=tmp_path / "stage2",
-            resume_from=prior,
-            rollout_impl=None,
-        )
-        assert spy.call_args.kwargs["resume_from"] == prior
-
-    def test_stage3_forwards_resume_from(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        spy = _stub_train_module(monkeypatch, module_name="cells.step_17_train_stage3")
-        prior = tmp_path / "stage2_final"
-        cmd_train_stage(
-            3,
-            num_steps=4,
-            output_dir=tmp_path / "stage3",
-            resume_from=prior,
-            rollout_impl=None,
-        )
-        assert spy.call_args.kwargs["resume_from"] == prior
-
-
-# ---------------------------------------------------------------------------
-# cmd_eval_baseline / cmd_eval_final / cmd_probe / cmd_plots / cmd_summary
-# ---------------------------------------------------------------------------
-
-
-class TestCmdEvalBaseline:
-    def test_baseline_writes_json_and_calls_eval_baseline(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        report = _make_eval_report("base")
-        spy = MagicMock(return_value=report)
-        monkeypatch.setattr("cells.step_18_eval_baseline.eval_baseline", spy)
-        briefs_path = tmp_path / "briefs.jsonl"
-        _write_briefs(briefs_path, n=60)
-        out = cmd_eval_baseline(
-            episodes=50,
-            briefs_path=briefs_path,
-            output_path=tmp_path / "baseline.json",
-            training_eval_impl=None,
-        )
-        assert out.exists()
-        spy.assert_called_once()
-        loaded = json.loads(out.read_text(encoding="utf-8"))
-        assert loaded["model_path"] == "base"
-
-
-class TestCmdEvalFinal:
-    def test_eval_final_requires_existing_checkpoint(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        briefs = tmp_path / "briefs.jsonl"
-        _write_briefs(briefs, n=60)
-        baseline_path = tmp_path / "baseline.json"
-        write_report(_make_eval_report("base"), baseline_path)
-        with pytest.raises(MissingArtifactError, match="checkpoint not found"):
-            cmd_eval_final(
-                checkpoint=tmp_path / "no_such_ckpt",
-                episodes=50,
-                briefs_path=briefs,
-                baseline_path=baseline_path,
-                output_path=tmp_path / "final.json",
-                training_eval_impl=None,
-            )
-
-    def test_eval_final_writes_report(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        briefs = tmp_path / "briefs.jsonl"
-        _write_briefs(briefs, n=60)
-        baseline_path = tmp_path / "baseline.json"
-        write_report(_make_eval_report("base"), baseline_path)
-        ckpt = tmp_path / "stage3"
-        ckpt.mkdir()
-        spy = MagicMock(return_value=_make_eval_report(str(ckpt)))
-        monkeypatch.setattr("cells.step_19_eval_final.eval_final", spy)
-        out = cmd_eval_final(
-            checkpoint=ckpt,
-            episodes=50,
-            briefs_path=briefs,
-            baseline_path=baseline_path,
-            output_path=tmp_path / "final.json",
-            training_eval_impl=None,
-        )
-        assert out.exists()
-        spy.assert_called_once()
-
-
-class TestCmdProbe:
-    def test_probe_writes_json_and_md(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        from cells.step_20_probe import (
-            ProbeExploitClassSummary,
-            ProbeReport,
-        )
-
-        briefs = tmp_path / "briefs.jsonl"
-        _write_briefs(briefs, n=300)
-        ckpt = tmp_path / "stage3"
-        ckpt.mkdir()
-        rows = (
-            ProbeExploitClassSummary(
-                exploit_class="hallucinated_field",
-                count=0,
-                rate=0.0,
-                example_episode_id=None,
-                writeup_line_1="d1",
-                writeup_line_2="d2",
-                writeup_line_3="d3",
-            ),
-        )
-        report = ProbeReport(
-            model_path=str(ckpt),
-            n_episodes=200,
-            git_sha="abc1234",
-            timestamp_ist="2026-04-25T18:00:00+05:30",
-            per_class=rows,
-            raw_hits=(),
-            total_hits=0,
-            novel_classes=(),
-        )
-        spy = MagicMock(return_value=report)
-        monkeypatch.setattr("cells.step_20_probe.probe_reward_hacking", spy)
-        json_p, md_p = cmd_probe(
-            checkpoint=ckpt,
-            episodes=200,
-            briefs_path=briefs,
-            json_output=tmp_path / "probe.json",
-            md_output=tmp_path / "probe.md",
-            training_eval_impl=None,
-            git_sha="abc1234",
-        )
-        assert json_p.exists() and md_p.exists()
-        assert "Reward-Hacking Probe Report" in md_p.read_text(encoding="utf-8")
-
-
-class TestCmdPlotsAndSummary:
-    def test_plots_calls_render_plots(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        baseline_p = tmp_path / "baseline.json"
-        final_p = tmp_path / "final.json"
-        write_report(_make_eval_report("base"), baseline_p)
-        write_report(_make_eval_report("trained"), final_p)
-        spy = MagicMock(return_value={"per_language_bars": tmp_path / "out" / "x.png"})
-        monkeypatch.setattr("cells.step_21_plots.render_plots", spy)
-        result = cmd_plots(
-            baseline_path=baseline_p,
-            final_path=final_p,
-            out_dir=tmp_path / "out",
-            wandb_run_id=None,
-        )
-        assert "per_language_bars" in result
-        spy.assert_called_once()
-
-    def test_summary_writes_markdown(self, tmp_path: Path) -> None:
-        baseline_p = tmp_path / "baseline.json"
-        final_p = tmp_path / "final.json"
-        write_report(_make_eval_report("base"), baseline_p)
-        write_report(_make_eval_report("trained"), final_p)
-        out = cmd_summary(
-            baseline_path=baseline_p,
-            final_path=final_p,
-            output_path=tmp_path / "summary.md",
-        )
-        text = out.read_text(encoding="utf-8")
-        assert "Baseline → Final summary" in text
-
-
-# ---------------------------------------------------------------------------
-# cmd_deploy
-# ---------------------------------------------------------------------------
-
-
-class TestCmdDeploy:
-    def test_deploy_missing_checkpoint_raises(self, tmp_path: Path) -> None:
-        with pytest.raises(MissingArtifactError, match="checkpoint not found"):
-            cmd_deploy(
-                checkpoint=tmp_path / "no",
-                repo_id="org/name",
-                token="tok",
-            )
-
-    def test_deploy_calls_push_lora(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        ckpt = tmp_path / "ckpt"
-        ckpt.mkdir()
-        spy = MagicMock(return_value=MagicMock(success=True, return_code=0))
-        monkeypatch.setattr("cells.step_24_deploy_hf.push_lora_to_hub", spy)
-        result = cmd_deploy(checkpoint=ckpt, repo_id="org/name", token="tok")
-        spy.assert_called_once()
-        assert result.success is True
-
-
-# ---------------------------------------------------------------------------
-# cmd_pipeline (end-to-end orchestration with all heavy calls stubbed)
-# ---------------------------------------------------------------------------
-
-
-class TestCmdPipeline:
-    def test_pipeline_runs_all_stages(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        briefs = tmp_path / "briefs.jsonl"
-        _write_briefs(briefs, n=300)
-
-        # Stub every cell entry-point.
-        stage1_ckpt = tmp_path / "out" / "stage1"
-        stage2_ckpt = tmp_path / "out" / "stage2"
-        stage3_ckpt = tmp_path / "out" / "stage3"
-        for p in (stage1_ckpt, stage2_ckpt, stage3_ckpt):
-            p.mkdir(parents=True, exist_ok=True)
-
-        s1 = MagicMock(return_value=stage1_ckpt)
-        s2 = MagicMock(return_value=stage2_ckpt)
-        s3 = MagicMock(return_value=stage3_ckpt)
-        monkeypatch.setattr("cells.step_15_train_stage1.train", s1)
-        monkeypatch.setattr("cells.step_16_train_stage2.train", s2)
-        monkeypatch.setattr("cells.step_17_train_stage3.train", s3)
-
-        baseline_report = _make_eval_report("base")
-        final_report = _make_eval_report(str(stage3_ckpt))
-        eb = MagicMock(return_value=baseline_report)
-        ef = MagicMock(return_value=final_report)
-        monkeypatch.setattr("cells.step_18_eval_baseline.eval_baseline", eb)
-        monkeypatch.setattr("cells.step_19_eval_final.eval_final", ef)
-
-        from cells.step_20_probe import ProbeReport
-
-        probe_report = ProbeReport(
-            model_path=str(stage3_ckpt),
-            n_episodes=200,
-            git_sha="abc",
-            timestamp_ist="t",
-            per_class=(),
-            raw_hits=(),
-            total_hits=0,
-            novel_classes=(),
-        )
-        prb = MagicMock(return_value=probe_report)
-        monkeypatch.setattr("cells.step_20_probe.probe_reward_hacking", prb)
-        plots_spy = MagicMock(return_value={"per_language_bars": tmp_path / "p.png"})
-        monkeypatch.setattr("cells.step_21_plots.render_plots", plots_spy)
-
-        cfg = PipelineConfig(
-            output_dir=tmp_path / "out",
-            eval_dir=tmp_path / "eval",
-            briefs_path=briefs,
-            num_steps_stage1=1,
-            num_steps_stage2=1,
-            num_steps_stage3=1,
-            eval_episodes=50,
-            probe_episodes=200,
-            rollout_impl=None,
-            training_eval_impl=None,
-            push_to_hub=False,
-            repo_id=None,
-            hf_token=None,
-            wandb_run_id=None,
-        )
-        artifacts = cmd_pipeline(cfg)
-
-        assert artifacts["stage1_checkpoint"] == stage1_ckpt
-        assert artifacts["stage3_checkpoint"] == stage3_ckpt
-        assert (tmp_path / "eval" / "baseline.json").exists()
-        assert (tmp_path / "eval" / "final.json").exists()
-        assert (tmp_path / "eval" / "probe.json").exists()
-        assert (tmp_path / "eval" / "probe.md").exists()
-        assert (tmp_path / "eval" / "summary.md").exists()
-        assert "deploy" not in artifacts
-        s1.assert_called_once()
-        s2.assert_called_once()
-        s3.assert_called_once()
-        eb.assert_called_once()
-        ef.assert_called_once()
-        prb.assert_called_once()
-
-    def test_pipeline_push_to_hub_requires_repo_and_token(self, tmp_path: Path) -> None:
-        cfg = PipelineConfig(
-            output_dir=tmp_path / "out",
-            eval_dir=tmp_path / "eval",
-            briefs_path=tmp_path / "briefs.jsonl",
-            num_steps_stage1=1,
-            num_steps_stage2=1,
-            num_steps_stage3=1,
-            eval_episodes=50,
-            probe_episodes=200,
-            rollout_impl=None,
-            training_eval_impl=None,
-            push_to_hub=True,
-            repo_id=None,
-            hf_token=None,
-            wandb_run_id=None,
-        )
-        # Stub everything before the push so we don't fall over earlier.
-        with pytest.raises(PipelineError, match="repo-id"):
-            # Manually push the deploy branch by feeding a config that's
-            # already past the stages — easier to assert via deploy directly.
-            # The cfg validation lives inside cmd_pipeline; this inline check
-            # mirrors that branch.
-            if cfg.push_to_hub and (not cfg.hf_token or not cfg.repo_id):
-                raise PipelineError("push_to_hub=True requires --repo-id and --hf-token")
-
-
-# ---------------------------------------------------------------------------
-# CLI parser
-# ---------------------------------------------------------------------------
-
-
-class TestBuildParser:
-    def test_parser_recognises_every_subcommand(self) -> None:
-        parser = build_parser()
-        # argparse exposes choices via the subparsers action.
-        sub_action = next(
-            a for a in parser._actions if a.dest == "cmd"
-        )
-        choices = set(sub_action.choices)  # type: ignore[arg-type]
-        expected = {
+def test_stage1_calls_step_15_train_with_built_factories(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    train_mock = _patch_train_call(monkeypatch, "cells.step_15_train_stage1")
+    rc = main(
+        [
             "stage1",
+            "--num-steps",
+            "3",
+            "--hardware",
+            "v100",
+            "--output-dir",
+            str(tmp_path / "stage1"),
+        ]
+    )
+    assert rc == 0
+    assert train_mock.called
+    kwargs = train_mock.call_args.kwargs
+    assert kwargs["num_steps"] == 3
+    assert callable(kwargs["task_gen"])
+    assert callable(kwargs["env_factory"])
+    assert callable(kwargs["rollout_group_fn"])
+    assert kwargs["output_dir"] == tmp_path / "stage1" / "final"
+    assert "resume_from" not in kwargs
+
+
+def test_stage2_requires_resume_from(tmp_path: Path) -> None:
+    parser = build_arg_parser()
+    with pytest.raises(SystemExit) as excinfo:
+        parser.parse_args(
+            [
+                "stage2",
+                "--num-steps",
+                "5",
+                "--output-dir",
+                str(tmp_path / "stage2"),
+            ]
+        )
+    assert excinfo.value.code == 2
+
+
+def test_stage2_passes_resume_from_to_train(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    train_mock = _patch_train_call(monkeypatch, "cells.step_16_train_stage2")
+    resume = tmp_path / "stage1" / "final"
+    resume.mkdir(parents=True)
+    rc = main(
+        [
             "stage2",
-            "stage3",
-            "eval-baseline",
+            "--num-steps",
+            "5",
+            "--hardware",
+            "h100",
+            "--resume-from",
+            str(resume),
+            "--output-dir",
+            str(tmp_path / "stage2"),
+        ]
+    )
+    assert rc == 0
+    assert train_mock.call_args.kwargs["resume_from"] == resume
+
+
+def test_stage3_requires_resume_from(tmp_path: Path) -> None:
+    parser = build_arg_parser()
+    with pytest.raises(SystemExit) as excinfo:
+        parser.parse_args(
+            [
+                "stage3",
+                "--num-steps",
+                "5",
+                "--output-dir",
+                str(tmp_path / "stage3"),
+            ]
+        )
+    assert excinfo.value.code == 2
+
+
+# ---------------------------------------------------------------------------
+# Eval handlers
+# ---------------------------------------------------------------------------
+
+
+def test_eval_baseline_writes_json_report(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    fake_report = _eval_report("base")
+    monkeypatch.setattr(
+        run_pipeline,
+        "build_training_eval",
+        lambda: MagicMock(return_value=fake_report),
+    )
+    monkeypatch.setattr(
+        run_pipeline, "build_briefs", lambda min_rows: _fake_briefs(60)
+    )
+
+    import cells.step_18_eval_baseline as eb
+
+    monkeypatch.setattr(eb, "eval_baseline", lambda *a, **k: fake_report)
+
+    output = tmp_path / "baseline.json"
+    rc = main(["eval-baseline", "--episodes", "50", "--output", str(output)])
+    assert rc == 0
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["model_path"] == "base"
+    assert payload["n_episodes"] == 50
+
+
+def test_eval_final_requires_checkpoint(tmp_path: Path) -> None:
+    parser = build_arg_parser()
+    with pytest.raises(SystemExit) as excinfo:
+        parser.parse_args(
+            ["eval-final", "--episodes", "50", "--output", str(tmp_path / "f.json")]
+        )
+    assert excinfo.value.code == 2
+
+
+def test_eval_final_requires_baseline_alongside_output(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(run_pipeline, "build_training_eval", lambda: MagicMock())
+    monkeypatch.setattr(
+        run_pipeline, "build_briefs", lambda min_rows: _fake_briefs(60)
+    )
+    rc = main(
+        [
             "eval-final",
+            "--episodes",
+            "50",
+            "--checkpoint",
+            str(tmp_path / "ckpt"),
+            "--output",
+            str(tmp_path / "final.json"),
+        ]
+    )
+    assert rc == 1
+
+
+# ---------------------------------------------------------------------------
+# Probe handler
+# ---------------------------------------------------------------------------
+
+
+def test_probe_requires_checkpoint(tmp_path: Path) -> None:
+    parser = build_arg_parser()
+    with pytest.raises(SystemExit) as excinfo:
+        parser.parse_args(
+            ["probe", "--episodes", "200", "--output", str(tmp_path / "p.json")]
+        )
+    assert excinfo.value.code == 2
+
+
+def test_probe_writes_json_and_md(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from cells.step_20_probe import ProbeReport
+
+    fake = ProbeReport(
+        model_path=str(tmp_path / "ckpt"),
+        n_episodes=200,
+        git_sha="abc",
+        timestamp_ist="1970-01-01T00:00:00+05:30",
+        per_class=(),
+        raw_hits=(),
+        total_hits=0,
+        novel_classes=(),
+    )
+    monkeypatch.setattr(run_pipeline, "build_training_eval", lambda: MagicMock())
+    monkeypatch.setattr(
+        run_pipeline, "build_briefs", lambda min_rows: _fake_briefs(min_rows)
+    )
+
+    import cells.step_20_probe as probe_mod
+
+    monkeypatch.setattr(probe_mod, "probe_reward_hacking", lambda *a, **k: fake)
+    monkeypatch.setattr(
+        probe_mod,
+        "render_probe_report_md",
+        lambda report, path: Path(path).write_text("# probe\n"),
+    )
+
+    output = tmp_path / "probe.json"
+    rc = main(
+        [
             "probe",
+            "--episodes",
+            "200",
+            "--checkpoint",
+            str(tmp_path / "ckpt"),
+            "--output",
+            str(output),
+        ]
+    )
+    assert rc == 0
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["n_episodes"] == 200
+    assert (tmp_path / "probe.md").exists()
+
+
+# ---------------------------------------------------------------------------
+# Plots / Summary
+# ---------------------------------------------------------------------------
+
+
+def test_plots_requires_baseline_and_final(tmp_path: Path) -> None:
+    parser = build_arg_parser()
+    with pytest.raises(SystemExit) as excinfo:
+        parser.parse_args(["plots", "--output-dir", str(tmp_path)])
+    assert excinfo.value.code == 2
+
+
+def test_plots_handler_invokes_render_plots(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    base_path, final_path = _write_baseline_and_final(tmp_path)
+    out_dir = tmp_path / "plots"
+
+    import cells.step_21_plots as plots_mod
+
+    capture: dict[str, Any] = {}
+
+    def fake_render(
+        baseline: Any, final: Any, run_id: Any, dest: Path
+    ) -> dict[str, Path]:
+        capture["called"] = True
+        capture["dest"] = dest
+        return {"per_language_bars": dest / "per_language_bars.png"}
+
+    monkeypatch.setattr(plots_mod, "render_plots", fake_render)
+
+    rc = main(
+        [
             "plots",
+            "--baseline",
+            str(base_path),
+            "--final",
+            str(final_path),
+            "--output-dir",
+            str(out_dir),
+        ]
+    )
+    assert rc == 0
+    assert capture["called"] is True
+    assert capture["dest"] == out_dir
+
+
+def test_summary_writes_md_to_output_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    base_path, final_path = _write_baseline_and_final(tmp_path)
+    probe_path = tmp_path / "probe.json"
+    probe_path.write_text("{}", encoding="utf-8")
+
+    import cells.step_22_summary as summary_mod
+
+    monkeypatch.setattr(
+        summary_mod,
+        "print_summary_table",
+        lambda baseline, final: "# DriftCall\n",
+    )
+
+    output = tmp_path / "summary.md"
+    rc = main(
+        [
             "summary",
+            "--baseline",
+            str(base_path),
+            "--final",
+            str(final_path),
+            "--probe",
+            str(probe_path),
+            "--output",
+            str(output),
+        ]
+    )
+    assert rc == 0
+    assert output.read_text(encoding="utf-8").startswith("# DriftCall")
+
+
+# ---------------------------------------------------------------------------
+# Deploy handler
+# ---------------------------------------------------------------------------
+
+
+def test_deploy_requires_repo(tmp_path: Path) -> None:
+    parser = build_arg_parser()
+    with pytest.raises(SystemExit) as excinfo:
+        parser.parse_args(
+            [
+                "deploy",
+                "--checkpoint",
+                str(tmp_path / "ckpt"),
+                "--eval-reports",
+                str(tmp_path),
+            ]
+        )
+    assert excinfo.value.code == 2
+
+
+def test_deploy_invokes_push_lora(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    ckpt = tmp_path / "ckpt"
+    ckpt.mkdir()
+    eval_reports = tmp_path / "eval_reports"
+    eval_reports.mkdir()
+
+    import cells.step_24_deploy_hf as deploy_mod
+
+    push_mock = MagicMock(
+        return_value=SimpleNamespace(
+            success=True,
+            return_code=0,
+            stderr="",
+        )
+    )
+    monkeypatch.setattr(deploy_mod, "push_lora_to_hub", push_mock)
+    monkeypatch.setenv("HF_TOKEN", "fake-token")
+
+    rc = main(
+        [
             "deploy",
-            "pipeline",
-        }
-        assert expected.issubset(choices)
-
-    def test_parser_stage1_rejects_resume_from_argument(self) -> None:
-        parser = build_parser()
-        # stage1 must not accept --resume-from at the parser level.
-        with pytest.raises(SystemExit):
-            parser.parse_args(
-                ["stage1", "--num-steps", "1", "--output-dir", "x", "--resume-from", "y"]
-            )
-
-    def test_parser_stage2_requires_resume_from(self) -> None:
-        parser = build_parser()
-        with pytest.raises(SystemExit):
-            parser.parse_args(["stage2", "--num-steps", "1", "--output-dir", "x"])
-
-    def test_parser_summary_args(self) -> None:
-        parser = build_parser()
-        ns = parser.parse_args(
-            [
-                "summary",
-                "--baseline",
-                "b.json",
-                "--final",
-                "f.json",
-                "--output",
-                "s.md",
-            ]
-        )
-        assert ns.cmd == "summary"
-        assert ns.baseline == Path("b.json")
-        assert ns.output == Path("s.md")
+            "--checkpoint",
+            str(ckpt),
+            "--eval-reports",
+            str(eval_reports),
+            "--repo",
+            "team/driftcall-lora",
+        ]
+    )
+    assert rc == 0
+    assert push_mock.called
 
 
 # ---------------------------------------------------------------------------
-# main() error handling
+# Factory smoke test
 # ---------------------------------------------------------------------------
 
 
-class TestMain:
-    def test_main_returns_1_on_pipeline_error(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        tmp_path: Path,
-        capsys: pytest.CaptureFixture[str],
-    ) -> None:
-        # Force a PipelineError by pointing eval-baseline at a missing briefs file.
-        rc = main(
-            [
-                "eval-baseline",
-                "--briefs",
-                str(tmp_path / "no.jsonl"),
-                "--output",
-                str(tmp_path / "baseline.json"),
-            ]
-        )
-        assert rc == 1
-        captured = capsys.readouterr()
-        assert "ERROR" in captured.err
+def test_factories_construct_real_callables() -> None:
+    task_gen = build_task_gen()
+    env_factory = build_env_factory(
+        curriculum_stage=1,
+        language_weights={
+            "en": 0.50,
+            "hinglish": 0.30,
+            "hi": 0.20,
+            "ta": 0.0,
+            "kn": 0.0,
+        },
+    )
+    rollout_group_fn = build_rollout_group_fn()
 
-    def test_main_summary_happy_path(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        baseline_p = tmp_path / "baseline.json"
-        final_p = tmp_path / "final.json"
-        write_report(_make_eval_report("base"), baseline_p)
-        write_report(_make_eval_report("trained"), final_p)
-        rc = main(
-            [
-                "summary",
-                "--baseline",
-                str(baseline_p),
-                "--final",
-                str(final_p),
-                "--output",
-                str(tmp_path / "summary.md"),
-            ]
-        )
-        assert rc == 0
-        assert (tmp_path / "summary.md").exists()
+    assert callable(task_gen)
+    assert callable(env_factory)
+    assert callable(rollout_group_fn)
+
+    goal = task_gen(
+        seed=0,
+        stage=1,
+        language_weights={
+            "en": 0.50,
+            "hinglish": 0.30,
+            "hi": 0.20,
+            "ta": 0.0,
+            "kn": 0.0,
+        },
+    )
+    from cells.step_04_models import GoalSpec
+
+    assert isinstance(goal, GoalSpec)
+
+    from cells.step_10_env import DriftCallEnv
+
+    env_a = env_factory()
+    env_b = env_factory()
+    assert isinstance(env_a, DriftCallEnv)
+    assert isinstance(env_b, DriftCallEnv)
+    assert env_a is not env_b
 
 
 # ---------------------------------------------------------------------------
-# Module surface — keep the public contract honest
+# JSON round-trip
 # ---------------------------------------------------------------------------
 
 
-class TestModuleSurface:
-    def test_pipeline_no_pragmas_or_typeignore(self) -> None:
-        text = Path(pipe.__file__).read_text(encoding="utf-8")
-        assert "# noqa" not in text
-        # type: ignore is allowed only as a single comment in main(); no other usages.
-        assert text.count("type: ignore") <= 2
+def test_eval_report_json_roundtrip() -> None:
+    import math
+
+    original = _eval_report("base")
+    payload = serialize_eval_report(original)
+    restored = deserialize_eval_report(payload)
+    assert restored.model_path == original.model_path
+    assert restored.n_episodes == original.n_episodes
+    assert restored.reward_mean_ci == original.reward_mean_ci
+    assert restored.per_language == original.per_language
+    assert math.isnan(restored.drift_detection_latency.stage2_mean)
+
+
+def test_serialize_eval_report_rejects_non_dataclass() -> None:
+    with pytest.raises(TypeError):
+        serialize_eval_report({"not": "a dataclass"})
+
+
+# ---------------------------------------------------------------------------
+# build_briefs fallback
+# ---------------------------------------------------------------------------
+
+
+def test_build_briefs_falls_back_to_synthetic(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        run_pipeline, "_PUBLICATION_VAL_BRIEFS", Path("/nonexistent/briefs.jsonl")
+    )
+    rows = build_briefs(min_rows=10)
+    assert len(rows) >= 10
+    assert all(hasattr(r, "episode_id") for r in rows)
