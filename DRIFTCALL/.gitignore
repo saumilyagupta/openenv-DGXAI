@@ -14,8 +14,10 @@ env/
 .env
 .env.*
 !.env.example
-# Local secrets fallback (wandb API key etc.) — never commit.
-cells/_secrets.py
+# cells/_secrets.py IS tracked — user runs in a private repo and accepts the
+# risk of hardcoded credentials. Rotate by editing the file then re-pushing.
+# To scrub from history if repo ever goes public:
+#   git filter-repo --path cells/_secrets.py --invert-paths
 
 # Editor / OS
 .DS_Store
