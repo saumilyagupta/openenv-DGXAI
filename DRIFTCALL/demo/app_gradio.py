@@ -1,7 +1,7 @@
 """DriftCall demo Space — Gradio 5.x entrypoint.
 
 Implements ``docs/modules/deploy_demo_space.md`` (sealed). Single-file demo:
-mic → ASR → DriftCallEnv → Gemma 4 E2B (base | trained LoRA) → TTS → speaker
+mic → ASR → DriftCallEnv → Gemma 3n E2B (base | trained LoRA) → TTS → speaker
 with a live trace panel and a manual drift-injection dropdown.
 
 Hard rules:
@@ -54,8 +54,8 @@ _TRACE_COLUMNS: tuple[str, ...] = (
     "tool_response_preview",
     "reward_delta",
 )
-_BASE_MODEL_ID_DEFAULT: str = "unsloth/gemma-4-E2B-it-bnb-4bit"
-_TRAINED_ADAPTER_ID_DEFAULT: str = "driftcall/gemma-4-e2b-driftcall-lora"
+_BASE_MODEL_ID_DEFAULT: str = "unsloth/gemma-3n-E2B-it"
+_TRAINED_ADAPTER_ID_DEFAULT: str = "driftcall/gemma-3n-e2b-driftcall-lora"
 _HARDWARE_ENV_VAR: str = "DRIFTCALL_HARDWARE"
 _HARDWARE_FALLBACK_ENV_VAR: str = "DRIFTCALL_HARDWARE_FALLBACK"
 _TRACE_PREVIEW_LEN: int = 120

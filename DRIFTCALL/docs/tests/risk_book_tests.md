@@ -206,7 +206,7 @@ The test suite explicitly enumerates the 8 CLAUDE.md §11 items and asserts a li
 
 | CLAUDE.md §11 item | Kind | Register entry | Test(s) |
 |---|---|---|---|
-| #1 Gemma 4 E2B smoke fails | Escalate | R13 | U23, I8 |
+| #1 Gemma 3n E2B smoke fails | Escalate | R13 | U23, I8 |
 | #2 `openenv validate` fails 3× | Escalate | R11 | U23, I8 |
 | #3 Stage-1 R1 < 0.4 at step 100 | Escalate | R14 | U14, U23, I8 |
 | #4 Critic flags DESIGN.md flaw | Escalate | R15 (process path) | U23, I8 (process-level spec-conflict per risk_book.md §7.5) |

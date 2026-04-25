@@ -389,7 +389,7 @@ All fixtures live in `DRIFTCALL/tests/conftest.py` unless noted. Pinned-hash fix
 
 **Scope:** `tests/test_pitch_demo.py`.
 
-**Generated:** Screen-recorded once against the base (untrained) Gemma 4 E2B running against a drift-triggered episode; saved to `pitch_assets/video/broll/`. Sha256 computed at freeze.
+**Generated:** Screen-recorded once against the base (untrained) Gemma 3n E2B running against a drift-triggered episode; saved to `pitch_assets/video/broll/`. Sha256 computed at freeze.
 
 **Used by:** U25, I11.
 

@@ -5,7 +5,7 @@ Implements ``docs/modules/deploy_demo_space.md`` §2.2-§2.6 and DESIGN.md §11.
 
 This module is the **storytelling surface**: a Gradio 5.x ``gr.Blocks`` UI that
 lets a judge speak a brief, watch the trace panel, and toggle between the base
-Gemma 4 E2B model and the trained LoRA adapter without restarting the process.
+Gemma 3n E2B model and the trained LoRA adapter without restarting the process.
 
 Design contract (deploy_demo_space.md):
   * Mic input via ``gr.Audio(sources=["microphone"])`` (§2.2).
@@ -260,8 +260,8 @@ class ModelLoader:
     def __init__(
         self,
         *,
-        base_model_id: str = "unsloth/gemma-4-E2B-it-bnb-4bit",
-        trained_adapter_id: str = "driftcall/gemma-4-e2b-driftcall-lora",
+        base_model_id: str = "unsloth/gemma-3n-E2B-it",
+        trained_adapter_id: str = "driftcall/gemma-3n-e2b-driftcall-lora",
         max_seq_length: int = 4096,
     ) -> None:
         self._base_model_id = base_model_id

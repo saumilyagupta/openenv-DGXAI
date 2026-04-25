@@ -322,7 +322,7 @@ test_integration_render_plots_without_wandb
 ```
 @pytest.mark.cuda
 test_integration_real_training_eval_delegation
-  Setup:   real Gemma 4 E2B + toy LoRA adapter on a 2-episode smoke slice.
+  Setup:   real Gemma 3n E2B + toy LoRA adapter on a 2-episode smoke slice.
   Assert:  run_eval returns a valid EvalReport; no exception.
 ```
 

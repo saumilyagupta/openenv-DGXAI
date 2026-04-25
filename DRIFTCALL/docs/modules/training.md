@@ -11,7 +11,7 @@
 
 ## 1. Purpose
 
-The training module is the **RL optimizer** for DriftCall. It fine-tunes `unsloth/gemma-4-E2B-it-bnb-4bit` via **GRPO with group-relative advantages** (TRL 0.23+ `GRPOTrainer`, Unsloth 2026.4.5+ `FastModel`) against the DriftCall environment so the model learns to (a) tool-use fluently, (b) detect mid-episode schema drift, (c) adapt tool calls to the post-drift schema, and (d) maintain calibrated confidence under uncertainty.
+The training module is the **RL optimizer** for DriftCall. It fine-tunes `unsloth/gemma-3n-E2B-it` via **GRPO with group-relative advantages** (TRL 0.23+ `GRPOTrainer`, Unsloth 2026.4.5+ `FastModel`) against the DriftCall environment so the model learns to (a) tool-use fluently, (b) detect mid-episode schema drift, (c) adapt tool calls to the post-drift schema, and (d) maintain calibrated confidence under uncertainty.
 
 This module exists to:
 
@@ -19,7 +19,7 @@ This module exists to:
 2. **Run the 3-stage curriculum** (DESIGN.md §10.3): 150 warmup steps (no drift) → 200 single-drift steps → 150 compound-drift steps. Total **500 GRPO steps × G=8 rollouts × ~6 turns ≈ 24,000 individual agent trajectories** (DESIGN.md §10.3).
 3. **Stay V100-safe.** Gemma 4 is BF16-native; V100 is FP16-only. Training runs in 4-bit NF4 + FP16 autocast with gradient checkpointing and `use_bias_correction_kl=True` to survive KL estimation numerics (DESIGN.md §14 risk #1, #2).
 4. **Checkpoint without corrupting the 4-bit base.** Save LoRA adapters via `save_pretrained(safe_serialization=True)`; never naively upcast 4-bit→16-bit + merge for re-training (DESIGN.md §10.5, CLAUDE.md §9).
-5. **Produce the before/after numbers** that drive the pitch: a `baseline` `EvalReport` (untrained Gemma 4 E2B on 50 held-out episodes) and a `final` `EvalReport` (trained LoRA on the same 50), with per-reward means, drift-detection-latency curve, and per-language breakdown (DESIGN.md §15 pitch 1:00–2:00 segment).
+5. **Produce the before/after numbers** that drive the pitch: a `baseline` `EvalReport` (untrained Gemma 3n E2B on 50 held-out episodes) and a `final` `EvalReport` (trained LoRA on the same 50), with per-reward means, drift-detection-latency curve, and per-language breakdown (DESIGN.md §15 pitch 1:00–2:00 segment).
 
 No audio in training. Text-in / text-out only — ASR/TTS are env-boundary concerns (DESIGN.md §9.4). No LLM-as-judge anywhere in the pipeline — the env is the judge (CLAUDE.md §0.5).
 
@@ -355,48 +355,52 @@ def build_grpo_config(
 ### 3.1 Model + adapter construction (DESIGN.md §10.1)
 
 ```python
-from unsloth import FastModel
 import torch
+from unsloth import FastModel
+
+# hardware is "v100" or "h100" — set via DRIFTCALL_HARDWARE env var
+dtype = torch.float16 if hardware == "v100" else torch.bfloat16
 
 model, tokenizer = FastModel.from_pretrained(
-    "unsloth/gemma-4-E2B-it-bnb-4bit",
+    "unsloth/gemma-3n-E2B-it",
     max_seq_length=4096,
     load_in_4bit=True,
-    dtype=torch.float16,             # explicit FP16 for V100 safety
+    dtype=dtype,    # FP16 on V100 (sm_70), BF16 on H100 (sm_90)
 )
 
+# Gemma 3n is multimodal (text + vision + audio towers).
+# Freeze vision/audio; train only language + attention + MLP.
 model = FastModel.get_peft_model(
     model,
     r=16,
     lora_alpha=32,
-    target_modules=[
-        "q_proj", "k_proj", "v_proj", "o_proj",
-        "gate_proj", "up_proj", "down_proj",
-    ],
+    lora_dropout=0.05,
+    finetune_vision_layers=False,        # keep vision tower frozen
+    finetune_language_layers=True,       # train text language stack
+    finetune_attention_modules=True,     # train attention modules
+    finetune_mlp_modules=True,           # train MLP modules
     use_gradient_checkpointing="unsloth",
     random_state=3407,
 )
 ```
 
 **Invariants:**
-- `model.config.torch_dtype == torch.float16` on V100 (checked at load; raise if BF16 slipped through).
-- Base weights are 4-bit NF4; only LoRA adapters (r=16, α=32, 7 target modules) are trainable.
-- Gemma 4 E2B context is 128K (DESIGN.md §0 TL;DR); we use 4096 here — enough for a 6-turn episode with tool-call JSON payloads.
+- `next(model.parameters()).dtype == torch.float16` on V100 (checked at load; `BF16SlippageError` halts if BF16 slipped through).
+- `next(model.parameters()).dtype == torch.bfloat16` on H100 (checked at load; `FP16SlippageError` halts if FP16 slipped through).
+- Base weights are 4-bit Dynamic NF4; only LoRA adapters (r=16, α=32, language + attention + MLP layers) are trainable. Vision/audio towers remain frozen.
+- Gemma 3n E2B context is 32K; we use 4096 here — enough for a 6-turn episode with tool-call JSON payloads.
 
-**BF16-slippage assertion (runs at `train()` entry, before any rollout):**
+**Dtype-slippage assertion (runs at `train()` entry, before any rollout):**
 
 ```python
-# Immediately after FastModel.from_pretrained(..., dtype=torch.float16)
-_first_param_dtype = next(model.parameters()).dtype
-assert _first_param_dtype == torch.float16, (
-    f"BF16 slipped through: V100 unsafe. "
-    f"next(model.parameters()).dtype == {_first_param_dtype}, expected torch.float16. "
-    f"Root cause: Unsloth auto-picked BF16 despite dtype=torch.float16 kwarg. "
-    f"Halt training; do NOT proceed on V100."
-)
+# Immediately after FastModel.from_pretrained(..., dtype=dtype)
+from cells.step_12_gemma_boot import assert_dtype_for_hardware
+assert_dtype_for_hardware(model, hardware)
+# Raises BF16SlippageError on V100 if param is bfloat16.
+# Raises FP16SlippageError on H100 if param is float16.
 ```
 
-The assertion fires on any trainable or non-trainable parameter returning `torch.bfloat16`. This is a hard halt — V100 (sm_70) has no BF16 tensor cores, and silently running BF16 via software emulation causes ~10× slowdown AND the numerical-instability patterns catalogued in §7a. The check runs **once**, at `train()` entry, before `GRPOTrainer` is constructed, before any optimizer state is built — so the assertion message fires cleanly on misconfiguration.
+The assertion fires once at `train()` entry, before `GRPOTrainer` is constructed, before any optimizer state is built. V100 (sm_70) has no BF16 tensor cores — running BF16 via software emulation causes ~10× slowdown AND the numerical-instability patterns in §7a. H100 (sm_90) has native BF16 — running FP16 misses the tensor cores and may cause gradient underflow.
 
 ### 3.2 Episode rollout semantics (DESIGN.md §3.2, §7.4)
 
@@ -563,13 +567,13 @@ new_beta = clamp(new_beta, beta_min, beta_max)
 | `fp16` / `bf16` | `fp16=True`, `bf16=False` | `fp16=False`, `bf16=True` |
 | `optim` | `paged_adamw_8bit` | `adamw_torch_fused` |
 | `attn_implementation` | *(unset, uses model default)* | `flash_attention_3` |
-| LoRA dtype assertion (`step_12`) | `torch.float16` via `assert_fp16_dtype` | **N/A**: `boot_gemma` runs the dtype check only under the V100 configuration. An H100 boot helper can skip it once the caller confirms BF16 is safe. |
+| LoRA dtype assertion (`step_12`) | `torch.float16` via `assert_dtype_for_hardware(model, "v100")` → `BF16SlippageError` | `torch.bfloat16` via `assert_dtype_for_hardware(model, "h100")` → `FP16SlippageError` |
 
 **Invariants preserved across modes.** `beta`, `num_generations`, `gradient_accumulation_steps`, `use_bias_correction_kl`, `gradient_checkpointing`, `max_prompt_length`, `max_completion_length`, `warmup_ratio` are identical on both paths. See `test_hardware_h100_invariants_still_hold`.
 
 **`assert_config_invariants` hardware inference.** When the `hardware=` kwarg is omitted (V100-era callers), the checker infers mode from `config.bf16`: truthy → H100 rules, else → V100 rules. This keeps legacy callers wire-compatible with no changes.
 
-**`LORA_DROPOUT = 0.05`** (step_12). LoRA dropout was silently zero before; 0.05 matches `unsloth/gemma-4-E2B-it` reference notebooks and reduces small-run overfitting on the 500-step curriculum. Threaded through `BootConfig.lora_dropout` → `FastModel.get_peft_model(lora_dropout=...)`.
+**`LORA_DROPOUT = 0.05`** (step_12). LoRA dropout was silently zero before; 0.05 matches `unsloth/gemma-3n-E2B-it` reference notebooks and reduces small-run overfitting on the 500-step curriculum. Threaded through `BootConfig.lora_dropout` → `FastModel.get_peft_model(lora_dropout=...)`.
 
 ### 3.4 Monitoring — WandB columns (DESIGN.md §10.4)
 
@@ -649,7 +653,7 @@ tokenizer.save_pretrained("checkpoints/stage{N}_final")
 
 # (b) HF Hub push (adapter-only; base stays 4-bit on Hub).
 model.push_to_hub(
-    "<team>/gemma-4-e2b-driftcall-lora",
+    "<team>/gemma-3n-e2b-driftcall-lora",
     safe_serialization=True,
 )
 
@@ -810,7 +814,7 @@ class CheckpointMeta:
     cumulative_steps: int                      # across stages (for WandB resume)
     wall_clock_seconds: float
     reward_mean_at_save: float
-    base_model_id: str                         # "unsloth/gemma-4-E2B-it-bnb-4bit"
+    base_model_id: str                         # "unsloth/gemma-3n-E2B-it"
     unsloth_version: str                       # e.g. "2026.4.5"
     trl_version: str                           # e.g. "0.23.1"
     torch_version: str                         # e.g. "2.5.1"
@@ -867,7 +871,7 @@ All training-specific exceptions subclass `TrainingError(Exception)`.
 - **Reads `driftcall.task_generator.generate`** — called once per GRPO group to produce the shared `GoalSpec`.
 - **Reads `driftcall.models`** — `GoalSpec`, `DriftCallAction`, `ActionType`, `Episode`, `Rewards`, `LanguageCode`.
 - **Writes to `checkpoints/stage{N}_final/`** — adapter + tokenizer + `driftcall_meta.json`.
-- **Writes to HF Hub repo `<team>/gemma-4-e2b-driftcall-lora`** — adapter only, `safe_serialization=True`.
+- **Writes to HF Hub repo `<team>/gemma-3n-e2b-driftcall-lora`** — adapter only, `safe_serialization=True`.
 
 ### 6.3 Hardware
 
@@ -879,7 +883,7 @@ All training-specific exceptions subclass `TrainingError(Exception)`.
 
 | Component | Estimate (GB) | Notes |
 |---|---|---|
-| Gemma 4 E2B base (4-bit NF4) | 2.0 | 2B params × 0.5 bytes/param + bnb quant metadata |
+| Gemma 3n E2B base (4-bit NF4) | 2.0 | 2B params × 0.5 bytes/param + bnb quant metadata |
 | LoRA adapters (r=16, α=32, 7 modules) + grads | 0.2 | ~20M trainable params × (FP16 weight + FP16 grad) ≈ 80 MB × 2 |
 | Optimizer state (`paged_adamw_8bit`) | 0.3 | 8-bit moments for adapter params; paged to CPU on overflow |
 | KV cache (G=8 parallel generations × 4096 seq) | 8.0 | Dominant for generate(); scales linearly in G and seq-len |
@@ -1048,7 +1052,7 @@ from __future__ import annotations
 
 # 1. Load base 4-bit Gemma + attach Stage-1 adapters.
 model, tokenizer = FastModel.from_pretrained(
-    "unsloth/gemma-4-E2B-it-bnb-4bit",
+    "unsloth/gemma-3n-E2B-it",
     max_seq_length=4096, load_in_4bit=True, dtype=torch.float16,
 )
 from peft import PeftModel

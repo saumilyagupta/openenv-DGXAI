@@ -14,8 +14,8 @@ Stage-3 contract:
     NEVER naive 4-bit -> 16-bit merge (DESIGN.md §10.5, CLAUDE.md §9).
   - WandB primary monitoring; ``LocalCSVCallback`` mirrors every ``on_log``
     when ``WANDB_MODE=offline`` or the wandb upload flakes (training.md §2.4.1).
-  - BF16-slippage assertion fires at entry via ``assert_fp16_dtype`` from
-    step_12 (V100 safety; training.md §3.1).
+  - Dtype-slippage assertion fires at entry via ``assert_dtype_for_hardware``
+    from step_12 (V100 -> FP16, H100 -> BF16 safety; training.md §3.1).
 
 Heavy imports (``torch``, ``trl``, ``unsloth``, ``wandb``, ``peft``) are
 deferred inside functions so this module imports cleanly on CPU-only CI.
@@ -29,7 +29,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, cast
 
-from cells.step_12_gemma_boot import BootConfig, assert_fp16_dtype
+from cells.step_12_gemma_boot import BootConfig, assert_dtype_for_hardware
 from cells.step_13_grpo_config import build_grpo_config
 from cells.step_14_custom_trainer import EpisodeDatasetAdapter, LanguageCode
 
@@ -218,25 +218,29 @@ def save_checkpoint(
 
 
 def _load_base_model(boot_config: BootConfig | None) -> tuple[Any, Any]:
-    """Load the 4-bit Gemma base model (no LoRA attach) and verify FP16.
+    """Load the 4-bit Gemma 3n base model (no LoRA attach) and verify dtype.
 
     Stage 3 must NOT call :func:`cells.step_12_gemma_boot.boot_gemma`
     because that helper attaches a *fresh* LoRA via ``get_peft_model``;
     we instead load the base only, then wrap with the saved Stage-2
     adapters via :func:`_load_stage2_adapters` (training.md §3.1, §3.6).
+
+    Precision is hardware-aware: V100 -> FP16, H100 -> BF16.
     """
     cfg = boot_config if boot_config is not None else BootConfig()
 
     import torch
     from unsloth import FastModel
 
+    dtype = torch.float16 if cfg.hardware == "v100" else torch.bfloat16
+
     model, tokenizer = FastModel.from_pretrained(
         cfg.base_model_id,
         max_seq_length=cfg.max_seq_length,
         load_in_4bit=cfg.load_in_4bit,
-        dtype=torch.float16,
+        dtype=dtype,
     )
-    assert_fp16_dtype(model)
+    assert_dtype_for_hardware(model, cfg.hardware)
     return model, tokenizer
 
 
@@ -265,7 +269,7 @@ def train(
     """Run GRPO Stage-3 (compound drift) for ``num_steps`` updates.
 
     Behaviour (training.md §3.5 stage transitions):
-      1. Load Gemma 4 E2B base in 4-bit (FP16-pinned) — no fresh LoRA.
+      1. Load Gemma 3n E2B base in 4-bit (hardware-aware precision) — no fresh LoRA.
       2. Assert FP16 dtype on the base (BF16-slippage halt).
       3. Attach Stage-2 LoRA adapters via ``PeftModel.from_pretrained``.
       4. Build :class:`GRPOConfig` for stage 3 (warmup_ratio=0.0).
@@ -289,7 +293,7 @@ def train(
     base_model, tokenizer = _load_base_model(boot_config)
     model = _load_stage2_adapters(base_model, plan.resume_from)
 
-    config = build_grpo_config(stage=plan.stage, resume_output_dir=plan.output_dir)
+    config = build_grpo_config(stage=plan.stage, resume_output_dir=plan.output_dir, max_steps=plan.num_steps)
 
     if task_gen is None or env_factory is None or rollout_group_fn is None:
         raise ValueError(

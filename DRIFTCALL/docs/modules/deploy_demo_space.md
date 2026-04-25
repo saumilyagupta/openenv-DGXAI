@@ -10,8 +10,8 @@ This module specifies the **Demo HF Space** (`<team>/driftcall-demo`) — a Grad
 
 Concretely the Space must:
 
-1. Load the base **Gemma 4 E2B (4-bit)** model once and hold it resident.
-2. Hot-swap between the base model and a **trained LoRA adapter** at `<team>/gemma-4-e2b-driftcall-lora` via a radio toggle, without restarting the process.
+1. Load the base **Gemma 3n E2B (4-bit)** model once and hold it resident.
+2. Hot-swap between the base model and a **trained LoRA adapter** at `<team>/gemma-3n-e2b-driftcall-lora` via a radio toggle, without restarting the process.
 3. Accept **voice input from a Gradio `gr.Audio(sources=["microphone"])` component**, transcribe via the shared ASR singleton (`audio.md §2.2`), step the in-process `DriftCallEnv(audio_boundary_enabled=True)` (see `env.md`), generate a model reply, synthesize via `TTSEngine.synthesize_to_gradio` (`audio.md §2.1`) for low-latency playback, and stream a live trace panel showing action, tool response, drift event, and reward components.
 4. Prefer **ZeroGPU** (Hugging Face's free, Ampere serverless, stateless GPU) and fall back to **A10G small** ($1.05/hr, ~$20 of the $30 hackathon budget) if ZeroGPU is unavailable or queue-rejected.
 5. Complete a full round-trip turn (mic → transcript → env → model → TTS → audio playback) in **≤ 8 s on ZeroGPU warm, ≤ 12 s on A10G warm**, because that is the upper bound on judge attention span during the live pitch (DESIGN.md §15 "Before/After" beat).
@@ -132,8 +132,8 @@ class ModelLoader:
     def __init__(
         self,
         *,
-        base_model_id: str = "unsloth/gemma-4-E2B-it-bnb-4bit",
-        trained_adapter_id: str = "<team>/gemma-4-e2b-driftcall-lora",
+        base_model_id: str = "unsloth/gemma-3n-E2B-it",
+        trained_adapter_id: str = "<team>/gemma-3n-e2b-driftcall-lora",
         max_seq_length: int = 4096,
     ) -> None: ...
 
@@ -160,7 +160,7 @@ class ModelLoader:
         """
 
     def is_trained_available(self) -> bool:
-        """Has the `<team>/gemma-4-e2b-driftcall-lora` adapter been mounted?
+        """Has the `<team>/gemma-3n-e2b-driftcall-lora` adapter been mounted?
         Used by the UI to grey out the "trained" radio option when the LoRA
         failed to download (§5.3)."""
 
@@ -223,13 +223,13 @@ def render_trace(
 
 1. **ZeroGPU (primary).** README YAML front-matter declares `hardware: zero-gpu`. The process uses `@spaces.GPU(duration=60)` on `infer_turn`. Cold starts acquire a GPU slice only for the duration of one inference; between calls the process runs on CPU and the weights stay cached on the node (HF ZeroGPU model). This makes the $0 hardware line in DESIGN.md §3.5 viable.
 2. **A10G small (fallback).** If ZeroGPU queue-rejects twice in a row during warmup, D switches the README YAML to `hardware: a10g-small` and redeploys. A10G is stateful: the base model stays resident, so `@spaces.GPU` is a no-op (the `spaces` package is still importable on A10G and its decorator is a pass-through). Budget: ≤ 20 hours of A10G = ~$20 of the $30 cap.
-3. **Never CPU.** The demo loses its punch below ~10 tok/s; CPU generation on Gemma 4 E2B is ~1 tok/s. If both ZeroGPU and A10G are unavailable, **abort deployment** — the pitch reverts to a pre-recorded video (see `risk_book.md`).
+3. **Never CPU.** The demo loses its punch below ~10 tok/s; CPU generation on Gemma 3n E2B is ~1 tok/s. If both ZeroGPU and A10G are unavailable, **abort deployment** — the pitch reverts to a pre-recorded video (see `risk_book.md`).
 
 ### 3.2 Model hot-swap (base ⇄ trained)
 
-Both adapters share a single base model forward graph. This matters for memory: the A10G small has 24 GB; Gemma 4 E2B 4-bit is ~2.5 GB; mounting two separate base+adapter copies would near-OOM. Instead:
+Both adapters share a single base model forward graph. This matters for memory: the A10G small has 24 GB; Gemma 3n E2B 4-bit is ~2.5 GB; mounting two separate base+adapter copies would near-OOM. Instead:
 
-1. Boot path: load base 4-bit → `PeftModel.from_pretrained(model, "<team>/gemma-4-e2b-driftcall-lora", adapter_name="driftcall")`.
+1. Boot path: load base 4-bit → `PeftModel.from_pretrained(model, "<team>/gemma-3n-e2b-driftcall-lora", adapter_name="driftcall")`.
 2. "base" checkpoint: `with model.disable_adapter(): generate(...)`.
 3. "trained" checkpoint: `model.set_adapter("driftcall"); model.enable_adapter_layers(); generate(...)`.
 4. Enable/disable is a pointer-flip on the peft wrapper — microsecond-scale — so the radio toggle has no perceptible latency.
@@ -266,7 +266,7 @@ Two reset paths:
 | Mic upload (Gradio client → server) | 0.3 s | 0.3 s |
 | ASR (`transcribe()`, `faster-whisper-small int8`, 30 s clip max) | 0.8 s | 0.8 s |
 | Env step (mock vendor call + drift injector) | 0.1 s | 0.1 s |
-| Model generate (Gemma 4 E2B 4-bit, 256 tokens) | 4.5 s | 2.0 s |
+| Model generate (Gemma 3n E2B 4-bit, 256 tokens) | 4.5 s | 2.0 s |
 | TTS (`synthesize_to_gradio`, 200 char) | 0.8 s | 0.8 s |
 | DataFrame render + network return | 0.5 s | 0.5 s |
 | **Total** | **≈ 7.0 s** | **≈ 4.5 s** |
@@ -290,14 +290,14 @@ pinned: true
 license: apache-2.0
 hardware: zero-gpu   # fallback: a10g-small
 models:
-  - <team>/gemma-4-e2b-driftcall-lora
+  - <team>/gemma-3n-e2b-driftcall-lora
 tags:
   - openenv
   - indic
   - voice
   - grpo
   - drift
-short_description: Voice-first Indic RL environment — before/after a schema-drift-trained Gemma 4 E2B.
+short_description: Voice-first Indic RL environment — before/after a schema-drift-trained Gemma 3n E2B.
 ---
 ```
 
@@ -428,7 +428,7 @@ The demo Space **reuses the same audio stack versions as the env Space** (`audio
 | `driftcall.models` | `DriftCallAction`, `DriftCallObservation`, `EvalReport` (for the final-report tab). |
 | `driftcall.rewards` | Reward-dict shape (for the reward bar); never imported for computation — the env does that. |
 | `driftcall.drift_injector` | `DRIFT_PATTERN_IDS` (Literal type alias) — to populate the manual-drift dropdown values. |
-| Hugging Face Hub | `<team>/gemma-4-e2b-driftcall-lora` (runtime download). |
+| Hugging Face Hub | `<team>/gemma-3n-e2b-driftcall-lora` (runtime download). |
 
 ### 6.3 System dependencies (baked in image via `Dockerfile` if self-hosted; installed on HF Spaces via system packages)
 
@@ -486,7 +486,7 @@ cd DRIFTCALL/demo
 uv pip install -r requirements.txt
 HF_TOKEN=hf_xxx python app_gradio.py
 # → Gradio server on http://0.0.0.0:7860
-# → fetches <team>/gemma-4-e2b-driftcall-lora on boot
+# → fetches <team>/gemma-3n-e2b-driftcall-lora on boot
 ```
 
 For production (HF Space), no launch command is invoked by D — the Space platform auto-detects `app_file: app_gradio.py` from the README front-matter and runs it.

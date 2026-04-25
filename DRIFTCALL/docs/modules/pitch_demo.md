@@ -93,7 +93,7 @@ DRIFTCALL/pitch_assets/
 | HF Hub blog | `post.md` + `post_assets/` | `https://huggingface.co/blog/<team>/driftcall-indic-drift-rl` |
 | HF Space (demo) README | Embeds `driftcall_demo.mp4` and links deck + blog | `<team>/driftcall-demo` README frontmatter `video` and `links` fields |
 | HF Space (env) README | Links blog + video | `<team>/driftcall-env` README |
-| HF Hub model card | Embeds video + blog | `<team>/gemma-4-e2b-driftcall-lora` model card `video` field |
+| HF Hub model card | Embeds video + blog | `<team>/gemma-3n-e2b-driftcall-lora` model card `video` field |
 | HF Hub dataset card | Links blog + video | `<team>/driftcall-indic-briefs` dataset card |
 | YouTube | `driftcall_demo.mp4` | Unlisted initially; made public at pitch start |
 | GitHub repo `README.md` | Thumbnails + "Watch the pitch" button | Repo root |
@@ -132,7 +132,7 @@ Each beat below specifies:
 - **Spoken (presenter steps on stage, deck shows slide 01_hook.png):**
   > *[Play `audio_samples/hindi_brief.wav` — 4 s — Hindi voice clip: "Bhai Friday ko Bangalore jaana hai, 8000 rupees max, 6pm ke baad"]*
   >
-  > "This is Gemma 4 E2B, untrained. It books the flight confidently. But mid-conversation, the airline's API renames `price` to `total_fare_inr`.
+  > "This is Gemma 3n E2B, untrained. It books the flight confidently. But mid-conversation, the airline's API renames `price` to `total_fare_inr`.
   >
   > *[Trace panel on screen shows: `KeyError: 'price'` — base model returns garbage]*
   >
@@ -219,7 +219,7 @@ Scene table:
 | Scene | Time | Visual | Audio | Captions |
 |---|---|---|---|---|
 | 1. Cold open | 0:00 – 0:08 | Black screen → title card "DriftCall" in white + subtitle "voice-first Indic RL with schema drift" | 3 s of silence then `hindi_brief.wav` | `[Hindi brief]: "Friday I need to go to Bangalore, under ₹8000, after 6pm"` |
-| 2. Problem statement | 0:08 – 0:25 | Screen-record of base model running the brief → shows `KeyError: 'price'` in red in trace panel (`broll/base_model_keyerror.mov`) | Voice-over (English): "Untrained Gemma 4 E2B confidently books the flight. Then the airline renames a field mid-conversation. The model crashes." | VO captions |
+| 2. Problem statement | 0:08 – 0:25 | Screen-record of base model running the brief → shows `KeyError: 'price'` in red in trace panel (`broll/base_model_keyerror.mov`) | Voice-over (English): "Untrained Gemma 3n E2B confidently books the flight. Then the airline renames a field mid-conversation. The model crashes." | VO captions |
 | 3. Environment tour | 0:25 – 0:50 | 2 D animation: 4 vendor boxes (airline/cab/hotel/restaurant) with drift lightning-bolts firing between them. Zoom into the reward card showing R1–R5. | VO: "DriftCall is an OpenEnv environment. Four Indian consumer APIs. Twenty drift patterns. Five deterministic rewards. Two hundred thousand procedural episodes." | VO captions + on-screen labels for each reward |
 | 4. Training curves | 0:50 – 1:15 | `broll/wandb_curves.mov` sped 2×, with three callouts overlaid: "R1: 18% → 64%", "R2: 8% → 71%", "Latency: 4.2 → 1.6 turns" | VO: "Five hundred GRPO steps on a single V100. Three curriculum stages. Here's the agent learning to detect and adapt to drift." | VO captions |
 | 5. Before / After | 1:15 – 1:42 | Split screen: left = base model transcript ending in KeyError; right = `broll/trained_model_adapts.mov` | `hindi_brief.wav` at 1:15, then `trained_reply_hinglish.wav` at 1:24 | On-screen: left-column KeyError label; right-column English gloss of the Hindi reply |
@@ -243,7 +243,7 @@ Five-section structure (word counts target total 550):
 
 - Env Space: `https://huggingface.co/spaces/<team>/driftcall-env`
 - Demo Space: `https://huggingface.co/spaces/<team>/driftcall-demo`
-- Model: `https://huggingface.co/<team>/gemma-4-e2b-driftcall-lora`
+- Model: `https://huggingface.co/<team>/gemma-3n-e2b-driftcall-lora`
 - Dataset: `https://huggingface.co/datasets/<team>/driftcall-indic-briefs`
 - Colab: `https://colab.research.google.com/github/<team>/driftcall/blob/main/notebooks/driftcall_minimal_grpo.ipynb`
 - GitHub: `https://github.com/<team>/driftcall`
@@ -440,7 +440,7 @@ The following is what a presenter reading from `script/pitch_3min.md` produces a
 
 ```
 00:00  [Slide 01_hook on screen] [Play hindi_brief.wav]
-00:04  "This is Gemma 4 E2B, untrained. It books the flight confidently.
+00:04  "This is Gemma 3n E2B, untrained. It books the flight confidently.
         But mid-conversation, the airline's API renames `price` to
         `total_fare_inr`."
 00:12  [Trace-panel zoom animation on slide 01]
@@ -493,7 +493,7 @@ This shows what the blog's third section looks like at production length (~150 w
 
 ![Reward curves across Stage 1–3](./post_assets/fig_reward_curves.png)
 
-We trained Gemma 4 E2B with GRPO for 500 steps on a single V100, split across three
+We trained Gemma 3n E2B with GRPO for 500 steps on a single V100, split across three
 curriculum stages:
 
 - **Stage 1 (150 steps):** tool-call format. No drift. Teaches the agent to emit

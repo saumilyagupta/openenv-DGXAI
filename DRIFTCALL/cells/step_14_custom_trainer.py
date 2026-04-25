@@ -163,6 +163,26 @@ class EpisodeDatasetAdapter:
             yield self._build_record(step)
             step += 1
 
+    def __len__(self) -> int:
+        """Length sentinel for TRL 0.24+ ``RepeatSampler``.
+
+        The dataset is logically infinite (one record per GRPO step), but
+        TRL 0.24's ``RepeatSampler`` calls ``len(data_source)`` to size the
+        sampler. Returning a large finite number lets training proceed; the
+        actual step count is bounded by ``GRPOConfig.max_steps``.
+        """
+        return 1_000_000
+
+    def __getitem__(self, idx: int) -> dict[str, Any]:
+        """Map-style indexing for TRL 0.24+ DataLoader.
+
+        TRL 0.24 treats the train_dataset as a Map-style dataset and looks
+        records up by integer index. We honour the contract by deriving the
+        record purely from ``idx`` — the adapter is stateless so any index
+        produces a deterministic ``(prompt, _meta)`` pair for that step.
+        """
+        return self._build_record(int(idx))
+
     def peek(self, step: int) -> AdapterRecord:
         """Materialize the record at ``step`` without advancing iteration.
 
@@ -219,6 +239,20 @@ def _make_driftcall_init(
         adaptive_kl_beta_max: float = DEFAULT_BETA_MAX,
         **kwargs: Any,
     ) -> None:
+        # TRL 0.24 made ``reward_funcs`` a required arg on GRPOTrainer.
+        # Our custom ``_generate_and_score_completions`` short-circuits the
+        # base reward path entirely (calls ``reward_fn_driftcall`` directly),
+        # so the parent's ``reward_funcs`` value is never invoked. Pass a
+        # placeholder identity reward to satisfy the signature on TRL>=0.24.
+        if "reward_funcs" not in kwargs:
+            def _placeholder_reward(
+                completions: Any = None,
+                **_unused: Any,
+            ) -> list[float]:
+                n = len(completions) if completions is not None else 0
+                return [0.0] * n
+
+            kwargs["reward_funcs"] = [_placeholder_reward]
         base_cls.__init__(self, *args, **kwargs)
         self.rollout_group_fn = rollout_group_fn
         self.env_factory = env_factory
@@ -358,7 +392,20 @@ DEFAULT_BETA_MAX: float = 1.0
 DEFAULT_KP: float = 2.0
 
 
-class AdaptiveKLCallback:
+def _trainer_callback_base() -> type:
+    """Return ``transformers.TrainerCallback`` if importable, else ``object``.
+
+    Importing transformers lazily keeps step_14 importable on CPU-only CI
+    runners that don't have transformers installed.
+    """
+    try:
+        from transformers.trainer_callback import TrainerCallback
+        return TrainerCallback
+    except Exception:
+        return object
+
+
+class AdaptiveKLCallback(_trainer_callback_base()):  # type: ignore[misc]
     """Retarget β each step based on the ratio of measured KL to ``target_kl``.
 
     Proportional controller with symmetric log-space update:
@@ -371,8 +418,9 @@ class AdaptiveKLCallback:
     Safe on missing / NaN / non-numeric KL signals (no-op, no exception).
 
     Inherits from :class:`transformers.trainer_callback.TrainerCallback` when
-    available (production path); falls back to ``object`` on CPU-only CI so
-    the class can be exercised without installing transformers.
+    available (production path) so all the no-op callback events
+    (``on_train_begin``, ``on_step_begin``, etc.) come for free; falls back
+    to ``object`` on CPU-only CI when transformers is not installed.
     """
 
     def __init__(

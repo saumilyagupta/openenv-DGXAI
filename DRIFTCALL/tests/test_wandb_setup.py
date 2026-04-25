@@ -184,7 +184,7 @@ class TestInitWandbTags:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         tags = self._call(monkeypatch)
-        assert "gemma-4-e2b" in tags
+        assert "gemma-3n-e2b" in tags
 
     def test_h100_tag_when_enabled(self, monkeypatch: pytest.MonkeyPatch) -> None:
         tags = self._call(monkeypatch, h100_mode=True)

@@ -11,7 +11,7 @@
 #   docker run --gpus all \
 #     -e WANDB_API_KEY=<key>           \
 #     -e HF_TOKEN=<hf-write-token>     \
-#     -e DRIFTCALL_HF_REPO=<user>/gemma-4-e2b-driftcall-lora \
+#     -e DRIFTCALL_HF_REPO=<user>/gemma-3n-e2b-driftcall-lora \
 #     -e DRIFTCALL_HARDWARE=h100       \
 #     -v /tmp/checkpoints:/app/checkpoints \
 #     driftcall-train:latest
@@ -89,7 +89,7 @@ COPY docs/ ./docs/
 ARG HF_TOKEN_BUILD=""
 RUN if [ -n "$HF_TOKEN_BUILD" ]; then \
         HF_TOKEN="$HF_TOKEN_BUILD" python3 -c "from huggingface_hub import snapshot_download; \
-        snapshot_download('unsloth/gemma-4-E2B-it-bnb-4bit')" || true ; \
+        snapshot_download('unsloth/gemma-3n-E2B-it')" || true ; \
     fi
 
 # Quick smoke check at build time — verify imports work.

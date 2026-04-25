@@ -54,7 +54,7 @@ class HubLink:
 HUB_LINKS: tuple[HubLink, ...] = (
     HubLink(
         label="Model (LoRA)",
-        url="https://huggingface.co/driftcall/gemma-4-e2b-driftcall-lora",
+        url="https://huggingface.co/driftcall/gemma-3n-e2b-driftcall-lora",
     ),
     HubLink(
         label="Dataset",
@@ -79,7 +79,7 @@ HUB_LINKS: tuple[HubLink, ...] = (
 PITCH_SUMMARY: tuple[str, ...] = (
     "Zero voice OpenEnv environments existed before this.",
     "Zero schema-drift environments. Zero Indic environments.",
-    "DriftCall is all three in one — Gemma 4 E2B + GRPO + Kokoro + faster-whisper,",
+    "DriftCall is all three in one — Gemma 3n E2B + GRPO + Kokoro + faster-whisper,",
     "200,000 procedural episodes, 5 deterministic rewards, 20 drift patterns,",
     "trained in 14 hours on a single V100.",
 )

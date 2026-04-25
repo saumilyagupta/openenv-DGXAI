@@ -1,6 +1,6 @@
 # Cell 18 — Baseline Evaluation
 
-`eval_baseline(...)` runs the **untrained Gemma 4 E2B** on the first 50 rows of
+`eval_baseline(...)` runs the **untrained Gemma 3n E2B** on the first 50 rows of
 `val/briefs.jsonl` under frozen-greedy sampling and returns an `EvalReport`
 with bootstrap CIs (`n_boot=10_000`, `rng_seed=20260426`).
 

@@ -1,7 +1,7 @@
 """Cell 18 — Baseline evaluation harness.
 
 Implements ``docs/modules/evaluation.md`` §1, §2, §3.1–§3.3, §3.8, §4 and
-§5 for the baseline (untrained Gemma 4 E2B) eval path.
+§5 for the baseline (untrained Gemma 3n E2B) eval path.
 
 Hard rules (evaluation.md §3.1, §3.2, §6.3):
 - Greedy decoding (``temperature=0.0``); ``num_generations=1``;

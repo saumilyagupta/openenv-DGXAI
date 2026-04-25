@@ -6,7 +6,7 @@
 **Target artifact:** Colab-runnable notebook `notebooks/train_driftcall.ipynb` built by concatenating numbered cell `.py` files from `cells/`.
 **Event deadline:** Apr 26 2026, pitch day.
 **Compute:** 1× V100 32GB (local training) + $30 HF Space credit (deployment).
-**Base model:** `unsloth/gemma-4-E2B-it-bnb-4bit`.
+**Base model:** `unsloth/gemma-3n-E2B-it`.
 
 ---
 
@@ -19,7 +19,7 @@ Implement DriftCall as **25 numbered Python cells** in `cells/step_NN_<name>.py`
 **Stop conditions:**
 1. All batch checklists green + `notebooks/train_driftcall.ipynb` builds + runs end-to-end on Colab T4 / V100 + demo Space deploys.
 2. Any attempt to modify a Phase D doc without orchestrator approval → halt and escalate.
-3. Gemma 4 E2B fails to boot in Unsloth on V100 → halt and escalate (no fallback model — Gemma 4 E2B is the pinned choice).
+3. Gemma 3n E2B fails to boot in Unsloth → halt and escalate (no fallback model — Gemma 3n E2B is the pinned choice).
 
 Everything else: proceed without interruption.
 
@@ -69,7 +69,7 @@ Every `.py` file in `cells/` is named `step_NN_<snake_name>.py`, where `NN` is a
 | 09 | `step_09_audio.py` | audio.md | TTSEngine + ASREngine + AudioTrace |
 | 10 | `step_10_env.py` | env.md | DriftCallEnv class |
 | 11 | `step_11_smoke_env.py` | env.md §8 | Run one Stage-1 episode locally |
-| 12 | `step_12_gemma_boot.py` | training.md §3.1 | Load Gemma 4 E2B (Unsloth, 4-bit, FP16, BF16-slippage assert) |
+| 12 | `step_12_gemma_boot.py` | training.md §3.1 | Load Gemma 3n E2B (Unsloth, 4-bit, hardware-aware precision, dtype-slippage assert) |
 | 13 | `step_13_grpo_config.py` | training.md §2.4 | `build_grpo_config(stage)` + reward_fn wiring |
 | 14 | `step_14_custom_trainer.py` | training.md §3.2.3 | `DriftCallGRPOTrainer` + `EpisodeDatasetAdapter` |
 | 15 | `step_15_train_stage1.py` | training.md §3.5 | Stage 1: 150 GRPO steps, no drift |
@@ -91,7 +91,7 @@ Every `.py` file in `cells/` is named `step_NN_<snake_name>.py`, where `NN` is a
 - `notebooks/build_notebook.py` — concatenates `cells/step_NN_*.py` + `cells/step_NN_*.md` into `notebooks/train_driftcall.ipynb`
 - `data/` — authored fixtures (YAML, JSON)
 - `tests/conftest.py` — shared pytest fixtures
-- `scripts/smoke_gemma4_boot.py` — one-off smoke test
+- `scripts/smoke_gemma3n_boot.py` — one-off smoke test
 - `Dockerfile`, `pyproject.toml`, `requirements.txt`, `openenv.yaml`, `.gitignore`, `README.md`
 
 ---
@@ -297,8 +297,8 @@ Run from `DRIFTCALL/` unless noted.
 | Notebook build | `python3 notebooks/build_notebook.py` |
 | Docker build | `docker build -t driftcall-env .` |
 | HF Space env | `hf upload <team>/driftcall-env . --repo-type space` |
-| HF Hub model | `model.push_to_hub("<team>/gemma-4-e2b-driftcall-lora", safe_serialization=True)` |
-| Gemma 4 smoke | `python3 scripts/smoke_gemma4_boot.py` |
+| HF Hub model | `model.push_to_hub("<team>/gemma-3n-e2b-driftcall-lora", safe_serialization=True)` |
+| Gemma 3n smoke | `python3 scripts/smoke_gemma3n_boot.py` |
 
 ---
 
@@ -321,7 +321,7 @@ Run from `DRIFTCALL/` unless noted.
 
 Before Batch C1:
 
-- [ ] Gemma 4 E2B smoke test passes on V100 (DESIGN.md §16.A.1)
+- [ ] Gemma 3n E2B smoke test passes on V100 (DESIGN.md §16.A.1)
 - [ ] Unsloth 2026.4.5+, TRL 0.23+, PyTorch 2.5+ installed
 - [ ] Kokoro-82M + faster-whisper-small in local HF cache
 - [ ] HF CLI authenticated (`hf auth login`)
@@ -354,7 +354,7 @@ Before Batch C1:
 ## 11. Escalation & Stop Conditions
 
 **Escalate (pause dispatch) if:**
-- Gemma 4 E2B smoke fails on V100 → block; escalate to user (no fallback model)
+- Gemma 3n E2B smoke fails on V100 → block; escalate to user (no fallback model)
 - `openenv validate` fails after 3 attempts → block
 - Stage-1 training R1 < 0.4 at step 100 → block; reward/curriculum revisit
 - Critic finds consistent Phase D doc flaw → update spec first

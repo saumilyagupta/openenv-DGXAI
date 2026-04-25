@@ -21,7 +21,7 @@
 
 The evaluation module is the **evidence-production layer** for the 20% "Showing Improvement" and 10% "Reward/Pipeline Quality" judging criteria (DESIGN.md §1.3). It does three things, all offline, all deterministic, none of which touch the trainer:
 
-1. **Paired baseline-vs-final benchmark.** Run the untrained Gemma 4 E2B and the post-training LoRA on the *identical* 50 held-out episodes from `val/briefs.jsonl`, at `temperature=0.0` greedy decoding, and produce two `EvalReport` records. Paired `(episode_id, seed)` tuples permit valid difference statistics — **not** two independent samples.
+1. **Paired baseline-vs-final benchmark.** Run the untrained Gemma 3n E2B and the post-training LoRA on the *identical* 50 held-out episodes from `val/briefs.jsonl`, at `temperature=0.0` greedy decoding, and produce two `EvalReport` records. Paired `(episode_id, seed)` tuples permit valid difference statistics — **not** two independent samples.
 2. **Reward-hacking probe report.** Run the trained LoRA on 200 held-out episodes and mechanically scan every `Rewards.breakdown` record for the exploit classes enumerated in rewards.md §3.6 (hallucinated fields, repeated identical tool calls, `PROBE_SCHEMA` abuse, bare drift claims, state-write attempts). Emit a 1-page writeup with per-class counts + example `episode_id` citations — criterion #4's differentiator, shipped as DESIGN.md §13 deliverable #9.
 3. **Curve rendering.** Consume WandB run history + the two `EvalReport`s to render the four plot panels called out in DESIGN.md §15 pitch 1:00–2:00: per-reward stack over training steps, drift-detection-latency vs training steps, per-language reward breakdown bars, and baseline-vs-final side-by-side bars.
 
@@ -182,7 +182,7 @@ def render_plots(
 
 ```python
 # training/eval_baseline.py
-#   python3 training/eval_baseline.py --model gemma-4-e2b --episodes 50
+#   python3 training/eval_baseline.py --model gemma-3n-e2b --episodes 50
 #   → runs run_eval("base", 50), writes eval_reports/baseline.json.
 #
 # training/eval_final.py
@@ -629,7 +629,7 @@ All evaluation-specific exceptions subclass `EvaluationError(Exception)`.
 
 ## 7. Edge Cases
 
-1. **Zero-success baseline.** Untrained Gemma 4 E2B on Stage 2/3 episodes scores `R1 == 0.0` on all 50 baseline episodes. `r1_mean_ci = (0.0, 0.0, 0.0)` — degenerate CI. Emit `ZeroSuccessBaselineWarning` (§5), set `EvalReport.breakdown["ci_undefined_rewards"] = ["r1"]`, render `before_after_bars.png` with a "0 of 50 successes" annotation next to the baseline bar. Paired-difference CI is still well-defined — `paired_difference_ci([0]*50, [1, 0, 1, ...])` is a valid bootstrap — and the blog can still claim a delta. This is the **expected** outcome of the untrained baseline and exactly what makes the post-training curve compelling.
+1. **Zero-success baseline.** Untrained Gemma 3n E2B on Stage 2/3 episodes scores `R1 == 0.0` on all 50 baseline episodes. `r1_mean_ci = (0.0, 0.0, 0.0)` — degenerate CI. Emit `ZeroSuccessBaselineWarning` (§5), set `EvalReport.breakdown["ci_undefined_rewards"] = ["r1"]`, render `before_after_bars.png` with a "0 of 50 successes" annotation next to the baseline bar. Paired-difference CI is still well-defined — `paired_difference_ci([0]*50, [1, 0, 1, ...])` is a valid bootstrap — and the blog can still claim a delta. This is the **expected** outcome of the untrained baseline and exactly what makes the post-training curve compelling.
 
 2. **Per-language cohort empty.** `val/briefs.jsonl` rows `[0:50]` happen to contain zero `language == "kn"` episodes (for example, because the publication seed chose a language-weight distribution that underrepresented Kannada). `PerLanguageReport(language="kn", n_episodes=0, …)` is emitted with NaN means. `per_language_bars.png` renderer filters `n_episodes == 0` cohorts and renders only the 4 non-empty cohorts with a footer note "Kannada cohort empty at n=50; see val split publication seed in datasets.md §8.1". Never raises, never renders a NaN bar.
 
@@ -655,7 +655,7 @@ All evaluation-specific exceptions subclass `EvaluationError(Exception)`.
 
 ```bash
 cd DRIFTCALL/
-python3 training/eval_baseline.py --model gemma-4-e2b --episodes 50
+python3 training/eval_baseline.py --model gemma-3n-e2b --episodes 50
 # → writes eval_reports/baseline.json, exits 0.
 ```
 

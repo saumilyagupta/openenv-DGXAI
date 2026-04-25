@@ -181,7 +181,7 @@ on signal s fired at time t:
 
 | Signal | Scope | First responder | Escalates to |
 |---|---|---|---|
-| Gemma 4 E2B smoke fails on V100 | training | Person C | User (block; may downshift to Gemma 3 4B) |
+| Gemma 3n E2B smoke fails on V100 | training | Person C | User (block; may downshift to Gemma 3 4B) |
 | `openenv validate` fails 3× | deploy | Person D | User (block; may need schema deviation approval) |
 | Stage-1 R1 < 0.4 at step 100 | training | Person C → Person B | User (curriculum/reward redesign required) |
 | Critic flags consistent DESIGN.md flaw | any phase | Orchestrator | User (update spec before continuing) |
@@ -592,7 +592,7 @@ Fifteen entries. R01–R12 are DESIGN.md §14 verbatim, augmented with owner + t
 - **Stop condition:** None (design-time mitigation, not runtime).
 - **design_refs:** DESIGN.md §14 #12, pitch_demo.md, DESIGN.md §15.
 
-### R13 — Gemma 4 E2B smoke test fails on V100 (NEW per CLAUDE.md §11)
+### R13 — Gemma 3n E2B smoke test fails on V100 (NEW per CLAUDE.md §11)
 
 - **Probability:** Med
 - **Impact:** kills (block; may need downshift to Gemma 3 4B)

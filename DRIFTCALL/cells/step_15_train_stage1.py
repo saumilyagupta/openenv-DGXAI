@@ -10,8 +10,8 @@ Stage-1 contract:
     NEVER naive 4-bit -> 16-bit merge (DESIGN.md §10.5, CLAUDE.md §9).
   - WandB primary monitoring; ``LocalCSVCallback`` mirrors every ``on_log``
     when ``WANDB_MODE=offline`` or the wandb upload flakes (training.md §2.4.1).
-  - BF16-slippage assertion fires at entry via ``assert_fp16_dtype`` from
-    step_12 (V100 safety; training.md §3.1).
+  - Dtype-slippage assertion fires at entry via ``assert_dtype_for_hardware``
+    from step_12 (V100 -> FP16, H100 -> BF16 safety; training.md §3.1).
 
 Heavy imports (``torch``, ``trl``, ``unsloth``, ``wandb``) are deferred
 inside functions so this module imports cleanly on CPU-only CI.
@@ -226,7 +226,7 @@ def train(
     """Run GRPO Stage-1 (warmup, no drift) for ``num_steps`` updates.
 
     Behaviour (training.md §2.1):
-      1. Boot Gemma 4 E2B in 4-bit + attach LoRA via :func:`boot_gemma`.
+      1. Boot Gemma 3n E2B in 4-bit + attach LoRA via :func:`boot_gemma`.
       2. Re-assert FP16 dtype (BF16-slippage halt; training.md §3.1).
       3. Build :class:`GRPOConfig` for stage 1 (warmup_ratio=0.1).
       4. Build the streaming :class:`EpisodeDatasetAdapter` with the
@@ -251,7 +251,7 @@ def train(
     # model here — the wrapped LoRA params are FP16 by construction.
     model, tokenizer = boot_gemma(boot_config)
 
-    config = build_grpo_config(stage=plan.stage, resume_output_dir=plan.output_dir)
+    config = build_grpo_config(stage=plan.stage, resume_output_dir=plan.output_dir, max_steps=plan.num_steps)
 
     if task_gen is None or env_factory is None or rollout_group_fn is None:
         raise ValueError(

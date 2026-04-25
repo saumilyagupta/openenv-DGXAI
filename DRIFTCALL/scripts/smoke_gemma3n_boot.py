@@ -1,23 +1,26 @@
-"""Gemma 4 E2B boot smoke test on V100.
+"""Gemma 3n E2B boot smoke test (hardware-aware: V100 FP16, H100 BF16).
 
-DESIGN.md §16.A.1 — the mandatory kickoff check before dispatching Batch C1.
+DESIGN.md §16.A.1 — the mandatory kickoff check before dispatching training.
 
-Loads `unsloth/gemma-4-E2B-it-bnb-4bit` in 4-bit on the local V100, asserts the
-compute dtype is FP16 (NOT BF16 — the V100 has no native BF16 tensor cores and
-trying to run BF16 mixed precision triggers grad instability, DESIGN.md §14
-Risk 01), generates one short Hindi completion, and prints `SMOKE PASS` or
+Loads `unsloth/gemma-3n-E2B-it` in 4-bit, asserts the
+compute dtype matches the target hardware (FP16 on V100, BF16 on H100),
+generates one short Hindi completion, and prints `SMOKE PASS` or
 `SMOKE FAIL` with diagnostic info.
 
 Usage
 -----
-Full GPU run (what the team lead runs on the V100 box before dispatching C1)::
+Full GPU run on V100 (default hardware)::
 
-    python3 scripts/smoke_gemma4_boot.py
+    python3 scripts/smoke_gemma3n_boot.py
+
+Full GPU run on H100::
+
+    python3 scripts/smoke_gemma3n_boot.py --hardware h100
 
 CPU sanity (import-only — validates the smoke script itself is syntactically
 sound and its direct imports resolve on machines without CUDA / Unsloth)::
 
-    python3 scripts/smoke_gemma4_boot.py --no-gpu
+    python3 scripts/smoke_gemma3n_boot.py --no-gpu
 
 The `--no-gpu` mode deliberately does NOT import `unsloth` or `torch`; those
 pull CUDA runtime libs and fail on pure-CPU dev boxes. It validates only the
@@ -31,7 +34,7 @@ import sys
 import traceback
 from typing import Final
 
-_MODEL_ID: Final[str] = "unsloth/gemma-4-E2B-it-bnb-4bit"
+_MODEL_ID: Final[str] = "unsloth/gemma-3n-E2B-it"
 _MAX_SEQ_LEN: Final[int] = 4096
 _SEED_UTTERANCE: Final[str] = "नमस्ते, आप कैसे हैं?"
 _MAX_NEW_TOKENS: Final[int] = 40
@@ -39,10 +42,10 @@ _MAX_NEW_TOKENS: Final[int] = 40
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        prog="smoke_gemma4_boot",
+        prog="smoke_gemma3n_boot",
         description=(
-            "DriftCall Phase C kickoff smoke test — confirm Gemma 4 E2B boots "
-            "on the local V100 with FP16 precision (DESIGN.md §16.A.1)."
+            "DriftCall kickoff smoke test — confirm Gemma 3n E2B boots "
+            "with hardware-appropriate precision (DESIGN.md §16.A.1)."
         ),
     )
     parser.add_argument(
@@ -53,6 +56,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "imports cleanly and its argparse surface works. Exits 0 on "
             "success. Use on CI / dev boxes without a GPU."
         ),
+    )
+    parser.add_argument(
+        "--hardware",
+        choices=["v100", "h100"],
+        default="v100",
+        help="Target hardware: v100 (FP16) or h100 (BF16). Default: v100.",
     )
     return parser.parse_args(argv)
 
@@ -69,13 +78,13 @@ def _run_cpu_sanity() -> int:
     """Import-only sanity path. Exits 0 if the script itself is healthy."""
     _print_pass(
         "CPU sanity — script imports, argparse OK. "
-        "Run without --no-gpu on the V100 to exercise the real weight load."
+        "Run without --no-gpu on the target GPU to exercise the real weight load."
     )
     return 0
 
 
-def _run_gpu_smoke() -> int:
-    """Full V100 boot test. Lazy-imports heavyweight deps so --no-gpu stays light."""
+def _run_gpu_smoke(hardware: str) -> int:
+    """Full GPU boot test. Lazy-imports heavyweight deps so --no-gpu stays light."""
     try:
         import torch
     except ImportError as exc:
@@ -84,14 +93,17 @@ def _run_gpu_smoke() -> int:
 
     if not torch.cuda.is_available():
         _print_fail(
-            "CUDA unavailable. The Gemma 4 E2B 4-bit checkpoint requires a "
-            "CUDA GPU (V100 target). Use --no-gpu for a CPU sanity check."
+            "CUDA unavailable. The Gemma 3n E2B 4-bit checkpoint requires a "
+            "CUDA GPU. Use --no-gpu for a CPU sanity check."
         )
         return 1
 
     device_name = torch.cuda.get_device_name(0)
     capability = torch.cuda.get_device_capability(0)
     print(f"[smoke] CUDA device: {device_name} (compute capability {capability})")
+
+    expected_dtype = torch.float16 if hardware == "v100" else torch.bfloat16
+    load_dtype = expected_dtype
 
     try:
         from unsloth import FastModel
@@ -107,7 +119,7 @@ def _run_gpu_smoke() -> int:
             _MODEL_ID,
             max_seq_length=_MAX_SEQ_LEN,
             load_in_4bit=True,
-            dtype=torch.float16,
+            dtype=load_dtype,
         )
     except Exception as exc:
         _print_fail(f"FastModel.from_pretrained raised: {exc!r}")
@@ -115,11 +127,10 @@ def _run_gpu_smoke() -> int:
         return 1
 
     dtype = getattr(model, "dtype", None)
-    if dtype is not torch.float16:
+    if dtype is not expected_dtype:
         _print_fail(
-            f"model.dtype={dtype!r} — expected torch.float16. "
-            "V100 lacks native BF16 tensor cores; BF16 training is "
-            "unstable (DESIGN.md §14 Risk 01)."
+            f"model.dtype={dtype!r} — expected {expected_dtype} for {hardware.upper()}. "
+            f"Dtype-slippage detected; halt before training (DESIGN.md §14 Risk 01)."
         )
         return 1
 
@@ -136,8 +147,9 @@ def _run_gpu_smoke() -> int:
     if len(preview) > 120:
         preview = preview[:117] + "..."
 
+    precision_label = "FP16" if hardware == "v100" else "BF16"
     _print_pass(
-        f"Gemma 4 E2B loaded in FP16 4-bit on {device_name}; "
+        f"Gemma 3n E2B loaded in {precision_label} 4-bit on {device_name}; "
         f"generated {outputs.shape[-1] - inputs['input_ids'].shape[-1]} new tokens. "
         f'Completion preview: "{preview}"'
     )
@@ -148,7 +160,7 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     if args.no_gpu:
         return _run_cpu_sanity()
-    return _run_gpu_smoke()
+    return _run_gpu_smoke(args.hardware)
 
 
 if __name__ == "__main__":

@@ -5,10 +5,11 @@
 unsloth>=2026.4.5
 trl>=0.23
 torch>=2.5
-transformers>=4.46
+transformers>=4.51
 peft>=0.13
 bitsandbytes>=0.43
 accelerate>=1.0
+timm>=1.0
 
 # OpenEnv + FastAPI (deploy_env_space.md §4.5)
 fastapi>=0.115

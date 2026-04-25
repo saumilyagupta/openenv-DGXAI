@@ -15,13 +15,13 @@ The demo Space is the **storytelling surface** (not the OpenEnv grading surface)
 1. **UI component wiring** — every declared `gr.Audio`, `gr.Radio`, `gr.Dropdown`, `gr.DataFrame`, `gr.Textbox`, and reset button mounts, renders, and is reachable from `build_ui()` (`deploy_demo_space.md §2.2`).
 2. **Model hot-swap correctness** — `ModelLoader.generate(checkpoint="base" | "trained")` calls `peft`'s `disable_adapter()` / `set_adapter("driftcall")` exactly where the spec mandates (`§2.3`, `§3.2`).
 3. **Session isolation** — the process-wide registry keys by UUID, caps at 10 concurrent sessions, enforces a 900 s idle TTL, and never leaks state across tabs (`§3.3`).
-4. **LoRA-404 degradation path** — when `<team>/gemma-4-e2b-driftcall-lora` is missing, `is_trained_available()` returns `False`, the `trained` radio option is greyed out, and the Space still launches (`§3.2`, `§7.4`, error 5.2).
+4. **LoRA-404 degradation path** — when `<team>/gemma-3n-e2b-driftcall-lora` is missing, `is_trained_available()` returns `False`, the `trained` radio option is greyed out, and the Space still launches (`§3.2`, `§7.4`, error 5.2).
 5. **Latency budget** — one full `infer_turn` (mic → ASR → env → model → TTS → return) stays under 8 s on a stubbed ZeroGPU path and under 12 s on the A10G path (`§3.6`).
 6. **9 error modes (5.1–5.9)** — every error in `deploy_demo_space.md §5` has a test that triggers it and asserts the user-facing `status_msg` plus safe-default positional returns.
 7. **Manual drift injection** — `DriftToggleBridge.queue()` / `consume()` is idempotent, coalesces double-press, and passes `force_drift_pattern=...` to `env.step()` at the correct turn (`§3.8`, `§7.3`).
 8. **Fallback video trigger** — when both ZeroGPU and A10G are unavailable, the launch workflow aborts with a deterministic status and the pre-recorded video CTA surfaces (`§3.1`, `risk_book.md` cross-ref).
 
-**Out of scope:** real ZeroGPU runtime (mocked via `spaces.GPU` pass-through patch); real Gemma 4 E2B inference (stubbed via `mock_gemma4_e2b_model` fixture — see §5); real Kokoro TTS synthesis (reuses `audio_tests.md` fixtures via shared conftest); browser-level mic permission (asserted only via `audio_tuple=None` branch); HF Hub push (`openenv validate` runs on the **env** Space, not demo per `§1` of the module doc).
+**Out of scope:** real ZeroGPU runtime (mocked via `spaces.GPU` pass-through patch); real Gemma 3n E2B inference (stubbed via `mock_gemma4_e2b_model` fixture — see §5); real Kokoro TTS synthesis (reuses `audio_tests.md` fixtures via shared conftest); browser-level mic permission (asserted only via `audio_tuple=None` branch); HF Hub push (`openenv validate` runs on the **env** Space, not demo per `§1` of the module doc).
 
 Every test below cites the clause in `docs/modules/deploy_demo_space.md` it covers via `deploy_demo_space.md §X.Y` in the docstring.
 
@@ -225,7 +225,7 @@ def test_property_sessions_never_leak_state(session_batch):
 
 ## 3. Integration tests
 
-All integration tests live in `DRIFTCALL/tests/test_deploy_demo_space_integration.py`. They exercise the full wiring with Gemma 4 E2B stubbed, real Whisper ASR (CPU), real Kokoro TTS (CPU), and the real `DriftCallEnv` (audio-enabled, mock vendors).
+All integration tests live in `DRIFTCALL/tests/test_deploy_demo_space_integration.py`. They exercise the full wiring with Gemma 3n E2B stubbed, real Whisper ASR (CPU), real Kokoro TTS (CPU), and the real `DriftCallEnv` (audio-enabled, mock vendors).
 
 ### 3.1 Full demo flow — mic → Whisper → env → Gemma stub → Kokoro → speaker
 

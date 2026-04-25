@@ -17,7 +17,7 @@ the agent must book flights, schedule rides, and file complaints across
 five mock vendor APIs while those APIs undergo deterministic mid-episode
 **schema drift**, **pricing drift**, **T&C drift**, **policy drift**, and
 **auth drift**. It is an OpenEnv-compliant REST environment plus an
-in-process Python trainer; a trained LoRA adapter for Gemma 4 E2B is
+in-process Python trainer; a trained LoRA adapter for Gemma 3n E2B is
 published alongside.
 
 - **OpenEnv manifest:** [`openenv.yaml`](./openenv.yaml)
@@ -33,7 +33,7 @@ published alongside.
   network at runtime.
 - **Trainer:** in-process GRPO (TRL 0.23+, Unsloth 2026.4.5+) on a single
   V100. Text-in / text-out — audio is an env-boundary concern.
-- **Demo Space:** Gradio 5 on ZeroGPU, base Gemma 4 E2B + trained LoRA
+- **Demo Space:** Gradio 5 on ZeroGPU, base Gemma 3n E2B + trained LoRA
   adapter switchable via a toggle.
 
 ## Quickstart
@@ -92,7 +92,7 @@ Custom metrics logged each training step (training.md §3.3.3):
 - `train/beta_clamped_to_min` — 1 if β was floored at `beta_min` this step
 - `train/beta_clamped_to_max` — 1 if β was ceilinged at `beta_max` this step
 
-Run tags (set at `wandb.init`): `stage{N}`, `gemma-4-e2b`, `bf16` or `fp16`,
+Run tags (set at `wandb.init`): `stage{N}`, `gemma-3n-e2b`, `bf16` or `fp16`,
 `adaptive-kl` or `static-kl`, `seed{N}`.
 
 ## License

@@ -39,11 +39,11 @@ htmlcov/
 # Training artifacts
 checkpoints/
 .cache/
-wandb/
+
 mlruns/
 
 # Logs
-*.log
+
 
 # Build
 build/

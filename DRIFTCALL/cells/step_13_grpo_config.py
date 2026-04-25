@@ -139,11 +139,15 @@ def build_grpo_config(
     num_generations: int = DEFAULT_NUM_GENERATIONS,
     resume_output_dir: Path | None = None,
     hardware: HardwareT = "v100",
+    max_steps: int = -1,
 ) -> Any:
     """Build a TRL ``GRPOConfig`` matching training.md §2.4 exactly.
 
     Validates ``num_generations in {4, 8}`` before import so CPU-only
     tests can trigger the assertion without TRL installed.
+
+    ``max_steps`` maps to TRL's ``max_steps`` (default -1 = run until dataset
+    exhausted; pass the stage step count for a fixed-step curriculum).
     """
     _validate_stage(stage)
     _validate_num_generations(num_generations)
@@ -167,11 +171,25 @@ def build_grpo_config(
         optim_choice = OPTIM_V100
         attn_implementation = None
 
+    import inspect
+
     from trl import GRPOConfig
 
+    _grpo_params = set(inspect.signature(GRPOConfig.__init__).parameters)
+
     extra_kwargs: dict[str, Any] = {}
-    if attn_implementation is not None:
+    # attn_implementation was a GRPOConfig param in TRL ≤0.23; removed in 0.24.
+    if attn_implementation is not None and "attn_implementation" in _grpo_params:
         extra_kwargs["attn_implementation"] = attn_implementation
+    # use_bias_correction_kl was introduced in TRL 0.23 and removed in TRL 0.24.
+    if "use_bias_correction_kl" in _grpo_params:
+        extra_kwargs["use_bias_correction_kl"] = True
+
+    # TRL 0.24+ requires generation_batch_size to be divisible by
+    # num_generations. Default (per_device * grad_accum) may be smaller.
+    # Pin it to num_generations so exactly one group is generated per step.
+    if "generation_batch_size" in _grpo_params:
+        extra_kwargs.setdefault("generation_batch_size", num_generations)
 
     config = GRPOConfig(
         learning_rate=LEARNING_RATE,
@@ -186,8 +204,8 @@ def build_grpo_config(
         num_generations=num_generations,
         max_prompt_length=MAX_PROMPT_LENGTH,
         max_completion_length=MAX_COMPLETION_LENGTH,
+        max_steps=max_steps,
         beta=BETA_KL,
-        use_bias_correction_kl=True,
         temperature=SAMPLING_TEMPERATURE,
         top_p=SAMPLING_TOP_P,
         fp16=fp16_flag,
@@ -226,10 +244,13 @@ def assert_config_invariants(
     if hardware is None:
         hardware = "h100" if getattr(config, "bf16", False) else "v100"
     _validate_hardware(hardware)
-    if getattr(config, "use_bias_correction_kl", None) is not True:
-        raise AssertionError(
-            "use_bias_correction_kl must be True (TRL issue #4637; training.md §3.3)"
-        )
+    # use_bias_correction_kl existed in TRL 0.23 only; TRL 0.24 removed it.
+    # Assert it only when the attr is present on the config object.
+    if hasattr(config, "use_bias_correction_kl"):
+        if getattr(config, "use_bias_correction_kl", None) is not True:
+            raise AssertionError(
+                "use_bias_correction_kl must be True (TRL issue #4637; training.md §3.3)"
+            )
     if hardware == "v100":
         if getattr(config, "fp16", None) is not True:
             raise AssertionError("fp16 must be True on V100 (training.md §3.1)")
@@ -240,10 +261,12 @@ def assert_config_invariants(
             raise AssertionError("bf16 must be True on H100 (training.md §3.1)")
         if getattr(config, "fp16", False) is True:
             raise AssertionError("fp16 must be False on H100 (training.md §3.1)")
-        if getattr(config, "attn_implementation", None) != H100_ATTN_IMPLEMENTATION:
-            raise AssertionError(
-                f"attn_implementation must be {H100_ATTN_IMPLEMENTATION!r} on H100"
-            )
+        # attn_implementation was a GRPOConfig field in TRL ≤0.23; removed in 0.24.
+        if hasattr(config, "attn_implementation"):
+            if getattr(config, "attn_implementation", None) != H100_ATTN_IMPLEMENTATION:
+                raise AssertionError(
+                    f"attn_implementation must be {H100_ATTN_IMPLEMENTATION!r} on H100"
+                )
     if getattr(config, "gradient_checkpointing", None) is not True:
         raise AssertionError("gradient_checkpointing must be True")
     if config.per_device_train_batch_size != PER_DEVICE_TRAIN_BATCH_SIZE:
@@ -280,8 +303,14 @@ def assert_config_invariants(
         raise AssertionError(
             f"max_completion_length must be {MAX_COMPLETION_LENGTH}"
         )
-    if config.report_to != REPORT_TO:
-        raise AssertionError(f"report_to must be {REPORT_TO!r}")
+    # TRL 0.24 normalises report_to to a list; earlier versions kept it a string.
+    _report_to = config.report_to
+    if isinstance(_report_to, list):
+        _report_to_check = _report_to == [REPORT_TO]
+    else:
+        _report_to_check = _report_to == REPORT_TO
+    if not _report_to_check:
+        raise AssertionError(f"report_to must be {REPORT_TO!r} (or [{REPORT_TO!r}]); got {config.report_to!r}")
     expected_run_name = f"driftcall-stage{stage}"
     if config.run_name != expected_run_name:
         raise AssertionError(
@@ -297,10 +326,12 @@ def assert_config_invariants(
         max_prompt_length=config.max_prompt_length,
         max_completion_length=config.max_completion_length,
         per_device_train_batch_size=config.per_device_train_batch_size,
-        use_bias_correction_kl=config.use_bias_correction_kl,
+        # use_bias_correction_kl was removed in TRL 0.24; default True for
+        # backwards compatibility with tests that read this field.
+        use_bias_correction_kl=getattr(config, "use_bias_correction_kl", True),
         fp16=config.fp16,
         gradient_checkpointing=config.gradient_checkpointing,
-        report_to=config.report_to,
+        report_to=config.report_to[0] if isinstance(config.report_to, list) else config.report_to,
         run_name=config.run_name,
         output_dir=config.output_dir,
     )
@@ -401,7 +432,7 @@ def init_wandb(
 
     tags = [
         f"stage{stage}",
-        "gemma-4-e2b",
+        "gemma-3n-e2b",
         "bf16" if h100_mode else "fp16",
         "adaptive-kl" if enable_adaptive_kl else "static-kl",
         f"seed{seed}",

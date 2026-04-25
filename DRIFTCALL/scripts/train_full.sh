@@ -6,7 +6,7 @@
 #
 #   WANDB_API_KEY            wandb auth (else falls back to cells/_secrets.py)
 #   HF_TOKEN                 huggingface_hub write token (required if PUSH_TO_HUB=true)
-#   DRIFTCALL_HF_REPO        e.g. "krrishchoudhary109/gemma-4-e2b-driftcall-lora"
+#   DRIFTCALL_HF_REPO        e.g. "krrishchoudhary109/gemma-3n-e2b-driftcall-lora"
 #   DRIFTCALL_HARDWARE       "v100" | "h100" (default h100)
 #   DRIFTCALL_NUM_STEPS_*    per-stage step counts
 #   DRIFTCALL_EVAL_EPISODES  baseline + final eval episode count
@@ -86,7 +86,7 @@ python3 -m cells.step_17_train_stage3 \
 log "Stage 3 complete. Final LoRA at $OUT/stage3/final"
 
 # ---------------------------------------------------------------------------
-# 4. Baseline eval (untrained Gemma 4 E2B, same 50 seeds)
+# 4. Baseline eval (untrained Gemma 3n E2B, same 50 seeds)
 # ---------------------------------------------------------------------------
 log "=== Baseline eval: $DRIFTCALL_EVAL_EPISODES episodes ==="
 python3 -m cells.step_18_eval_baseline \

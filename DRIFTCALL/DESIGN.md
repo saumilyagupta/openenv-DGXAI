@@ -7,13 +7,13 @@
 **Target event:** Meta × PyTorch × Hugging Face OpenEnv Hackathon, India — Apr 25–26, 2026
 **Team size:** 4
 **Compute:** 1× V100 32GB (local) + $30 HF Space credit
-**Base model:** `google/gemma-4-E2B-it` (2B effective, PLE-boosted, 128K context, multimodal-capable)
+**Base model:** `google/gemma-3n-E2B-it` (2B effective, PLE-boosted, 128K context, multimodal-capable)
 
 ---
 
 ## 0. TL;DR
 
-DriftCall is an **OpenEnv-compliant RL environment** where a Gemma 4 E2B agent handles **Indic-language voice requests** ("Bhai Friday ko Bangalore jaana hai, 8000 rupees max, 6pm ke baad") against mock consumer APIs (airline, cab, hotel, restaurant) whose **schemas, policies, and T&Cs drift mid-episode**. The agent must detect the drift, adapt (re-plan, clarify, or probe the new schema), and still satisfy the original request. Training uses **TRL GRPO + Unsloth 4-bit QLoRA on Gemma 4 E2B**. Deployment is two HF Spaces: a free-CPU environment Space (with live Kokoro TTS + faster-whisper ASR at the boundary) and a ZeroGPU/A10G demo Space with live voice I/O and a before/after trained-checkpoint toggle.
+DriftCall is an **OpenEnv-compliant RL environment** where a Gemma 3n E2B agent handles **Indic-language voice requests** ("Bhai Friday ko Bangalore jaana hai, 8000 rupees max, 6pm ke baad") against mock consumer APIs (airline, cab, hotel, restaurant) whose **schemas, policies, and T&Cs drift mid-episode**. The agent must detect the drift, adapt (re-plan, clarify, or probe the new schema), and still satisfy the original request. Training uses **TRL GRPO + Unsloth 4-bit QLoRA on Gemma 3n E2B**. Deployment is two HF Spaces: a free-CPU environment Space (with live Kokoro TTS + faster-whisper ASR at the boundary) and a ZeroGPU/A10G demo Space with live voice I/O and a before/after trained-checkpoint toggle.
 
 The project sits in **white space on three simultaneous axes**: no voice OpenEnv env exists, no schema-drift OpenEnv env exists, no Indic-language OpenEnv env exists. It directly hits the **Patronus AI sub-theme bonus** (consumer workflows with schema drift) and stacks four Indic-LLM-focused judges (Kolavi, Sachdeva, Shirawalmath, Pandey).
 
@@ -31,7 +31,7 @@ The project sits in **white space on three simultaneous axes**: no voice OpenEnv
 
 ### 1.2 Project Vision
 
-Train a small Gemma 4 E2B agent to be a **useful Indian-language voice concierge** that **does not break when the world changes underneath it** — because real APIs do change, real T&Cs do update, real business rules do shift mid-conversation. The agent must learn to:
+Train a small Gemma 3n E2B agent to be a **useful Indian-language voice concierge** that **does not break when the world changes underneath it** — because real APIs do change, real T&Cs do update, real business rules do shift mid-conversation. The agent must learn to:
 
 1. Parse ambiguous Indic voice requests into tool-callable plans.
 2. Execute multi-step bookings against a realistic mock vendor API.
@@ -82,7 +82,7 @@ No hackathon idea has a real 90%+ win probability. This is the defensible ceilin
 | Ben Burtenshaw | HF (runs OpenEnv) | Throughput, verifiable rewards, procedural curriculum | 200K+ procedural episodes, deterministic rewards |
 | Adithya S Kolavi | HF (built Ambari, Indic LLM Leaderboard) | Indic LLMs | Hindi/Tamil/Kannada task briefs native |
 | Aashay Sachdeva | Sarvam (22 Indian languages) | Indic + inference efficiency | Hinglish briefs + 4-bit QLoRA on V100 |
-| Adarsh Shirawalmath | HF (built Kannada Llama) | Low-resource Indic + small/efficient models | Gemma 4 E2B + Indic |
+| Adarsh Shirawalmath | HF (built Kannada Llama) | Low-resource Indic + small/efficient models | Gemma 3n E2B + Indic |
 | Nilesh Pandey | Meta GenAI India | Indian productization | Indian consumer APIs (IndiGo/Razorpay flavor) |
 | Yash Khare | Meta Partner Eng | PyTorch-native, shippable | Standard TRL stack |
 | Arkadip Maitra | Red Hat ML | vLLM/OpenShift, reproducibility | Clean Docker, Apache 2.0 |
@@ -108,7 +108,7 @@ No hackathon idea has a real 90%+ win probability. This is the defensible ceilin
 │   DriftCall Env (Python)                                                 │
 │        │                                                                 │
 │        ▼                                                                 │
-│   Gemma 4 E2B  ◀─── Unsloth 4-bit QLoRA + TRL GRPOTrainer                │
+│   Gemma 3n E2B  ◀─── Unsloth 4-bit QLoRA + TRL GRPOTrainer                │
 │        │              (bias_correction_kl=True, FP16 mixed precision)    │
 │        ▼                                                                 │
 │   5 reward functions ──▶ GRPO advantage ──▶ LoRA gradient update         │
@@ -144,7 +144,7 @@ No hackathon idea has a real 90%+ win probability. This is the defensible ceilin
 │        │                                                                 │
 │        ├─▶ Mic input ─▶ Kokoro (echo)/Whisper ─▶ env API                │
 │        │                                                                 │
-│        ├─▶ [Toggle] Base Gemma 4 E2B   OR   Trained LoRA                 │
+│        ├─▶ [Toggle] Base Gemma 3n E2B   OR   Trained LoRA                 │
 │        │                                                                 │
 │        ├─▶ Live trace panel (actions, drift events, tool responses)      │
 │        │                                                                 │
@@ -170,7 +170,7 @@ No hackathon idea has a real 90%+ win probability. This is the defensible ceilin
 ### 3.4 Demo Topology (HF Space — demo)
 
 - **Hardware:** **ZeroGPU preferred** (free Ampere serverless). Fallback: A10G small ($1/hr, ~$20 budget from $30).
-- **Loads:** base Gemma 4 E2B (4-bit) + trained LoRA adapters — switchable via toggle.
+- **Loads:** base Gemma 3n E2B (4-bit) + trained LoRA adapters — switchable via toggle.
 - **UI:** Gradio 5.x with `mic` component + live trace panel + reward readout.
 
 ### 3.5 Hardware/Credit Budget Fit
@@ -677,7 +677,7 @@ This is NOT a cheat — it mirrors every production voice agent (OpenAI Realtime
 
 ### 10.1 Stack
 
-- **Base model:** `unsloth/gemma-4-E2B-it-bnb-4bit`
+- **Base model:** `unsloth/gemma-3n-E2B-it`
 - **Framework:** Unsloth 2026.4.5+ (post-KL-fix), TRL 0.23+, PyTorch 2.5+
 - **Algorithm:** GRPO with bias-corrected KL estimator
 - **LoRA config:** r=16, alpha=32, target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
@@ -757,7 +757,7 @@ model.save_pretrained("checkpoints/stage3_final", safe_serialization=True)
 tokenizer.save_pretrained("checkpoints/stage3_final")
 
 # For HF Hub push
-model.push_to_hub("<team>/gemma-4-e2b-driftcall-lora", safe_serialization=True)
+model.push_to_hub("<team>/gemma-3n-e2b-driftcall-lora", safe_serialization=True)
 
 # For merged 16-bit model (DEMO ONLY, not for re-training)
 model.save_pretrained_merged("checkpoints/merged_16bit", tokenizer, save_method="merged_16bit")
@@ -811,14 +811,14 @@ driftcall-env/
 
 **Gradio UI components:**
 1. **Mic input** → Whisper → trace panel shows transcript + detected language.
-2. **Checkpoint toggle** — base Gemma 4 E2B ⇄ trained LoRA.
+2. **Checkpoint toggle** — base Gemma 3n E2B ⇄ trained LoRA.
 3. **Drift-injection toggle** — let judge manually trigger a drift pattern mid-demo.
 4. **Trace panel** — live stream of (action, tool response, drift event, reward components).
 5. **Audio output** — Kokoro TTS of agent's SPEAK action.
 
 ### 11.3 HF Hub Model Publication
 
-- **Repo:** `<team>/gemma-4-e2b-driftcall-lora`
+- **Repo:** `<team>/gemma-3n-e2b-driftcall-lora`
 - **Files:** `adapter_model.safetensors`, `adapter_config.json`, `tokenizer.json`, `README.md` with eval table, training curves, usage example.
 
 ### 11.4 HF Hub Dataset Publication
@@ -843,7 +843,7 @@ driftcall-env/
 
 | Hours | Person A | Person B | Person C | Person D |
 |---|---|---|---|---|
-| 0–4 | `openenv init`, finalize dataclasses in `models.py` | Skeleton 5 reward fns + unit test harness | Smoke test Gemma 4 E2B in Unsloth on V100 | Lock project name, HF org, logo |
+| 0–4 | `openenv init`, finalize dataclasses in `models.py` | Skeleton 5 reward fns + unit test harness | Smoke test Gemma 3n E2B in Unsloth on V100 | Lock project name, HF org, logo |
 | 4–10 | Mock vendor APIs × 4 (deterministic, seeded) | Implement R1–R3 + unit tests passing | 10-step GRPO dry run on toy env | Kokoro+Whisper working prototype, mic→text→agent→TTS |
 | 10–16 | Drift injector + 20 drift patterns library | Implement R4–R5 + anti-hack probe harness | Dataset format, `GRPOConfig` tuned | Gradio demo UI skeleton, trace panel |
 | 16–18 | Deploy env to free-CPU HF Space; `openenv validate` passes | Full reward suite green on 20 canonical episodes | Baseline eval run on E2B (no training) — "before" numbers | Demo Space scaffolded with ZeroGPU/A10G test |
@@ -877,7 +877,7 @@ Minimum requirements are ticked **twice** for margin:
 
 - [ ] ✅ HF Space (env) — OpenEnv compliant, `openenv validate` passes
 - [ ] ✅ HF Space (demo) — live voice I/O with before/after toggle
-- [ ] ✅ HF Hub model — `<team>/gemma-4-e2b-driftcall-lora`
+- [ ] ✅ HF Hub model — `<team>/gemma-3n-e2b-driftcall-lora`
 - [ ] ✅ HF Hub dataset — `<team>/driftcall-indic-briefs`
 - [ ] ✅ Colab notebook — minimal TRL + Unsloth training script (<300 lines)
 - [ ] ✅ HF blog post (<2 min read) — problem, env, curves, audio sample, code links
@@ -912,7 +912,7 @@ Minimum requirements are ticked **twice** for margin:
 ### 0:00 – 0:20 — The Hook
 > *[Plays Hindi voice clip: "Bhai Friday ko Bangalore jaana hai, 8000 rupees max, 6pm ke baad"]*
 >
-> "This is Gemma 4 E2B, untrained. It books the flight confidently. But mid-conversation, the airline's API renames `price` to `total_fare_inr`.
+> "This is Gemma 3n E2B, untrained. It books the flight confidently. But mid-conversation, the airline's API renames `price` to `total_fare_inr`.
 >
 > *[Trace panel shows: `KeyError: 'price'` — base model returns garbage]*
 >
@@ -957,12 +957,12 @@ Minimum requirements are ticked **twice** for margin:
 ### A. Smoke Tests (run before anything else)
 
 ```python
-# A.1 — Gemma 4 E2B boot on V100
+# A.1 — Gemma 3n E2B boot on V100
 from unsloth import FastModel
 import torch
 
 model, tokenizer = FastModel.from_pretrained(
-    "unsloth/gemma-4-E2B-it-bnb-4bit",
+    "unsloth/gemma-3n-E2B-it",
     max_seq_length=4096,
     load_in_4bit=True,
     dtype=torch.float16,  # explicit FP16 for V100 safety
@@ -1106,7 +1106,7 @@ driftcall/
 
 **Gemma 4**
 - [Welcome Gemma 4 (HF blog)](https://huggingface.co/blog/gemma4)
-- [google/gemma-4-E2B-it](https://huggingface.co/google/gemma-4-E2B-it)
+- [google/gemma-3n-E2B-it](https://huggingface.co/google/gemma-3n-E2B-it)
 - [Unsloth Gemma 4 fine-tuning guide](https://unsloth.ai/docs/models/gemma-4/train)
 - [Unsloth Gemma 4 Fixes discussion #4921](https://github.com/unslothai/unsloth/discussions/4921)
 
