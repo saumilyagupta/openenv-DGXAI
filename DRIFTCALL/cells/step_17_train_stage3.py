@@ -153,32 +153,30 @@ def build_run_plan(
 
 
 def _wandb_init_or_raise(*, run_name: str, output_dir: Path) -> Any:
-    """Initialise wandb; raise :class:`WandBStartupError` only when online."""
+    """Initialise wandb through :func:`cells.step_13_grpo_config.init_wandb`.
+
+    Offline mode (``WANDB_MODE=offline``) and disabled mode
+    (``WANDB_MODE=disabled``) never raise; online failures raise
+    :class:`WandBStartupError` (training.md §2.4.1, §3.3.3).
+    """
+    del run_name, output_dir  # retained for call-site compatibility
     mode = os.environ.get("WANDB_MODE")
     try:
-        import wandb
+        from cells.step_13_grpo_config import init_wandb
+
+        return init_wandb(stage=STAGE, seed=STAGE_BASE_SEED)
     except ImportError as exc:  # pragma: no cover - wandb required at runtime
-        if mode == "offline":
+        if mode in {"offline", "disabled"}:
             return None
         raise WandBStartupError(
             f"wandb import failed and WANDB_MODE != 'offline': {exc}"
         ) from exc
-
-    try:
-        run = wandb.init(
-            project="driftcall",
-            group="curriculum-v1",
-            name=run_name,
-            dir=str(output_dir.parent),
-            reinit=True,
-        )
     except Exception as exc:
-        if mode == "offline":
+        if mode in {"offline", "disabled"}:
             return None
         raise WandBStartupError(
             f"wandb.init() failed and WANDB_MODE != 'offline': {exc}"
         ) from exc
-    return run
 
 
 def write_local_csv_row(
