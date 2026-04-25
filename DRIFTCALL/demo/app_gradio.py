@@ -55,7 +55,7 @@ _TRACE_COLUMNS: tuple[str, ...] = (
     "reward_delta",
 )
 _BASE_MODEL_ID_DEFAULT: str = "unsloth/gemma-4-E2B-it-bnb-4bit"
-_TRAINED_ADAPTER_ID_DEFAULT: str = "driftcall/gemma-4-e2b-driftcall-lora"
+_TRAINED_ADAPTER_ID_DEFAULT: str = "DGXAI/gemma-4-e2b-driftcall-lora"
 _HARDWARE_ENV_VAR: str = "DRIFTCALL_HARDWARE"
 _HARDWARE_FALLBACK_ENV_VAR: str = "DRIFTCALL_HARDWARE_FALLBACK"
 _TRACE_PREVIEW_LEN: int = 120

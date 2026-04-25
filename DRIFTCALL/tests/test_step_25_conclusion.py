@@ -98,7 +98,7 @@ class TestLockedMetrics:
 class TestLockedLinks:
     def test_lora_repo_url(self) -> None:
         urls = {link.url for link in HUB_LINKS}
-        assert "https://huggingface.co/driftcall/gemma-4-e2b-driftcall-lora" in urls
+        assert "https://huggingface.co/DGXAI/gemma-4-e2b-driftcall-lora" in urls
 
     def test_dataset_repo_url(self) -> None:
         urls = {link.url for link in HUB_LINKS}

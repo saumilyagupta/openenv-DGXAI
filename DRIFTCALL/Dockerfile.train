@@ -1,24 +1,26 @@
 # syntax=docker/dockerfile:1.6
 # DriftCall — full training image for Akash Network GPU rentals.
 #
-# Self-contained: clones the repo at build time, installs all deps, runs
-# Stage 1 → Stage 2 → Stage 3 → baseline eval → final eval → reward-hacking
-# probe → plots → summary → push to HF Hub.
+# Image installs CUDA, Python deps, and tooling only. The repo is cloned and
+# `pip install -e` runs at container start (scripts/entrypoint.sh) so
+# `docker build` never needs GitHub credentials. Override GIT_* / GITHUB_TOKEN
+# at runtime (see akasha_config/akasha_deployment.sdl.example).
 #
 # Built on saumilyajj/dl-sam:2025 (team's standard ML dev image; CUDA 12.3
 # + Python 3.11 + base ML stack including torch>=2.0, transformers, peft,
 # bitsandbytes, accelerate, wandb, openssh-server, tmux, git).
 #
 # Usage:
-#   docker build -f Dockerfile.train \
-#     --build-arg GITHUB_TOKEN=$GITHUB_TOKEN \
-#     -t krrishchoudhary109/driftcall-train:v1 .
+#   docker build -f Dockerfile.train -t saumilyajj/driftcall:latest .
+#
+# Runtime (clone + train): GIT_REPO_URL, GIT_REF, SUBPATH, GITHUB_TOKEN,
+# HF_TOKEN, etc. — see akasha_config/akasha_deployment.sdl.example
 #
 #   docker run --gpus all \
 #     --env-file .env \
 #     -p 22:22 -p 7860:7860 \
 #     -v /tmp/akash-data:/mnt/data \
-#     krrishchoudhary109/driftcall-train:v1
+#     saumilyajj/driftcall:latest
 
 FROM saumilyajj/dl-sam:2025
 
@@ -51,8 +53,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
     DRIFTCALL_EVAL_DIR=/mnt/data/eval_reports \
     DRIFTCALL_LOG_DIR=/workspace/logs \
     DRIFTCALL_BRIEFS_PATH=/workspace/repo/data/val/briefs.jsonl \
-    DRIFTCALL_HF_REPO="" \
-    DRIFTCALL_PUSH_TO_HUB=true
+    DRIFTCALL_HF_REPO=DGXAI/gemma-4-e2b-driftcall-lora \
+    DRIFTCALL_PUSH_TO_HUB=true \
+    GIT_REPO_URL=https://github.com/saumilyagupta/openenv-DGXAI.git \
+    GIT_REF=main \
+    SUBPATH=DRIFTCALL \
+    DRIFTCALL_PRE_PULL_AT_START=0
 
 WORKDIR ${WORKSPACE_DIR}
 
@@ -78,6 +84,7 @@ RUN apt-get update && \
 
 # DriftCall-specific apt deps (audio + tini for clean SIGTERM).
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
         libsndfile1 \
         ffmpeg \
         tini \
@@ -94,30 +101,7 @@ ENV PATH="${WORKSPACE_DIR}/.venv/driftcall/bin:$PATH"
 ENV VIRTUAL_ENV="${WORKSPACE_DIR}/.venv/driftcall"
 
 # ---------------------------------------------------------------------------
-# 3. Clone the repo at build time
-#
-# Build args:
-#   GIT_REPO_URL — full HTTPS URL (default: saumilyagupta/openenv-DGXAI)
-#   GIT_REF      — branch / tag / commit SHA (default: main)
-#   GITHUB_TOKEN — fine-grained PAT for private repo access (optional)
-#   SUBPATH      — directory inside repo holding the DriftCall package
-# ---------------------------------------------------------------------------
-ARG GIT_REPO_URL=https://github.com/saumilyagupta/openenv-DGXAI.git
-ARG GIT_REF=main
-ARG GITHUB_TOKEN=""
-ARG SUBPATH=DRIFTCALL
-
-RUN if [ -n "$GITHUB_TOKEN" ]; then \
-        AUTHED_URL=$(echo "$GIT_REPO_URL" | sed "s|https://|https://${GITHUB_TOKEN}@|") ; \
-    else \
-        AUTHED_URL="$GIT_REPO_URL" ; \
-    fi && \
-    git clone --depth 1 --branch "$GIT_REF" "$AUTHED_URL" /tmp/repo && \
-    cp -r /tmp/repo/${SUBPATH}/. ${WORKSPACE_DIR}/repo/ && \
-    rm -rf /tmp/repo
-
-# ---------------------------------------------------------------------------
-# 4. Python deps inside the UV venv
+# 3. Python deps inside the UV venv
 #
 #   - PyTorch 2.5 + CUDA 12.4 wheel (matches torch's binary, runs against
 #     CUDA 12.3 thanks to driver compat).
@@ -160,8 +144,7 @@ RUN python -m pip install \
         "cachetools>=5.3" \
         "hf_transfer>=0.1"
 
-# Install the DriftCall package in editable mode.
-RUN python -m pip install --no-deps -e ${WORKSPACE_DIR}/repo
+# DriftCall package: installed editable at container start (entrypoint.sh).
 
 # Smoke check — fail the build if any required import is missing.
 RUN python -c "import torch, trl, peft, wandb, transformers, unsloth, bitsandbytes; \
@@ -186,18 +169,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && git config --global credential.helper store \
     && rm -rf /var/lib/apt/lists/*
 
-# ---------------------------------------------------------------------------
-# 6. Pre-pull base model weights at build time (optional)
-# ---------------------------------------------------------------------------
-ARG HF_TOKEN_BUILD=""
-RUN if [ -n "$HF_TOKEN_BUILD" ]; then \
-        HF_TOKEN="$HF_TOKEN_BUILD" python -c \
-            "from huggingface_hub import snapshot_download; \
-             snapshot_download('unsloth/gemma-4-E2B-it-bnb-4bit')" || true ; \
-    fi
+# Optional HF pre-pull at runtime: DRIFTCALL_PRE_PULL_AT_START=1 + HF_TOKEN (entrypoint.sh).
 
 # ---------------------------------------------------------------------------
-# 7. Entrypoint — start sshd in background, run training pipeline in tmux.
+# 6. Entrypoint — clone repo, install package, sshd, training in tmux.
 # ---------------------------------------------------------------------------
 COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh

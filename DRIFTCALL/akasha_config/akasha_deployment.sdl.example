@@ -13,6 +13,21 @@
 #   push trained LoRA + reports to HF Hub.
 #
 # Wall-clock on H100 80GB SXM5: ~5–6 hours.
+#
+# -----------------------------------------------------------------------------
+# Container start (entrypoint.sh) — clones the repo; no GitHub token needed for
+# public repos. Set GITHUB_TOKEN via Akash secrets for private clones.
+#
+#   GIT_REPO_URL, GIT_REF, SUBPATH — clone source (defaults in Dockerfile.train)
+#   GITHUB_TOKEN — optional PAT for private GitHub clone
+#   DRIFTCALL_SKIP_GIT_CLONE=1 — skip clone if /workspace/repo is bind-mounted
+#   DRIFTCALL_PRE_PULL_AT_START=1 — pre-pull Gemma weights (needs HF_TOKEN)
+#
+# Image build (no secrets required):
+#   docker build -f Dockerfile.train -t <registry>/driftcall-train:latest .
+#
+# Runtime env (below): use Akash console secrets for tokens — never commit real values.
+# -----------------------------------------------------------------------------
 
 version: "2.0"
 
@@ -50,8 +65,15 @@ services:
       - WANDB_API_KEY=wandb_v1_REPLACE_ME_OR_LET_secrets_py_FALLBACK
       # FastAPI server auth — if you expose port 7860, set a strong token.
       - DRIFTCALL_ENV_TOKEN=REPLACE_ME_WITH_64_RANDOM_BYTES
+      # Repo clone at container start (scripts/entrypoint.sh).
+      - GIT_REPO_URL=https://github.com/saumilyagupta/openenv-DGXAI.git
+      - GIT_REF=main
+      - SUBPATH=DRIFTCALL
+      # GitHub PAT — only if GIT_REPO_URL points at a private repo.
+      - GITHUB_TOKEN=
+      - DRIFTCALL_PRE_PULL_AT_START=0
       # --- DriftCall training knobs ----------------------------------------
-      - DRIFTCALL_HF_REPO=krrishchoudhary109/gemma-4-e2b-driftcall-lora
+      - DRIFTCALL_HF_REPO=DGXAI/gemma-4-e2b-driftcall-lora
       - DRIFTCALL_HARDWARE=h100
       - DRIFTCALL_NUM_STEPS_STAGE1=150
       - DRIFTCALL_NUM_STEPS_STAGE2=200

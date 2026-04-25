@@ -13,6 +13,13 @@
 #   push trained LoRA + reports to HF Hub.
 #
 # Wall-clock on H100 80GB SXM5: ~5–6 hours.
+#
+# -----------------------------------------------------------------------------
+# Container start clones the repo (entrypoint.sh). See akasha_deployment.sdl.example
+# for GIT_*, GITHUB_TOKEN, DRIFTCALL_PRE_PULL_AT_START. Build image with:
+#   docker build -f Dockerfile.train -t <registry>/driftcall:latest .
+# Never commit real tokens — use Akash console secrets.
+# -----------------------------------------------------------------------------
 
 version: "2.0"
 
@@ -21,7 +28,7 @@ services:
     # Pushed via:
     #   docker build -f Dockerfile.train -t krrishchoudhary109/driftcall-train:v1 .
     #   docker push krrishchoudhary109/driftcall-train:v1
-    image: krrishchoudhary109/driftcall-train:v1
+    image: saumilyajj/driftcall:latest
     expose:
       # SSH for tmux attach during training (optional; remove for headless).
       - port: 22
@@ -44,14 +51,21 @@ services:
     env:
       # --- Auth tokens (set via Akash console secrets, NOT here) -------------
       # Hugging Face write token — required for pushing the trained LoRA.
-      - HF_TOKEN=hf_REPLACE_ME_WITH_YOUR_HF_WRITE_TOKEN
+      - HF_TOKEN=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
       # WandB API key — optional. cells/_secrets.py has a hardcoded fallback;
       # set this to override at runtime without rebuilding the image.
-      - WANDB_API_KEY=wandb_v1_REPLACE_ME_OR_LET_secrets_py_FALLBACK
+      - WANDB_API_KEY=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
       # FastAPI server auth — if you expose port 7860, set a strong token.
       - DRIFTCALL_ENV_TOKEN=REPLACE_ME_WITH_64_RANDOM_BYTES
+      # Repo clone at container start (scripts/entrypoint.sh).
+      - GIT_REPO_URL=https://github.com/saumilyagupta/openenv-DGXAI.git
+      - GIT_REF=main
+      - SUBPATH=DRIFTCALL
+      # GitHub PAT — only if the repo is private. Rotate any token that was ever committed.
+      - GITHUB_TOKEN=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
+      - DRIFTCALL_PRE_PULL_AT_START=0
       # --- DriftCall training knobs ----------------------------------------
-      - DRIFTCALL_HF_REPO=krrishchoudhary109/gemma-4-e2b-driftcall-lora
+      - DRIFTCALL_HF_REPO=DGXAI/gemma-4-e2b-driftcall-lora
       - DRIFTCALL_HARDWARE=h100
       - DRIFTCALL_NUM_STEPS_STAGE1=150
       - DRIFTCALL_NUM_STEPS_STAGE2=200

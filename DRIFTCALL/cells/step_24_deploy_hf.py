@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-DEFAULT_LORA_REPO_ID: str = "driftcall/gemma-4-e2b-driftcall-lora"
+DEFAULT_LORA_REPO_ID: str = "DGXAI/gemma-4-e2b-driftcall-lora"
 DEFAULT_DATASET_REPO_ID: str = "driftcall/driftcall-indic-briefs"
 DEFAULT_ENV_SPACE_ID: str = "driftcall/driftcall-env"
 DEFAULT_DEMO_SPACE_ID: str = "driftcall/driftcall-demo"

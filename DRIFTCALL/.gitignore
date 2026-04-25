@@ -49,3 +49,4 @@ mlruns/
 build/
 dist/
 *.egg-info/
+akasha_config/akasha_deployment.sdl

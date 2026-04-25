@@ -12,7 +12,7 @@ Locked metrics from DESIGN.md §15 + `pitch_demo.md` §3.4 Section 3:
 - Format compliance (R4): 0.41 → 0.92
 
 Locked HF Hub links (`pitch_demo.md` §2.3):
-- `huggingface.co/driftcall/gemma-4-e2b-driftcall-lora`
+- `huggingface.co/DGXAI/gemma-4-e2b-driftcall-lora`
 - `huggingface.co/datasets/driftcall/driftcall-indic-briefs`
 - `huggingface.co/spaces/driftcall/driftcall-env`
 - `huggingface.co/spaces/driftcall/driftcall-demo`

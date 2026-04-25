@@ -13,7 +13,7 @@
 #   WANDB_API_KEY                  wandb auth (optional; offline-safe)
 #   WANDB_RUN_ID                   wandb run id for plot history fetch
 #   HF_TOKEN                       huggingface_hub write token (required if PUSH_TO_HUB=true)
-#   DRIFTCALL_HF_REPO              e.g. "krrishchoudhary109/gemma-4-e2b-driftcall-lora"
+#   DRIFTCALL_HF_REPO              e.g. "DGXAI/gemma-4-e2b-driftcall-lora"
 #   DRIFTCALL_HARDWARE             "v100" | "h100" (default h100)
 #   DRIFTCALL_NUM_STEPS_STAGE{1,2,3}  per-stage GRPO step counts
 #   DRIFTCALL_EVAL_EPISODES        baseline + final eval episode count

@@ -15,8 +15,7 @@
 #   ./scripts/build_and_push.sh --skip-push          # build only
 #   ./scripts/build_and_push.sh --tag v2             # custom tag
 #   ./scripts/build_and_push.sh --user yourdockeruser
-#   GITHUB_TOKEN=ghp_... ./scripts/build_and_push.sh # for private repo clone
-#   HF_TOKEN_BUILD=hf_... ./scripts/build_and_push.sh # pre-pull Gemma weights
+#   (Git clone + HF pre-pull happen at container start via entrypoint.sh, not here.)
 
 set -euo pipefail
 
@@ -97,20 +96,9 @@ fi
 
 # 5. Build
 echo "==> Building ${IMAGE}:${TAG}"
-BUILD_ARGS=()
-if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-    BUILD_ARGS+=(--build-arg "GITHUB_TOKEN=${GITHUB_TOKEN}")
-fi
-if [[ -n "${HF_TOKEN_BUILD:-}" ]]; then
-    BUILD_ARGS+=(--build-arg "HF_TOKEN_BUILD=${HF_TOKEN_BUILD}")
-fi
-if [[ -n "${GIT_REF:-}" ]]; then
-    BUILD_ARGS+=(--build-arg "GIT_REF=${GIT_REF}")
-fi
 
 docker build \
     -f Dockerfile.train \
-    "${BUILD_ARGS[@]}" \
     -t "${IMAGE}:${TAG}" \
     -t "${IMAGE}:latest" \
     .

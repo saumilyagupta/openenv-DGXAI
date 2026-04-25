@@ -20,3 +20,5 @@ notebooks/train_driftcall.ipynb
 .git
 .gitignore
 .dockerignore
+akasha_config/akasha_deployment.sdl
+.env
