@@ -31,6 +31,11 @@ _os_pre.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
 _os_pre.environ.setdefault("TORCH_COMPILE_DISABLE", "1")
 _os_pre.environ.setdefault("UNSLOTH_COMPILE_DISABLE", "1")
 _os_pre.environ.setdefault("UNSLOTH_RETURN_LOGITS", "1")
+# Disable Unsloth's static cache + compile_config generation path that
+# breaks multimodal Gemma 4 sampling on transformers >= 5.5
+# (RuntimeError: prob_dist must be 1 or 2 dim).
+_os_pre.environ.setdefault("UNSLOTH_DISABLE_STATIC_GENERATION", "1")
+_os_pre.environ.setdefault("UNSLOTH_RETURN_HIDDEN_STATES", "0")
 try:
     import unsloth as _unsloth  # noqa: F401
 except ImportError:

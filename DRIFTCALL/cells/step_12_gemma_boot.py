@@ -41,6 +41,12 @@ os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
 os.environ.setdefault("TORCH_COMPILE_DISABLE", "1")
 os.environ.setdefault("UNSLOTH_COMPILE_DISABLE", "1")
 os.environ.setdefault("UNSLOTH_RETURN_LOGITS", "1")
+# Disable Unsloth's "static cache + compile_config" generation path. On
+# transformers >= 5.5 with multimodal Gemma 4, the static cache produces
+# malformed logit shapes during _sample, manifesting as
+# `RuntimeError: prob_dist must be 1 or 2 dim` in torch.multinomial.
+# Falls back to the dynamic-cache path which is correct on V100.
+os.environ.setdefault("UNSLOTH_DISABLE_STATIC_GENERATION", "1")
 # Explicitly start with hidden-states trick OFF; only Unsloth's GRPO
 # _get_per_token_logps_and_entropies block sets this to "1" temporarily.
 # Defensive reset prevents leaks across re-imports / test runs.
