@@ -13,7 +13,7 @@ accelerate>=1.0
 # OpenEnv + FastAPI (deploy_env_space.md §4.5)
 fastapi>=0.115
 uvicorn[standard]>=0.32
-openenv>=0.2
+openenv>=0.1.10,<0.2
 pydantic>=2.7
 
 # Audio pipeline (audio.md §6.1)

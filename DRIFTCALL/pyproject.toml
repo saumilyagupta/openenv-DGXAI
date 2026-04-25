@@ -36,7 +36,7 @@ dependencies = [
   # Server + OpenEnv (deploy_env_space.md §4.5).
   "fastapi>=0.115",
   "uvicorn[standard]>=0.32",
-  "openenv>=0.2",
+  "openenv>=0.1.10,<0.2",
   "pydantic>=2.7",
 
   # Audio (audio.md §6.1).
@@ -72,8 +72,11 @@ dev = [
 Homepage = "https://huggingface.co/spaces/driftcall/driftcall-env"
 Repository = "https://github.com/krrishchoudhary109/openenv-DGXAI"
 
+[project.scripts]
+server = "server.app:main"
+
 [tool.setuptools]
-packages = ["cells"]
+packages = ["cells", "server"]
 
 [tool.ruff]
 line-length = 100
