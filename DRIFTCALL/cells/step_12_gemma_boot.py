@@ -16,8 +16,17 @@ cell loads on CPU-only CI runners where Unsloth is not installed. Tests mock
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Any
+
+# V100 + recent-torch + Unsloth chunked log-softmax has a known dynamo
+# shape-tracing bug. Disable torch.compile/dynamo before any Unsloth import.
+# Both env-var and programmatic disable are belt-and-suspenders.
+os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
+os.environ.setdefault("TORCH_COMPILE_DISABLE", "1")
+os.environ.setdefault("UNSLOTH_COMPILE_DISABLE", "1")
+os.environ.setdefault("UNSLOTH_RETURN_LOGITS", "1")
 
 BASE_MODEL_ID: str = "unsloth/gemma-4-E2B-it-unsloth-bnb-4bit"
 MAX_SEQ_LENGTH: int = 4096
@@ -105,6 +114,15 @@ def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
     cfg = config if config is not None else BootConfig()
 
     import torch
+    # Programmatic dynamo disable in addition to the env vars set at module
+    # import. Required for V100 to avoid tracing failures inside Unsloth's
+    # chunked log-softmax path.
+    try:
+        import torch._dynamo as _dynamo
+        _dynamo.config.suppress_errors = True
+        _dynamo.config.disable = True
+    except Exception:
+        pass
     from unsloth import FastModel
 
     model, tokenizer = FastModel.from_pretrained(
