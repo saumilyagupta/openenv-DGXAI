@@ -447,7 +447,9 @@ def _generate_one_turn(model: Any, tokenizer: Any, prompt: str) -> str:
     """
     import torch
 
-    inputs = tokenizer(prompt, return_tensors="pt")
+    # Pass prompt as kwarg `text=` — Unsloth's Gemma4 processor wrapping
+    # consumes positional args silently, sending text=None to the inner call.
+    inputs = tokenizer(text=prompt, return_tensors="pt")
     if hasattr(model, "device"):
         inputs = {k: v.to(model.device) for k, v in inputs.items()}
     with torch.no_grad():
