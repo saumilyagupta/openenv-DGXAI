@@ -381,11 +381,11 @@ def test_load_api_schemas_smoke() -> None:
     registry = load_api_schemas(_DATA_ROOT / "api_schemas")
     assert isinstance(registry, APISchemaRegistry)
     total = sum(len(v) for v in registry.schemas.values())
-    assert total == 14
+    assert total == 15
     assert set(registry.schemas.keys()) == _EXPECTED_DOMAINS | {"payment"}
     for domain in ("airline", "cab", "restaurant", "hotel"):
         assert set(registry.schemas[domain].keys()) == {"v1", "v2", "v3"}
-    assert set(registry.schemas["payment"].keys()) == {"v1", "v2"}
+    assert set(registry.schemas["payment"].keys()) == {"v1", "v2", "v3"}
 
 
 def test_api_schema_has_schema_field() -> None:
@@ -436,7 +436,7 @@ def test_api_schemas_invalid_json_schema_raises(tmp_path: Path) -> None:
     for d in ("airline", "cab", "restaurant", "hotel"):
         for v in ("v1", "v2", "v3"):
             (root / d / f"{v}.json").write_text(json.dumps(bad))
-    for v in ("v1", "v2"):
+    for v in ("v1", "v2", "v3"):
         (root / "payment" / f"{v}.json").write_text(json.dumps(bad))
     with pytest.raises(DatasetSchemaError):
         load_api_schemas(root)

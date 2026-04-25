@@ -188,7 +188,12 @@
   to_version: v3
   description: "veg_only=True now excludes egg-based dishes (previously included)"
   mutation:
-    tnc_text_swap: {veg_only_excludes_egg: true}
+    # Two coupled keys: veg_only_excludes_egg is the new boolean policy flag
+    # introduced in v3; veg_only is the user-facing slot whose semantics are
+    # being mutated by this drift (same field, different meaning). Templates
+    # tag the live slot (veg_only) — keep both so the slot_tag is targetable
+    # AND the policy-flag audit trail is preserved.
+    tnc_text_swap: {veg_only_excludes_egg: true, veg_only: "semantics_egg_excluded"}
     side_channel_notice_append: "Semantics update: veg_only=True now excludes egg-based dishes."
   detection_hints:
     - veg_only
@@ -286,8 +291,8 @@
   drift_type: auth
   domain: payment
   from_version: v2
-  to_version: v2
-  description: "transactions > 5000 INR now require mfa_code; auth_error with MFA_REQUIRED (policy flip on payment v2)"
+  to_version: v3
+  description: "transactions > 5000 INR now require mfa_code; auth_error with MFA_REQUIRED (payment v2 → v3)"
   mutation:
     policy_flag_flip: {mfa_required: true}
     numeric_bump: {mfa_threshold_inr: 5000}

@@ -58,7 +58,7 @@ _EXPECTED_SCHEMA_VERSIONS: Mapping[str, tuple[str, ...]] = MappingProxyType(
         "cab": ("v1", "v2", "v3"),
         "restaurant": ("v1", "v2", "v3"),
         "hotel": ("v1", "v2", "v3"),
-        "payment": ("v1", "v2"),
+        "payment": ("v1", "v2", "v3"),
     }
 )
 
