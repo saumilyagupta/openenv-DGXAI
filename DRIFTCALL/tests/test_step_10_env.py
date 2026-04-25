@@ -1090,8 +1090,9 @@ def test_I1_episode_stage1_airline_happy_submit() -> None:
     assert env.done() is True
     assert env.episode().terminated_by == "SUBMIT"
     assert env.episode().turns_used == 5
-    # Stub rewards returns r1==1.0, r2==0.5 on success.
-    assert env.rewards().r1 == 1.0
+    # Real rewards: r1==0.0 because the agent only spoke (no TOOL_CALLs);
+    # the per-domain success predicate cannot match without a booking.
+    assert env.rewards().r1 == 0.0
 
 
 def test_I2_episode_stage2_drift_detect_adapt() -> None:
