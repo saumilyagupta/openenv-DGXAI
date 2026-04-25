@@ -1,0 +1,133 @@
+---
+# DriftCall — Akash Network deployment SDL for full GRPO training run.
+#
+# Target image: built from Dockerfile.train (FROM saumilyajj/dl-sam:2025).
+# Push to a registry first:
+#   docker build -f Dockerfile.train -t <registry>/driftcall-train:latest .
+#   docker push <registry>/driftcall-train:latest
+# Then update the `image:` line below with the pushed reference.
+#
+# Pipeline runs end-to-end on container start (see scripts/train_full.sh):
+#   Stage 1 (150 GRPO) → Stage 2 (200) → Stage 3 (150) → baseline + final
+#   eval (50 ep each) → reward-hacking probe (200 ep) → plots → summary →
+#   push trained LoRA + reports to HF Hub.
+#
+# Wall-clock on H100 80GB SXM5: ~5–6 hours.
+
+version: "2.0"
+
+services:
+  driftcall-train:
+    # Replace with your pushed image, e.g. krrishchoudhary109/driftcall-train:v1.
+    image: saumilyajj/dl-sam:2025
+    expose:
+      # SSH for tmux attach during training (optional; remove for headless).
+      - port: 22
+        as: 22
+        proto: tcp
+        to:
+          - global: true
+      # FastAPI env server — exposed only if you want to validate the trained
+      # env live while training is still running. Safe to remove for pure
+      # training-only deployments.
+      - port: 7860
+        as: 7860
+        to:
+          - global: true
+      # WandB local-mode dashboard (only used if WANDB_MODE=offline).
+      - port: 8080
+        as: 8080
+        to:
+          - global: true
+    env:
+      # --- Auth tokens (set via Akash console secrets, NOT here) -------------
+      # Hugging Face write token — required for pushing the trained LoRA.
+      - HF_TOKEN=hf_REPLACE_ME_WITH_YOUR_HF_WRITE_TOKEN
+      # WandB API key — optional. cells/_secrets.py has a hardcoded fallback;
+      # set this to override at runtime without rebuilding the image.
+      - WANDB_API_KEY=wandb_v1_REPLACE_ME_OR_LET_secrets_py_FALLBACK
+      # FastAPI server auth — if you expose port 7860, set a strong token.
+      - DRIFTCALL_ENV_TOKEN=REPLACE_ME_WITH_64_RANDOM_BYTES
+      # --- DriftCall training knobs ----------------------------------------
+      - DRIFTCALL_HF_REPO=krrishchoudhary109/gemma-4-e2b-driftcall-lora
+      - DRIFTCALL_HARDWARE=h100
+      - DRIFTCALL_NUM_STEPS_STAGE1=150
+      - DRIFTCALL_NUM_STEPS_STAGE2=200
+      - DRIFTCALL_NUM_STEPS_STAGE3=150
+      - DRIFTCALL_EVAL_EPISODES=50
+      - DRIFTCALL_PROBE_EPISODES=200
+      - DRIFTCALL_OUTPUT_DIR=/mnt/data/checkpoints
+      - DRIFTCALL_PUSH_TO_HUB=true
+      # --- WandB project / run config --------------------------------------
+      - WANDB_PROJECT=driftcall
+      - WANDB_MODE=online
+      # --- Caching / performance -------------------------------------------
+      - HF_HOME=/mnt/data/hf_cache
+      - HF_HUB_ENABLE_HF_TRANSFER=1
+      - TRANSFORMERS_VERBOSITY=info
+      - PYTHONUNBUFFERED=1
+      # --- Reproducibility -------------------------------------------------
+      - PYTHONHASHSEED=0
+    params:
+      storage:
+        # Shared-memory mount — used by torch DataLoader workers and
+        # Unsloth's KV-cache scratch. RAM-class is fastest.
+        shm:
+          mount: /dev/shm
+          readOnly: false
+        # Persistent volume — checkpoints + HF cache survive pod restarts.
+        # Holds: ~3 GB Gemma 4 E2B 4-bit + LoRA + ~9 GB checkpoints (per
+        # stage × N saves) + ~5 GB merged 16-bit final + ~1 GB eval reports.
+        data:
+          mount: /mnt/data
+          readOnly: false
+
+profiles:
+  compute:
+    driftcall-train:
+      resources:
+        cpu:
+          # 16 vCPUs is the sweet spot per per-step CPU profile (data
+          # loading + tokenizer + reward computation + checkpoint compress).
+          units: 16
+        memory:
+          # H100 pods routinely come with 100–200 GB; 64 GB is the floor.
+          size: 64Gi
+        storage:
+          # Container ephemeral storage — small, OS + pip cache only.
+          - size: 50Gi
+          # /dev/shm — bigger than default to avoid DataLoader OOMs.
+          - name: shm
+            size: 32Gi
+            attributes:
+              persistent: false
+              class: ram
+          # /mnt/data — persistent across pod restarts. Sized for full run
+          # output (training.md §3.4 + DESIGN.md §16). Class beta3 = NVMe.
+          - name: data
+            size: 256Gi
+            attributes:
+              persistent: true
+              class: beta3
+        gpu:
+          units: 1
+          attributes:
+            vendor:
+              nvidia:
+                - model: h100
+                  ram: 80Gi
+                  interface: sxm
+  placement:
+    dcloud:
+      pricing:
+        driftcall-train:
+          denom: uakt
+          # Bid in uAKT/sec. 100000 uAKT/sec ≈ $1.5–2.0/hr at recent prices.
+          # Bump higher to win the auction faster on busy days.
+          amount: 100000
+
+deployment:
+  driftcall-train:
+    dcloud:
+      profile: driftcall-train
+      count: 1
