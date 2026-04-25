@@ -14,8 +14,7 @@ import re
 import unicodedata
 from collections import Counter
 from math import sqrt
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 import yaml
@@ -23,7 +22,6 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from cells import step_07_task_generator as tg
-from cells.step_04_models import GoalSpec
 from cells.step_07_task_generator import (
     InvalidBudgetError,
     InvalidLanguageError,
@@ -32,7 +30,6 @@ from cells.step_07_task_generator import (
     MissingSlotError,
     NoVariantForLanguageError,
     SlotDistribution,
-    SlotGrid,
     Template,
     TemplateFileMissingError,
     TemplateLibrary,
@@ -43,6 +40,11 @@ from cells.step_07_task_generator import (
     load_templates,
     stable_sub_seed,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from cells.step_04_models import GoalSpec
 
 # ---------------------------------------------------------------------------
 # Shared fixtures / weight constants (§5.3 of the test plan)

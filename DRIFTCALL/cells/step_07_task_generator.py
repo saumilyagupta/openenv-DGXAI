@@ -425,9 +425,8 @@ def load_templates(
         parsed_templates.append(_parse_template(raw, where=f"templates[{idx}]"))
 
     # i18n file is optional; if absent we use an empty mapping.
-    i18n_data: dict[LanguageCode, dict[str, str]] = {
-        code: {} for code in ("hi", "ta", "kn", "en", "hinglish")
-    }
+    _LANG_CODES: tuple[LanguageCode, ...] = ("hi", "ta", "kn", "en", "hinglish")
+    i18n_data: dict[LanguageCode, dict[str, str]] = {code: {} for code in _LANG_CODES}
     if i18n_path.exists():
         try:
             with i18n_path.open("r", encoding="utf-8") as fh:
@@ -767,7 +766,7 @@ def _pick_domain(seed: int, library: TemplateLibrary, stage: int) -> Domain:
             f"library has no templates eligible at stage={stage}"
         )
     rng = random.Random(stable_sub_seed(seed, "domain"))
-    return cast("Domain", rng.choice(available))
+    return rng.choice(available)
 
 
 def _eligible_templates(
@@ -978,7 +977,7 @@ def _pick_language(
     codes = sorted(language_weights.keys())
     weights = [float(language_weights[c]) for c in codes]
     chosen = rng.choices(codes, weights=weights, k=1)[0]
-    return cast("LanguageCode", chosen)
+    return chosen
 
 
 # ---------------------------------------------------------------------------

@@ -66,6 +66,9 @@
   min_stage: 1
   required_slots: [city, cuisine, when]
   optional_slots: []
+  slot_distributions:
+    cuisine:
+      choices: [Biryani, Dosa, Pizza, Thali, Noodles, Idli, Chaat, Paneer, Roti]
   constraints_template:
     budget_inr:
       distribution: uniform
