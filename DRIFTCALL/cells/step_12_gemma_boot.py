@@ -184,6 +184,35 @@ def _patch_gemma4_for_unsloth_return_hidden_states() -> None:
     # GRPOTrainer reads via ``.logits``. Fields not set are ignored downstream.
     _wrap_forward(_CondGen, CausalLMOutputWithPast)
 
+    # Second root-cause patch: Gemma 4's processor emits multimodal-only
+    # kwargs (mm_token_type_ids, pixel_values_lengths, image_sizes) that
+    # generate()'s _validate_model_kwargs rejects with a ValueError because
+    # they aren't in the forward() signature. For text-only training those
+    # kwargs are either all-zero or absent semantically — drop them before
+    # validation. Audio/vision codepaths still emit input_features /
+    # pixel_values which ARE in the forward signature and pass through.
+    _MM_KWARGS_TO_DROP = (
+        "mm_token_type_ids",
+        "pixel_values_lengths",
+        "image_sizes",
+    )
+
+    def _wrap_validate(target_cls):
+        if target_cls is None or getattr(target_cls, "_DRIFTCALL_VAL_PATCHED", False):
+            return
+        original = target_cls._validate_model_kwargs
+
+        def patched_validate(self, model_kwargs):
+            for k in _MM_KWARGS_TO_DROP:
+                model_kwargs.pop(k, None)
+            return original(self, model_kwargs)
+
+        target_cls._validate_model_kwargs = patched_validate
+        target_cls._DRIFTCALL_VAL_PATCHED = True
+
+    _wrap_validate(_Causal)
+    _wrap_validate(_CondGen)
+
 
 def boot_gemma(config: BootConfig | None = None) -> tuple[Any, Any]:
     """Load Gemma 4 E2B in 4-bit + attach LoRA; return (model, tokenizer).
