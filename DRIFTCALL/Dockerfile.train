@@ -1,48 +1,42 @@
 # syntax=docker/dockerfile:1.6
 # DriftCall — full training image for Akash Network GPU rentals.
 #
-# Self-contained: clones the repo at build time, installs all deps, then
-# runs Stage 1 → Stage 2 → Stage 3 → baseline eval → final eval →
-# reward-hacking probe → plots → summary → push to HF Hub.
+# Self-contained: clones the repo at build time, installs all deps, runs
+# Stage 1 → Stage 2 → Stage 3 → baseline eval → final eval → reward-hacking
+# probe → plots → summary → push to HF Hub.
 #
-# Built on official pytorch/pytorch (CUDA 12.4 + PyTorch 2.5 pre-baked).
-# We do NOT use saumilyajj/dl-sam:2025 — that image had TensorFlow but no
-# PyTorch, making the build ~3 GB heavier and slower. The official PyTorch
-# image gives us the right base for free.
+# Built on saumilyajj/dl-sam:2025 (team's standard ML dev image; CUDA 12.3
+# + Python 3.11 + base ML stack including torch>=2.0, transformers, peft,
+# bitsandbytes, accelerate, wandb, openssh-server, tmux, git).
 #
 # Usage:
-#   # Public repo:
-#   docker build -f Dockerfile.train -t driftcall-train:v1 .
-#
-#   # Private repo (passes a fine-grained PAT to the build):
 #   docker build -f Dockerfile.train \
 #     --build-arg GITHUB_TOKEN=$GITHUB_TOKEN \
-#     -t driftcall-train:v1 .
+#     -t krrishchoudhary109/driftcall-train:v1 .
 #
 #   docker run --gpus all \
 #     --env-file .env \
+#     -p 22:22 -p 7860:7860 \
 #     -v /tmp/akash-data:/mnt/data \
-#     driftcall-train:v1
-#
-# On Akash, the SDL mounts a persistent volume at /mnt/data; checkpoints
-# survive pod restarts. SSH on :22 stays available for tmux attach.
+#     krrishchoudhary109/driftcall-train:v1
 
-FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
+FROM saumilyajj/dl-sam:2025
 
 LABEL org.opencontainers.image.title="DriftCall Trainer"
 LABEL org.opencontainers.image.source="https://github.com/saumilyagupta/openenv-DGXAI"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 # ---------------------------------------------------------------------------
-# Base environment — every value matches the SDL persistent volume layout
+# Environment
 # ---------------------------------------------------------------------------
-ENV PYTHONUNBUFFERED=1 \
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH=/app \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    DEBIAN_FRONTEND=noninteractive \
-    LANG=C.UTF-8 \
+    WORKSPACE_DIR=/workspace \
+    PYTHONPATH=/workspace/repo \
     HF_HOME=/mnt/data/hf_cache \
     HF_HUB_ENABLE_HF_TRANSFER=1 \
     WANDB_PROJECT=driftcall \
@@ -55,53 +49,58 @@ ENV PYTHONUNBUFFERED=1 \
     DRIFTCALL_PROBE_EPISODES=200 \
     DRIFTCALL_OUTPUT_DIR=/mnt/data/checkpoints \
     DRIFTCALL_EVAL_DIR=/mnt/data/eval_reports \
-    DRIFTCALL_LOG_DIR=/app/logs \
-    DRIFTCALL_BRIEFS_PATH=/app/data/val/briefs.jsonl \
+    DRIFTCALL_LOG_DIR=/workspace/logs \
+    DRIFTCALL_BRIEFS_PATH=/workspace/repo/data/val/briefs.jsonl \
     DRIFTCALL_HF_REPO="" \
     DRIFTCALL_PUSH_TO_HUB=true
 
+WORKDIR ${WORKSPACE_DIR}
+
+RUN mkdir -p ${WORKSPACE_DIR}/repo \
+             ${WORKSPACE_DIR}/logs \
+             /mnt/data/checkpoints \
+             /mnt/data/hf_cache \
+             /mnt/data/eval_reports
+
 # ---------------------------------------------------------------------------
-# System tools — pytorch base is slim. Add what we need:
-#   git           — clone the repo
-#   curl, ca-cert — HF / wandb HTTPS pulls
-#   build-essential — some Python wheels (kokoro, faster-whisper) need a C compiler
-#   libsndfile1, ffmpeg — audio for Kokoro TTS / faster-whisper ASR
-#   openssh-server, tmux — SSH attach during training
-#   tini — clean SIGTERM handling on Akash spot preemption
+# 1. CUDA Toolkit 12.3 (matches base image's CUDA driver/runtime version).
+#    Base only has cuda-cudart + libs; full toolkit adds nvcc for unsloth
+#    triton compilation + headers for native wheel builds.
 # ---------------------------------------------------------------------------
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        wget gnupg2 software-properties-common ca-certificates && \
+    wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb && \
+    dpkg -i cuda-keyring_1.1-1_all.deb && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends cuda-toolkit-12-3 && \
+    rm -rf /var/lib/apt/lists/* cuda-keyring_1.1-1_all.deb
+
+# DriftCall-specific apt deps (audio + tini for clean SIGTERM).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git \
-        curl \
-        ca-certificates \
-        build-essential \
         libsndfile1 \
         ffmpeg \
-        openssh-server \
-        tmux \
         tini \
     && rm -rf /var/lib/apt/lists/*
 
-# Configure sshd for Akash port-22 expose. Default password is "akash" —
-# override at runtime via `-e ROOT_PASSWORD=<new>`.
-RUN mkdir -p /var/run/sshd && \
-    echo 'root:akash' | chpasswd && \
-    sed -i 's/#PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
-    sed -i 's/#PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+# ---------------------------------------------------------------------------
+# 2. UV + Python venv
+# ---------------------------------------------------------------------------
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
+
+RUN uv venv ${WORKSPACE_DIR}/.venv/driftcall
+ENV PATH="${WORKSPACE_DIR}/.venv/driftcall/bin:$PATH"
+ENV VIRTUAL_ENV="${WORKSPACE_DIR}/.venv/driftcall"
 
 # ---------------------------------------------------------------------------
-# Mount points — /mnt/data is the SDL persistent volume; logs ephemeral.
-# ---------------------------------------------------------------------------
-RUN mkdir -p /mnt/data/checkpoints /mnt/data/hf_cache /mnt/data/eval_reports \
-             /app/logs
-
-WORKDIR /app
-
-# ---------------------------------------------------------------------------
-# Clone the repo at build time.
+# 3. Clone the repo at build time
+#
+# Build args:
 #   GIT_REPO_URL — full HTTPS URL (default: saumilyagupta/openenv-DGXAI)
 #   GIT_REF      — branch / tag / commit SHA (default: main)
 #   GITHUB_TOKEN — fine-grained PAT for private repo access (optional)
-#   SUBPATH      — directory inside the repo holding the DriftCall package
+#   SUBPATH      — directory inside repo holding the DriftCall package
 # ---------------------------------------------------------------------------
 ARG GIT_REPO_URL=https://github.com/saumilyagupta/openenv-DGXAI.git
 ARG GIT_REF=main
@@ -114,41 +113,44 @@ RUN if [ -n "$GITHUB_TOKEN" ]; then \
         AUTHED_URL="$GIT_REPO_URL" ; \
     fi && \
     git clone --depth 1 --branch "$GIT_REF" "$AUTHED_URL" /tmp/repo && \
-    cp -r /tmp/repo/${SUBPATH}/. /app/ && \
+    cp -r /tmp/repo/${SUBPATH}/. ${WORKSPACE_DIR}/repo/ && \
     rm -rf /tmp/repo
 
 # ---------------------------------------------------------------------------
-# Python deps.
+# 4. Python deps inside the UV venv
 #
-# Strategy:
-#   - PyTorch 2.5.1 + CUDA 12.4 already in base — keep them via --no-deps
-#     installation of packages that pin torch (unsloth, bitsandbytes, peft).
-#   - Everything else gets a normal install.
+#   - PyTorch 2.5 + CUDA 12.4 wheel (matches torch's binary, runs against
+#     CUDA 12.3 thanks to driver compat).
+#   - Core ML stack pinned to training.md versions.
+#   - DriftCall extras (unsloth, trl, fastapi, kokoro, faster-whisper, ...).
 #   - hf_transfer for fast HF Hub pulls.
-#   - Editable install of the local package so `from cells.* import` works
-#     from any CWD without PYTHONPATH side-effects.
 # ---------------------------------------------------------------------------
-RUN pip install --upgrade pip wheel setuptools
+RUN python -m ensurepip --upgrade && \
+    python -m pip install --upgrade pip wheel setuptools
 
-# Install the core stack first — these depend on a specific torch ABI, so
-# install with --no-deps to keep the base image's torch + cuda intact.
-RUN pip install --no-deps \
-        "unsloth>=2026.4.5" \
-        "bitsandbytes>=0.43" \
+RUN python -m pip install \
+        torch>=2.5 \
+        torchaudio>=2.5 \
+        --extra-index-url https://download.pytorch.org/whl/cu124
+
+RUN python -m pip install \
+        "transformers>=4.46" \
         "peft>=0.13" \
-        "trl>=0.23" \
         "accelerate>=1.0" \
-        "transformers>=4.46"
+        "bitsandbytes>=0.43" \
+        "wandb>=0.18" \
+        "huggingface_hub>=0.25" \
+        "safetensors>=0.4"
 
-# Install everything else with full deps — pulls in numpy, scipy, etc.
-RUN pip install \
+RUN python -m pip install \
+        "unsloth>=2026.4.5" \
+        "trl>=0.23" \
         "fastapi>=0.115" \
         "uvicorn[standard]>=0.32" \
         "openenv>=0.1.10,<0.2" \
         "pydantic>=2.7" \
         "kokoro>=0.3,<0.4" \
         "faster-whisper>=1.0,<2.0" \
-        "torchaudio>=2.5" \
         "soundfile>=0.12" \
         "numpy<2.0" \
         "gradio>=5.8,<6" \
@@ -156,57 +158,52 @@ RUN pip install \
         "nbformat>=5.10" \
         "PyYAML>=6.0" \
         "cachetools>=5.3" \
-        "huggingface_hub>=0.25" \
-        "wandb>=0.18" \
         "hf_transfer>=0.1"
 
-# Install the project as a package so `from cells.* import` works from any CWD.
-RUN pip install --no-deps -e .
+# Install the DriftCall package in editable mode.
+RUN python -m pip install --no-deps -e ${WORKSPACE_DIR}/repo
+
+# Smoke check — fail the build if any required import is missing.
+RUN python -c "import torch, trl, peft, wandb, transformers, unsloth, bitsandbytes; \
+               print(f'torch={torch.__version__} cuda={torch.version.cuda} ' \
+                     f'trl={trl.__version__} wandb={wandb.__version__} ' \
+                     f'transformers={transformers.__version__}')"
 
 # ---------------------------------------------------------------------------
-# Smoke check at build time — fail fast if base image is incompatible.
+# 5. SSH server setup (matches the team's reference Dockerfile pattern)
 # ---------------------------------------------------------------------------
-RUN python3 -c "import torch, trl, peft, wandb, transformers, unsloth, bitsandbytes; \
-                print(f'torch={torch.__version__} cuda={torch.version.cuda} ' \
-                      f'trl={trl.__version__} wandb={wandb.__version__} ' \
-                      f'transformers={transformers.__version__}')"
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        openssh-server \
+    && mkdir -p /var/run/sshd \
+    && echo 'root:driftcall' | chpasswd \
+    && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/#PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config \
+    && sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config \
+    && echo "ClientAliveInterval 60" >> /etc/ssh/sshd_config \
+    && echo "ClientAliveCountMax 3" >> /etc/ssh/sshd_config \
+    && echo "TCPKeepAlive yes" >> /etc/ssh/sshd_config \
+    && git config --global credential.helper store \
+    && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------
-# Pre-pull base model weights (optional — guarded by build arg).
+# 6. Pre-pull base model weights at build time (optional)
 # ---------------------------------------------------------------------------
 ARG HF_TOKEN_BUILD=""
 RUN if [ -n "$HF_TOKEN_BUILD" ]; then \
-        HF_TOKEN="$HF_TOKEN_BUILD" python3 -c \
+        HF_TOKEN="$HF_TOKEN_BUILD" python -c \
             "from huggingface_hub import snapshot_download; \
              snapshot_download('unsloth/gemma-4-E2B-it-bnb-4bit')" || true ; \
     fi
 
 # ---------------------------------------------------------------------------
-# Entrypoint — start sshd in background, run training pipeline in tmux.
+# 7. Entrypoint — start sshd in background, run training pipeline in tmux.
 # ---------------------------------------------------------------------------
-RUN cp /app/scripts/train_full.sh /usr/local/bin/train_full.sh && \
-    chmod +x /usr/local/bin/train_full.sh
-
-RUN cat > /usr/local/bin/akash_entrypoint.sh <<'EOF' && chmod +x /usr/local/bin/akash_entrypoint.sh
-#!/usr/bin/env bash
-set -e
-# Optional override of root password before sshd starts.
-if [ -n "${ROOT_PASSWORD:-}" ]; then
-    echo "root:${ROOT_PASSWORD}" | chpasswd
-fi
-# Start sshd in background — port 22 stays accessible for tmux attach.
-/usr/sbin/sshd
-# Run the training pipeline inside a named tmux session.
-tmux new-session -d -s train "/usr/local/bin/train_full.sh 2>&1 | tee -a /app/logs/train.log"
-# Hold the container open while tmux runs the training in detached mode.
-while tmux has-session -t train 2>/dev/null; do sleep 30; done
-echo "[entrypoint] tmux session ended; container will exit"
-tail -50 /app/logs/train.log || true
-EOF
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 22 7860
 
 # tini handles SIGTERM cleanly so Akash spot preemption doesn't corrupt
 # checkpoints mid-write.
-ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["/usr/local/bin/akash_entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/entrypoint.sh"]
