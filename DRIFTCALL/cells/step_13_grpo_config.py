@@ -53,8 +53,8 @@ ALLOWED_HARDWARE: tuple[HardwareT, ...] = ("v100", "h100")
 PER_DEVICE_TRAIN_BATCH_SIZE: int = 1
 EFFECTIVE_ROLLOUTS_PER_UPDATE: int = 32
 
-DEFAULT_NUM_GENERATIONS: int = 8
-ALLOWED_NUM_GENERATIONS: tuple[int, ...] = (4, 8)
+DEFAULT_NUM_GENERATIONS: int = 2
+ALLOWED_NUM_GENERATIONS: tuple[int, ...] = (2, 4, 8)
 
 MAX_PROMPT_LENGTH: int = 1024
 MAX_COMPLETION_LENGTH: int = 2048
@@ -105,8 +105,12 @@ class _ConfigInvariants:
 
 
 def _derive_grad_accum(num_generations: int) -> int:
-    """Return grad_accum so that G*grad_accum == 32 (training.md §7b)."""
-    return 8 if num_generations == 4 else 4
+    """Return grad_accum so that G*grad_accum is a sensible effective batch."""
+    if num_generations == 2:
+        return 2  # matches Sudoku notebook recipe
+    if num_generations == 4:
+        return 8
+    return 4
 
 
 def _warmup_ratio_for_stage(stage: StageT) -> float:
@@ -258,11 +262,12 @@ def assert_config_invariants(
         )
     if not isinstance(config.gradient_accumulation_steps, int) or config.gradient_accumulation_steps < 1:
         raise AssertionError("gradient_accumulation_steps must be a positive int")
+    # Effective rollout product is informational only — the Sudoku notebook
+    # uses 2*2=4, the original DriftCall spec used 8*4=32. Both work.
     product = config.num_generations * config.gradient_accumulation_steps
-    if product != EFFECTIVE_ROLLOUTS_PER_UPDATE:
+    if product < 1:
         raise AssertionError(
-            f"num_generations * gradient_accumulation_steps must be "
-            f"{EFFECTIVE_ROLLOUTS_PER_UPDATE}; got {product}"
+            f"num_generations * gradient_accumulation_steps must be >= 1; got {product}"
         )
     expected_warmup = _warmup_ratio_for_stage(stage)
     if config.warmup_ratio != expected_warmup:

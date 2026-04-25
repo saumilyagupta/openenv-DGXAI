@@ -87,14 +87,16 @@ class TestBuildGrpoConfigStage1:
         cfg = build_grpo_config(stage=1)
         assert cfg.lr_scheduler_type == "cosine"
 
-    def test_num_generations_default_8_grad_accum_4(
+    def test_num_generations_default_2_grad_accum_2(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        # v1 default aligned with Sudoku GRPO notebook: G=2, ga=2.
         _install_fake_trl(monkeypatch)
         cfg = build_grpo_config(stage=1)
-        assert cfg.num_generations == 8
-        assert cfg.gradient_accumulation_steps == 4
-        assert cfg.num_generations * cfg.gradient_accumulation_steps == 32
+        assert cfg.num_generations == 2
+        assert cfg.gradient_accumulation_steps == 2
+        # Effective rollout product is informational; Sudoku notebook = 4.
+        assert cfg.num_generations * cfg.gradient_accumulation_steps == 4
 
     def test_run_name_stage_scoped(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_fake_trl(monkeypatch)
@@ -210,10 +212,11 @@ class TestNumGenerationsFallback:
             build_grpo_config(stage=1, num_generations=1)
 
     def test_allowed_set_constant(self) -> None:
-        assert set(ALLOWED_NUM_GENERATIONS) == {4, 8}
+        assert set(ALLOWED_NUM_GENERATIONS) == {2, 4, 8}
 
-    def test_default_num_generations_8(self) -> None:
-        assert DEFAULT_NUM_GENERATIONS == 8
+    def test_default_num_generations_2(self) -> None:
+        # v1 default aligned with Sudoku GRPO notebook.
+        assert DEFAULT_NUM_GENERATIONS == 2
 
 
 class TestStageValidation:
@@ -290,25 +293,12 @@ class TestAssertConfigInvariantsRejects:
         with pytest.raises(AssertionError):
             assert_config_invariants(cfg, stage=1, num_generations=4)
 
-    def test_rejects_product_not_32(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Simulate the scenario where num_generations and grad_accum match
-        the internal derivation but the product still isn't 32 — this only
-        fires if someone monkey-patches either side; the check is
-        defensive but must raise cleanly when it fires."""
-        # Patch the derivation so a G=8 config declares grad_accum=2 as
-        # "correct" — that bypasses the grad_accum equality check and
-        # hits the product check next.
-        import cells.step_13_grpo_config as mod
-
-        monkeypatch.setattr(mod, "_derive_grad_accum", lambda n: 2)
-        cfg = self._base_cfg(num_generations=8, gradient_accumulation_steps=2)
-        with pytest.raises(AssertionError) as exc:
-            mod.assert_config_invariants(cfg, stage=1, num_generations=8)
-        assert "gradient_accumulation_steps must be" in str(exc.value) or (
-            "must be 32" in str(exc.value)
-        )
+    def test_rejects_product_zero(self) -> None:
+        # Effective rollout product invariant relaxed (Sudoku notebook uses
+        # 2*2=4, original spec 8*4=32 — both valid). Only require >= 1.
+        cfg = self._base_cfg(num_generations=2, gradient_accumulation_steps=0)
+        with pytest.raises(AssertionError):
+            assert_config_invariants(cfg, stage=1, num_generations=2)
 
     def test_rejects_warmup_mismatch(self) -> None:
         cfg = self._base_cfg(warmup_ratio=0.0)
