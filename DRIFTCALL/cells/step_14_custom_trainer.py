@@ -317,12 +317,136 @@ def _driftcall_generate_and_score_completions(
         episodes=list(episodes),
     )
 
+    # Rich wandb logging — fires once per training step. Captures everything
+    # the trainer's report_to=wandb path doesn't already cover: full sample
+    # table (prompt+completion+reward+episode), per-step reward distribution,
+    # episode-level stats (turn count, budget remaining, tool calls), drift
+    # event counters, and per-language reward breakdown.
+    try:
+        _log_rollout_to_wandb(
+            self,
+            prompts=prompts,
+            completions=completions,
+            rewards=rewards,
+            episodes=episodes,
+            metas=metas,
+            goal=goal,
+        )
+    except Exception:  # pragma: no cover — never let wandb break a training step
+        pass
+
     return {
         "episodes": episodes,
         "completions": completions,
         "rewards": rewards,
         "prompts": prompts,
     }
+
+
+def _log_rollout_to_wandb(
+    trainer: Any,
+    *,
+    prompts: list[str],
+    completions: tuple[str, ...] | list[str],
+    rewards: list[float],
+    episodes: tuple[Any, ...] | list[Any],
+    metas: list[dict[str, Any]],
+    goal: Any,
+) -> None:
+    """Best-effort rich logging — silently no-ops if wandb is disabled."""
+    try:
+        import wandb
+    except ImportError:
+        return
+    if getattr(wandb, "run", None) is None:
+        return
+
+    step = int(getattr(trainer.state, "global_step", 0))
+    log_every = max(1, int(getattr(trainer.args, "logging_steps", 1)))
+
+    # Reward distribution stats — every step (cheap).
+    rewards_list = [float(r) for r in rewards]
+    if rewards_list:
+        import statistics as _stats
+        wandb.log({
+            "rewards/mean": _stats.fmean(rewards_list),
+            "rewards/min": min(rewards_list),
+            "rewards/max": max(rewards_list),
+            "rewards/std": (
+                _stats.pstdev(rewards_list) if len(rewards_list) > 1 else 0.0
+            ),
+            "rewards/count_zero": sum(1 for r in rewards_list if r == 0.0),
+            "rewards/count_nonzero": sum(1 for r in rewards_list if r != 0.0),
+        }, step=step)
+
+    # Completion length distribution.
+    comp_lens = [len(c) for c in completions]
+    if comp_lens:
+        wandb.log({
+            "completion/length_mean": sum(comp_lens) / len(comp_lens),
+            "completion/length_min": min(comp_lens),
+            "completion/length_max": max(comp_lens),
+        }, step=step)
+
+    # Per-language reward (the goal language is shared across G rollouts).
+    lang = getattr(goal, "language", None) or metas[0].get("language_weights", {})
+    if isinstance(lang, str) and rewards_list:
+        wandb.log({
+            f"rewards/by_lang/{lang}": sum(rewards_list) / len(rewards_list),
+        }, step=step)
+
+    # Episode-level stats: turn count, budget remaining, tool calls.
+    turn_counts: list[int] = []
+    budget_remaining: list[int] = []
+    tool_call_counts: list[int] = []
+    drift_event_counts: list[int] = []
+    for ep in episodes:
+        if ep is None:
+            continue
+        turn = getattr(ep, "turn", None)
+        if isinstance(turn, int):
+            turn_counts.append(turn)
+        bud = getattr(ep, "budget_remaining", None)
+        if isinstance(bud, int):
+            budget_remaining.append(bud)
+        tool_results = getattr(ep, "tool_results", None) or ()
+        tool_call_counts.append(len(tool_results))
+        drift_log = getattr(ep, "drift_log", None) or ()
+        drift_event_counts.append(len(drift_log))
+
+    def _mean(xs: list[int]) -> float:
+        return sum(xs) / len(xs) if xs else 0.0
+
+    wandb.log({
+        "episode/turn_count_mean": _mean(turn_counts),
+        "episode/budget_remaining_mean": _mean(budget_remaining),
+        "episode/tool_calls_mean": _mean(tool_call_counts),
+        "episode/drift_events_mean": _mean(drift_event_counts),
+    }, step=step)
+
+    # Sample table — every N steps (heavy, table-typed).
+    sample_every = max(log_every, 5)
+    if step % sample_every == 0:
+        # Truncate prompts/completions so the table stays small.
+        rows = []
+        for i, (p, c, r) in enumerate(
+            zip(prompts[:4], completions[:4], rewards_list[:4])
+        ):
+            rows.append([
+                step,
+                i,
+                str(getattr(goal, "language", "?")),
+                str(getattr(goal, "intent", "?")),
+                p[:512],
+                c[:1024],
+                float(r),
+            ])
+        if rows:
+            table = wandb.Table(
+                columns=["step", "g_idx", "language", "intent", "prompt", "completion", "reward"],
+                data=rows,
+            )
+            wandb.log({"samples/rollouts": table}, step=step)
 
 
 def _derive_rollout_seed(episode_seed: int, g_index: int) -> int:
