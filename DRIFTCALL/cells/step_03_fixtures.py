@@ -271,7 +271,7 @@ _TEMPLATE_CACHE: dict[Path, TemplateLibrary] = {}
 _I18N_CACHE: dict[Path, I18nLibrary] = {}
 _DRIFT_CACHE: dict[Path, DriftPatternLibrary] = {}
 _SCHEMA_CACHE: dict[Path, APISchemaRegistry] = {}
-_CACHE_LOCK = threading.Lock()
+_CACHE_LOCK = threading.RLock()
 
 
 # ---------------------------------------------------------------------------
