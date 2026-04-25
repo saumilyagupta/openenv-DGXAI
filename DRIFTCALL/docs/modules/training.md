@@ -522,6 +522,55 @@ This is ~200 lines of glue; the advantage + KL + optimizer step are inherited un
 - **KL estimation uses `use_bias_correction_kl=True`.** Per TRL issue #4637, the naive KL estimator is biased for sparse-reward GRPO and can drive `policy_kl → ∞` within 50 steps; the bias-corrected form is mandatory. Config assertion in `build_grpo_config` rejects `False`.
 - **KL coefficient `beta = 0.04`.** DESIGN.md §10.2. Monitored per §3.4.
 
+### 3.3.1 Adaptive KL controller (AdaptiveKLCallback)
+
+`beta = 0.04` is the **initial** coefficient — not a frozen invariant. A proportional controller adjusts it every `logging_steps=5` tick so the measured `train/policy_kl` tracks `target_kl` (default `BETA_KL = 0.04`). This keeps policy drift inside a narrow band across all three curriculum stages without operator intervention.
+
+**Update rule** (log-space, symmetric):
+
+```
+err      = (kl - target_kl) / target_kl
+new_beta = beta * exp(kp * err)
+new_beta = clamp(new_beta, beta_min, beta_max)
+```
+
+- `kp = 2.0` — proportional gain (multiplicative step in log-space).
+- `beta_min = 0.001`, `beta_max = 1.0` — hard clamps prevent collapse (β→0 lets the policy drift unboundedly) and over-anchoring (β→∞ freezes the policy).
+- The controller is a **no-op** when `logs` is `None`, `"kl"` is missing, or the value is non-numeric / NaN / ±∞. No exceptions propagate from `on_log`.
+
+**Wiring.** `DriftCallGRPOTrainer` adds an `AdaptiveKLCallback` by default. The callback attaches through `GRPOTrainer.add_callback` so `on_log(args, state, control, logs=...)` fires inside TRL's standard callback dispatch and mutates `args.beta` in-place — the next GRPO loss term picks up the new coefficient automatically.
+
+**Escape hatches** (all at `DriftCallGRPOTrainer.__init__`):
+
+| kwarg | default | purpose |
+|---|---|---|
+| `enable_adaptive_kl` | `True` | Opt out (reverts to constant `beta = BETA_KL`). |
+| `adaptive_kl_target` | `BETA_KL` | Override target KL. |
+| `adaptive_kl_kp` | `2.0` | Proportional gain. |
+| `adaptive_kl_beta_min` | `0.001` | Lower clamp. |
+| `adaptive_kl_beta_max` | `1.0` | Upper clamp. |
+
+**Why proportional (not PI / PID).** Stage-3 runs only ~150 steps at `logging_steps=5` → ~30 controller ticks. An integral term overshoots in fewer than 5 ticks on a short horizon; pure P converges within ~10 ticks for ±100% KL error (verified in `test_monotonic_increase_toward_stable_point`, `test_integration_simulated_50_steps`). If longer runs ever ship, revisit.
+
+**Why not touch `use_bias_correction_kl`.** §3.3 requires `use_bias_correction_kl=True` unconditionally (TRL issue #4637). The adaptive controller rides on top of that — it retargets the coefficient on an already-bias-corrected estimator.
+
+### 3.3.2 Hardware mode (V100 default, H100 optional)
+
+`build_grpo_config(stage, *, hardware="v100")` accepts two hardware modes; the V100 path is the bit-identical default that every existing test exercises, the H100 path is an opt-in for teams with sm_90 access.
+
+| Knob | V100 (default) | H100 |
+|---|---|---|
+| `fp16` / `bf16` | `fp16=True`, `bf16=False` | `fp16=False`, `bf16=True` |
+| `optim` | `paged_adamw_8bit` | `adamw_torch_fused` |
+| `attn_implementation` | *(unset, uses model default)* | `flash_attention_3` |
+| LoRA dtype assertion (`step_12`) | `torch.float16` via `assert_fp16_dtype` | **N/A**: `boot_gemma` runs the dtype check only under the V100 configuration. An H100 boot helper can skip it once the caller confirms BF16 is safe. |
+
+**Invariants preserved across modes.** `beta`, `num_generations`, `gradient_accumulation_steps`, `use_bias_correction_kl`, `gradient_checkpointing`, `max_prompt_length`, `max_completion_length`, `warmup_ratio` are identical on both paths. See `test_hardware_h100_invariants_still_hold`.
+
+**`assert_config_invariants` hardware inference.** When the `hardware=` kwarg is omitted (V100-era callers), the checker infers mode from `config.bf16`: truthy → H100 rules, else → V100 rules. This keeps legacy callers wire-compatible with no changes.
+
+**`LORA_DROPOUT = 0.05`** (step_12). LoRA dropout was silently zero before; 0.05 matches `unsloth/gemma-4-E2B-it` reference notebooks and reduces small-run overfitting on the 500-step curriculum. Threaded through `BootConfig.lora_dropout` → `FastModel.get_peft_model(lora_dropout=...)`.
+
 ### 3.4 Monitoring — WandB columns (DESIGN.md §10.4)
 
 The training callback logs the following **13 + 5 = 18 columns** per `logging_steps=5` tick (DESIGN.md §10.4 enumerates the first 13; per-language is a separate 5-column group):
