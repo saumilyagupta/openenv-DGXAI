@@ -5,7 +5,13 @@
 # dependencies, then runs Stage 1 → Stage 2 → Stage 3 → baseline eval →
 # final eval → reward-hacking probe → plots → summary → push to HF Hub.
 #
-# Built on saumilyajj/dl-sam:2025 (CUDA + PyTorch + Unsloth pre-baked).
+# Built on saumilyajj/dl-sam:2025. The base provides:
+#   - Ubuntu + CUDA 12.3 (CUDA_VERSION=12.3.0, NV_CUDA_CUDART_VERSION=12.3.52-1)
+#   - Python 3.11
+#   - TensorFlow 2.19.0 (the only ML framework pre-installed — we don't use it)
+#   - git-all, openssh-server, tmux pre-installed
+#   - Default CMD: `sshd -D` on port 22 (we override to run training instead)
+# We install PyTorch + Unsloth + TRL + everything from requirements.txt fresh.
 #
 # Usage:
 #   # Public repo:
@@ -55,17 +61,23 @@ ENV PYTHONUNBUFFERED=1 \
     DRIFTCALL_PUSH_TO_HUB=true
 
 # ---------------------------------------------------------------------------
-# System tools (some of these may be in the base; harmless if so)
+# System tools — base already has git, openssh-server, tmux, curl. Only
+# need libsndfile1 (Kokoro TTS), ffmpeg (whisper ASR), tini (SIGTERM
+# handling), build-essential (some Python wheels need a C compiler).
 # ---------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git \
-        curl \
-        ca-certificates \
         build-essential \
         libsndfile1 \
         ffmpeg \
         tini \
     && rm -rf /var/lib/apt/lists/*
+
+# Start sshd in the background so the SDL's port-22 expose works for
+# tmux attach during long training runs (matches Akash dev-pod UX).
+# Detach the daemon — never block the trainer's main process.
+RUN mkdir -p /var/run/sshd && \
+    echo 'PermitRootLogin yes' > /etc/ssh/sshd_config.d/99-akash.conf && \
+    echo 'UsePAM yes' >> /etc/ssh/sshd_config.d/99-akash.conf
 
 # ---------------------------------------------------------------------------
 # Persistent + ephemeral mount points (SDL maps /mnt/data persistent)
@@ -101,17 +113,18 @@ RUN if [ -n "$GITHUB_TOKEN" ]; then \
 # ---------------------------------------------------------------------------
 # Python deps
 #
-# Strategy:
-#   1. Install lightweight deps from requirements.txt without --deps (so
-#      we don't stomp on Unsloth/torch/CUDA already present in the base).
-#   2. Install hf_transfer for fast HF Hub pulls.
-#   3. Install the local package in editable mode so `from cells.* import`
-#      works from any CWD.
-#   4. Smoke-test imports to fail fast if the base image is incompatible.
+# Base image only has TensorFlow 2.19. We install PyTorch + Unsloth + TRL
+# + everything else from requirements.txt fresh. CUDA 12.3 is already
+# installed — torch will pick the matching cu121/cu124 wheel automatically.
+#
+# This is a heavy step (~5 GB download). Layer is cached aggressively
+# because requirements.txt rarely changes.
 # ---------------------------------------------------------------------------
-RUN pip install --upgrade pip
-RUN pip install --no-deps -r requirements.txt || pip install -r requirements.txt
+RUN pip install --upgrade pip wheel setuptools
+RUN pip install -r requirements.txt
 RUN pip install hf_transfer
+# Install the project as a package so `from cells.* import` works from any
+# CWD without relying on PYTHONPATH side effects.
 RUN pip install --no-deps -e .
 
 RUN python3 -c "import torch, trl, peft, wandb, transformers; \
@@ -129,12 +142,37 @@ RUN if [ -n "$HF_TOKEN_BUILD" ]; then \
     fi
 
 # ---------------------------------------------------------------------------
-# Entrypoint — chained training pipeline (Stage 1 → 2 → 3 → eval → probe → push)
+# Entrypoint wrapper — start sshd in background, then run training pipeline.
+#
+# Akash exposes port 22 via the SDL so you can `ssh root@<pod>` during
+# training, attach to the tmux session running train_full.sh, and watch
+# progress live. Default root password is "root" (set by the base image).
+# Change it via -e ROOT_PASSWORD=<new> at run time if exposed publicly.
 # ---------------------------------------------------------------------------
 RUN cp /app/scripts/train_full.sh /usr/local/bin/train_full.sh && \
     chmod +x /usr/local/bin/train_full.sh
 
+RUN cat > /usr/local/bin/akash_entrypoint.sh <<'EOF' && chmod +x /usr/local/bin/akash_entrypoint.sh
+#!/usr/bin/env bash
+set -e
+# Optional override of root password before sshd starts.
+if [ -n "${ROOT_PASSWORD:-}" ]; then
+    echo "root:${ROOT_PASSWORD}" | chpasswd
+fi
+# Start sshd in background — port 22 stays accessible for tmux attach.
+/usr/sbin/sshd
+# Run the training pipeline inside a named tmux session so the user can
+# `tmux attach -t train` after ssh-ing in.
+exec tmux new-session -d -s train "/usr/local/bin/train_full.sh 2>&1 | tee -a /app/logs/train.log"
+# Hold the container open while tmux runs the training in detached mode.
+# Container exits when train_full.sh finishes (success or failure).
+while tmux has-session -t train 2>/dev/null; do sleep 30; done
+echo "[entrypoint] tmux session ended; container will exit"
+# Cat the final log line for visibility in `docker logs`.
+tail -50 /app/logs/train.log || true
+EOF
+
 # tini handles SIGTERM cleanly so Akash spot preemption doesn't corrupt
 # checkpoints mid-write.
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["/usr/local/bin/train_full.sh"]
+CMD ["/usr/local/bin/akash_entrypoint.sh"]
