@@ -155,12 +155,23 @@ def get_session(session_id: str) -> DemoSessionState:
                 f"demo at capacity ({_MAX_SESSIONS} concurrent sessions)"
             )
         env = _make_env()
+        # Prime the env so the very first user turn doesn't get
+        # rejected with EnvNotReadyError. DriftCallEnv.reset() returns
+        # the initial observation (goal + available_tools); we stash it
+        # on the state so render_trace can show the brief immediately.
+        try:
+            initial_obs = env.reset()
+        except Exception:
+            logger.exception("env.reset raised on get_session for %s", session_id)
+            initial_obs = None
         state = DemoSessionState(
             session_id=session_id,
             env=env,
             created_at_ms=_now_ms(),
             last_activity_ms=_now_ms(),
         )
+        if initial_obs is not None:
+            state.last_observation = initial_obs
         _REGISTRY[session_id] = state
         return state
 
