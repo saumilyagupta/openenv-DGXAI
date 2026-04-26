@@ -385,15 +385,11 @@ def build_unified_app() -> FastAPI:
     async def training_stop() -> Any:
         return get_online_trainer().stop()
 
-    # Auto-start the trainer on first FastAPI lifespan tick — opt-in via env.
-    if os.environ.get("DRIFTCALL_ONLINE_AUTOSTART", "1") == "1":
-        @app.on_event("startup")
-        async def _autostart_trainer() -> None:
-            try:
-                get_online_trainer().start()
-            except Exception:
-                import logging
-                logging.getLogger("unified").exception("online trainer autostart failed")
+    # Note: @app.on_event('startup') is a no-op here because app.py already
+    # registers a custom `lifespan` context manager — the two APIs are mutually
+    # exclusive. We instead kick off the trainer at module load below, after
+    # `app = build_unified_app()` returns. The trainer's start() spawns a
+    # subprocess and returns immediately, so it never blocks uvicorn boot.
 
     # Mount the Gradio voice demo at /demo — runs locally, no iframe.
     # Gradio mounts under /demo/ (with trailing slash). Register a
@@ -425,3 +421,15 @@ def build_unified_app() -> FastAPI:
 
 
 app = build_unified_app()
+
+# Autostart the online GRPO trainer subprocess at module load.
+# We can't use @app.on_event('startup') because app.py registers a custom
+# `lifespan` context manager — the two APIs are mutually exclusive and the
+# decorator silently no-ops. Module-level call runs once on Space boot,
+# spawns a subprocess, and returns immediately so uvicorn isn't blocked.
+if os.environ.get("DRIFTCALL_ONLINE_AUTOSTART", "1") == "1":
+    try:
+        get_online_trainer().start()
+    except Exception:
+        import logging
+        logging.getLogger("unified").exception("trainer autostart failed")
