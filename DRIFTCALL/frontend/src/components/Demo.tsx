@@ -3,8 +3,11 @@ import { META } from "../data/content";
 import "./Demo.css";
 
 export function Demo(): JSX.Element {
+  // Both URLs target the unified Space — the Gradio demo is mounted at
+  // /demo/ within the same origin that serves this site, so the iframe
+  // never depends on a separate Space being healthy.
   const spaceUrl = `https://huggingface.co/spaces/${META.demoSpace}`;
-  const embedUrl = `https://${META.demoSpace.replace("/", "-").toLowerCase()}.hf.space`;
+  const embedUrl = META.demoEmbedUrl;
 
   return (
     <section className="section demo" id="demo">

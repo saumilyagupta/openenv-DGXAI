@@ -7,8 +7,13 @@ export const META = {
   devanagari: "ड्रिफ़्ट",
   baseModel: "unsloth/gemma-3n-E2B-it",
   loraRepo: "DGXAI/gemma-3n-e2b-driftcall-lora",
-  envSpace: "DGXAI/driftcall-env",
-  demoSpace: "DGXAI/driftcall-demo",
+  envSpace: "saumilyajj/driftcall",
+  demoSpace: "saumilyajj/driftcall",
+  // The unified Space serves the Gradio demo at /demo/. We iframe that
+  // path directly so everything lives on one origin and there's no
+  // dependency on a separate (potentially-erroring) demo Space.
+  demoEmbedUrl: "https://saumilyajj-driftcall.hf.space/demo/",
+  unifiedSpaceUrl: "https://saumilyajj-driftcall.hf.space",
   github: "https://github.com/saumilyagupta/openenv-DGXAI",
   hackathon: "DGX Hackathon 2026 — Indic Voice + RL track",
 } as const;
