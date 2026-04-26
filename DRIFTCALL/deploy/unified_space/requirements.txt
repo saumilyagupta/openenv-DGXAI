@@ -11,6 +11,9 @@ pydantic>=2.7
 PyYAML>=6.0
 huggingface_hub>=0.25
 cachetools>=5.3
+# Markdown → HTML for the /blog route.
+markdown>=3.6
+pymdown-extensions>=10.0
 
 # ── Audio (TTS + ASR) ─────────────────────────────────────────
 kokoro>=0.3,<0.4

@@ -28,6 +28,14 @@ const TILES = [
     accent: false,
   },
   {
+    label: "blog post",
+    title: "drift, 5 indic rooms, and a 2B brain",
+    desc: "long-form post · headline lifts · 6 demo episodes (5 langs × 5 drifts) · honest limitations · future work.",
+    href: "/blog",
+    suffix: "saumilyajj-driftcall.hf.space",
+    accent: false,
+  },
+  {
     label: "source",
     title: "saumilyagupta/openenv-DGXAI · branch google/gemma-3n-E4B-it",
     desc: "monorepo · cells/ · data/ · scripts/train_driftcall_grpo.py · deploy/",

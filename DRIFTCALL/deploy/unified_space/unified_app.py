@@ -63,6 +63,7 @@ SOURCE_URL = "https://github.com/saumilyagupta/openenv-DGXAI"
 
 SITE_DIR = Path(__file__).parent / "site"
 MANIFEST_PATH = Path(__file__).parent / "openenv.yaml"
+BLOG_PATH = Path(__file__).parent / "BLOG.md"
 
 # ---------------------------------------------------------------------------
 # Shared chrome — same dark editorial brutalism as the React site.
@@ -133,6 +134,7 @@ __BODY__
 _NAV_LINKS = [
     ("/", "site"),
     ("/demo", "demo"),
+    ("/blog", "blog"),
     ("/env", "env"),
     ("/openenv.yaml", "manifest"),
     ("/docs", "docs"),
@@ -154,6 +156,89 @@ def _page(title: str, slug: str, body: str, active: str) -> str:
         .replace("__NAV__", nav)
         .replace("__BODY__", body)
     )
+
+
+# ---------------------------------------------------------------------------
+# /blog — render BLOG.md with the site chrome.
+# ---------------------------------------------------------------------------
+_BLOG_EXTRA_CSS = """
+<style>
+  .blog-prose{max-width:72ch;margin:0 auto;color:#d9d3c8;line-height:1.65;font-size:1.02rem}
+  .blog-prose h1{font-family:"Instrument Serif",serif;font-style:italic;font-size:clamp(2.4rem,5vw,3.6rem);letter-spacing:-.022em;line-height:1;color:#f0eae0;margin:2rem 0 1rem}
+  .blog-prose h2{font-family:"Instrument Serif",serif;font-style:italic;font-size:clamp(1.6rem,3vw,2.2rem);letter-spacing:-.018em;color:#f0eae0;margin:3rem 0 1rem;padding-top:1.5rem;border-top:1px solid #1f1f28}
+  .blog-prose h3{font-family:"Instrument Serif",serif;font-style:italic;font-size:1.4rem;color:#ff7a17;margin:2rem 0 .75rem}
+  .blog-prose h4{font-family:"Geist Mono",monospace;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:#a8a29a;margin:1.5rem 0 .5rem}
+  .blog-prose p{margin:0 0 1.1rem}
+  .blog-prose strong{color:#f0eae0;font-weight:600}
+  .blog-prose em{font-style:italic}
+  .blog-prose a{color:#f0eae0;text-decoration:underline;text-decoration-color:#ff7a17;text-underline-offset:3px}
+  .blog-prose a:hover{color:#ff7a17}
+  .blog-prose ul,.blog-prose ol{margin:0 0 1.2rem;padding-left:1.4rem}
+  .blog-prose li{margin:0 0 .35rem}
+  .blog-prose blockquote{border-left:3px solid #ff7a17;padding:.4rem 0 .4rem 1.1rem;margin:1.4rem 0;color:#f0eae0;font-style:italic;font-family:"Instrument Serif",serif;font-size:1.18rem;line-height:1.45}
+  .blog-prose blockquote p{margin:0 0 .6rem}
+  .blog-prose blockquote p:last-child{margin:0}
+  .blog-prose code{font-family:"Geist Mono",monospace;color:#ff7a17;background:rgba(255,122,23,.08);padding:.05em .35em;border:1px solid rgba(255,122,23,.18);font-size:.88em}
+  .blog-prose pre{background:#0a0a0c;border:1px solid #1f1f28;padding:1rem 1.2rem;overflow:auto;margin:1.2rem 0;border-radius:0}
+  .blog-prose pre code{background:transparent;border:0;padding:0;color:#d9d3c8;font-size:.85rem;line-height:1.55}
+  .blog-prose hr{border:0;border-top:1px solid #1f1f28;margin:2.5rem 0}
+  .blog-prose table{border-collapse:collapse;margin:1.4rem 0;width:100%;font-size:.92rem}
+  .blog-prose th,.blog-prose td{border-bottom:1px solid #1f1f28;padding:.55rem .8rem;text-align:left;vertical-align:top}
+  .blog-prose th{font-family:"Geist Mono",monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#a8a29a;font-weight:400}
+  .blog-prose img{max-width:100%;display:block;margin:1.4rem auto}
+  .blog-prose details{margin:1.4rem 0;border:1px solid #1f1f28;padding:.8rem 1rem;background:#0e0e12}
+  .blog-prose details[open]{border-color:#ff7a17}
+  .blog-prose summary{cursor:pointer;font-family:"Geist Mono",monospace;font-size:.85rem;color:#ff7a17;letter-spacing:.04em}
+  .blog-cta{display:flex;flex-wrap:wrap;gap:.7rem;margin:2rem 0;justify-content:center}
+  .blog-missing{color:#ff7a17;font-family:"Geist Mono",monospace;padding:2rem;border:1px solid #1f1f28;background:#0a0a0c;text-align:center}
+</style>
+"""
+
+
+def _render_blog_html() -> str:
+    """Render BLOG.md to HTML. Returns an empty-state notice if missing."""
+    if not BLOG_PATH.exists():
+        return (
+            f"{_BLOG_EXTRA_CSS}"
+            '<div class="blog-prose"><div class="blog-missing">'
+            "BLOG.md not bundled in this build."
+            "</div></div>"
+        )
+    raw = BLOG_PATH.read_text(encoding="utf-8")
+    # Strip Hugging Face blog YAML frontmatter (between leading --- fences).
+    if raw.startswith("---"):
+        try:
+            _, _, rest = raw.split("---", 2)
+            raw = rest.lstrip("\n")
+        except ValueError:
+            pass
+    try:
+        import markdown as md  # type: ignore[import-not-found]
+        body_html = md.markdown(
+            raw,
+            extensions=[
+                "extra",
+                "tables",
+                "fenced_code",
+                "sane_lists",
+                "attr_list",
+                "toc",
+                "pymdownx.tilde",
+                "pymdownx.superfences",
+            ],
+        )
+    except Exception:
+        # Hard fallback: escape and dump in a <pre> so the page never 500s.
+        from html import escape
+        body_html = f"<pre>{escape(raw)}</pre>"
+    cta = (
+        '<div class="blog-cta">'
+        '<a class="btn" href="https://huggingface.co/spaces/saumilyajj/driftcall">↩ back to demo</a>'
+        '<a class="btn btn-ghost" href="https://github.com/saumilyagupta/openenv-DGXAI/blob/main/DRIFTCALL/BLOG.md">view source on github</a>'
+        '<a class="btn btn-ghost" href="https://huggingface.co/DGXAI/gemma-3n-e2b-driftcall-lora">pull the LoRA</a>'
+        "</div>"
+    )
+    return f'{_BLOG_EXTRA_CSS}<article class="blog-prose">{body_html}{cta}</article>'
 
 
 # ---------------------------------------------------------------------------
@@ -371,6 +456,10 @@ def build_unified_app() -> FastAPI:
     @app.get("/source", include_in_schema=False)
     async def serve_source_page() -> HTMLResponse:
         return HTMLResponse(_page("DriftCall — source", "/source", _SOURCE_BODY, "/source"))
+
+    @app.get("/blog", include_in_schema=False)
+    async def serve_blog_page() -> HTMLResponse:
+        return HTMLResponse(_page("DriftCall — blog", "/blog", _render_blog_html(), "/blog"))
 
     # ── Live online RL — subprocess wrapper around scripts/train_driftcall_grpo.py.
     @app.get("/training", include_in_schema=False)

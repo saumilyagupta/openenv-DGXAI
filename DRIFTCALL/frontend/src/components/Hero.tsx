@@ -94,6 +94,10 @@ export function Hero(): JSX.Element {
               <span>live demo</span>
               <span aria-hidden>→</span>
             </a>
+            <a className="hero__btn hero__btn--ghost" href="/blog">
+              <span>read the blog</span>
+              <span aria-hidden>→</span>
+            </a>
             <a
               className="hero__btn hero__btn--ghost"
               href={`https://huggingface.co/spaces/${META.envSpace}`}
