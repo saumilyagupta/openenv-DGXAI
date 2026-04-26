@@ -1,0 +1,14 @@
+# DriftCall inference (OpenEnv gym client + Gemma-3n LoRA policy).
+# Heavyweight model deps come from the parent venv; this file lists the
+# *additional* deps the inference module needs on top of the env Space deps.
+requests>=2.31
+
+# Model + LoRA loading (matches training stack — pinned to the same versions).
+torch>=2.5
+transformers>=4.51
+peft>=0.13
+unsloth>=2026.4.5
+
+# Optional: openenv SDK if you'd rather use `openenv.make(...)` than the
+# raw REST client.
+openenv>=0.1.10,<0.2
