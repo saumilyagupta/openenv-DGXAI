@@ -87,7 +87,7 @@ export function LiveRL(): JSX.Element {
   };
 
   const isRunning = !!status?.running;
-  const stepLabel = status ? `${status.step.toLocaleString()} / ${status.max_steps.toLocaleString()}` : "—";
+  const stepLabel = status ? status.step.toLocaleString() : "—";
   const rewardLabel = status?.boot_complete ? `${status.reward_mean.toFixed(3)} ± ${status.reward_std.toFixed(3)}` : "warming up…";
   const klLabel = status?.boot_complete ? status.kl.toFixed(3) : "—";
   const lossLabel = status?.boot_complete ? status.loss.toFixed(3) : "—";
@@ -158,8 +158,7 @@ export function LiveRL(): JSX.Element {
         <div className="liverl__progress">
           <div className="liverl__progress-bar" style={{ width: `${progressPct * 100}%` }} />
           <span className="mono liverl__progress-label">
-            {progressPct === 0 ? "0%" : `${(progressPct * 100).toFixed(1)}%`} of{" "}
-            {status?.max_steps ?? "?"} steps
+            {progressPct === 0 ? "0%" : `${(progressPct * 100).toFixed(1)}%`} complete
           </span>
         </div>
 

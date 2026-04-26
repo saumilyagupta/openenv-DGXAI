@@ -15,9 +15,9 @@ const NAV = [
   { id: "premise", label: "premise" },
   { id: "rewards", label: "reward" },
   { id: "demo", label: "demo" },
+  { id: "liverl", label: "live RL" },
   { id: "results", label: "results" },
   { id: "architecture", label: "arch" },
-  { id: "liverl", label: "live RL" },
   { id: "future", label: "future" },
   { id: "resources", label: "links" },
 ] as const;
@@ -46,9 +46,9 @@ export function App(): JSX.Element {
         <Premise />
         <RewardGrid />
         <Demo />
+        <LiveRL />
         <Results />
         <Architecture />
-        <LiveRL />
         <Future />
         <Resources />
       </main>
