@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 # `app.py` refuses to start without DRIFTCALL_ENV_TOKEN. For the hackathon
@@ -372,6 +372,13 @@ def build_unified_app() -> FastAPI:
         return HTMLResponse(_page("DriftCall — source", "/source", _SOURCE_BODY, "/source"))
 
     # Mount the Gradio voice demo at /demo — runs locally, no iframe.
+    # Gradio mounts under /demo/ (with trailing slash). Register a
+    # bare /demo handler that redirects to /demo/ so users typing the
+    # short URL don't hit the SPA static catch-all and 404.
+    @app.get("/demo", include_in_schema=False)
+    async def demo_trailing_slash() -> RedirectResponse:
+        return RedirectResponse(url="/demo/", status_code=308)
+
     blocks = _build_demo_blocks()
     if blocks is not None:
         try:
