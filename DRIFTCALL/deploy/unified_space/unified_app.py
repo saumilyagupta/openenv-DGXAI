@@ -36,6 +36,25 @@ from fastapi.staticfiles import StaticFiles
 # API end-to-end. To restrict access, override via Space Settings → Secrets.
 os.environ.setdefault("DRIFTCALL_ENV_TOKEN", "driftcall-demo")
 
+# `app.py` eager-loads Kokoro TTS + faster-whisper ASR at lifespan startup.
+# On this unified Space those engines aren't needed for the OpenEnv API
+# surface — they only matter inside the /demo Gradio app, which constructs
+# its own engines lazily on first audio I/O. We monkey-patch the eager-load
+# step BEFORE importing app.py so the lifespan handler skips it. This also
+# dodges the misaki/kokoro version-drift error (`module 'misaki.en' has no
+# attribute 'MutableToken'`) that was crashing startup.
+import importlib
+
+_audio = importlib.import_module("cells.step_09_audio")
+
+
+def _noop_engine() -> None:
+    return None
+
+
+_audio.get_tts_engine = _noop_engine          # type: ignore[assignment]
+_audio.get_asr_engine = _noop_engine          # type: ignore[assignment]
+
 from app import app as openenv_app  # noqa: E402  # type: ignore[import-not-found]
 
 LORA_HUB_URL = "https://huggingface.co/DGXAI/gemma-3n-e2b-driftcall-lora"
