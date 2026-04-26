@@ -548,8 +548,15 @@ def infer_turn(
         transcript = (text_input or "").strip()
 
     # 4. Drift consume.
+    # Normalize manual_drift: Gradio Dropdown serializes a None choice as
+    # the string "None" (or "" when unselected), so anything that isn't a
+    # real pattern id must be treated as "no manual drift".
     forced = get_drift_bridge().consume(session_id)
-    if manual_drift is not None:
+    if (
+        isinstance(manual_drift, str)
+        and manual_drift
+        and manual_drift not in {"(none)", "None", "none"}
+    ):
         forced = manual_drift
 
     # 5. Build action — first-turn agent uses transcript as a SPEAK.
@@ -829,7 +836,10 @@ def build_ui() -> Any:
         if trained_ok
         else "Checkpoint (Trained adapter unavailable at boot — base only)"
     )
-    drift_choices: list[Any] = [*_DRIFT_PATTERN_IDS, None]
+    # "(none)" sentinel comes first so it's the default selection. We
+    # cannot put Python None in the choices list because Gradio sends
+    # it back as the string "None" and confuses force_drift_pattern.
+    drift_choices: list[Any] = ["(none)", *_DRIFT_PATTERN_IDS]
 
     with gr.Blocks(title="DriftCall Demo") as demo:
         session_state = gr.State(value=str(uuid.uuid4()))
@@ -852,13 +862,16 @@ def build_ui() -> Any:
             )
             drift = gr.Dropdown(
                 choices=drift_choices,
-                value=None,
+                value="(none)",
                 label="Manual drift",
             )
-        textbox = gr.Textbox(
-            placeholder="Or type a brief here",
-            label="Text fallback",
-        )
+        with gr.Row():
+            textbox = gr.Textbox(
+                placeholder="Or type a brief here",
+                label="Text fallback",
+                scale=4,
+            )
+            send_btn = gr.Button("Send", scale=1, variant="primary")
         transcript = gr.Textbox(label="Transcript", interactive=False)
         trace = gr.DataFrame(
             value=_empty_trace_df(),
@@ -881,6 +894,18 @@ def build_ui() -> Any:
             return infer_turn(mic_in, ckpt, drift_pat, sid, text_input=text_in)
 
         mic.stop_recording(
+            _on_submit,
+            inputs=[mic, checkpoint, drift, session_state, textbox],
+            outputs=[transcript, speaker, trace, rewards, status],
+        )
+        # Wire the Send button + textbox-Enter to the same handler so a
+        # text-only brief works without forcing the user to record audio.
+        send_btn.click(
+            _on_submit,
+            inputs=[mic, checkpoint, drift, session_state, textbox],
+            outputs=[transcript, speaker, trace, rewards, status],
+        )
+        textbox.submit(
             _on_submit,
             inputs=[mic, checkpoint, drift, session_state, textbox],
             outputs=[transcript, speaker, trace, rewards, status],
