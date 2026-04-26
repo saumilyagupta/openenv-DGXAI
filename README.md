@@ -1,481 +1,465 @@
 ---
-title: CodeForge
-emoji: 🔨
-colorFrom: blue
-colorTo: indigo
+title: DriftCall Env
+emoji: 🧭
+colorFrom: indigo
+colorTo: pink
 sdk: docker
+app_port: 7860
 pinned: false
-tags:
-  - openenv
-  - mcp
-  - rl
-  - code-generation
+short_description: OpenEnv — Indic voice concierge under schema drift.
+license: apache-2.0
 ---
 
-# CodeForge
+<div align="center">
 
-**A reinforcement-learning environment in which the environment — not the LLM — grades every line of code.**
+# DriftCall
 
-An agent receives a natural-language coding task ("implement `greet(name)`") and must produce working Python through a budgeted sequence of actions. Every scalar in the reward is derived from real tool output (`ruff`, `mypy`, `pytest`), real AST grounding against `importlib`, and real skill-corpus citations. The LLM cannot grade itself, cannot hallucinate APIs, cannot skip verification.
+### Teaching a 2B model to survive when APIs break mid-conversation
 
-[OpenEnv](https://github.com/meta-pytorch/OpenEnv)-compliant. Ships with a FastAPI server, an MCP server (10 tools), and two head-to-head demo scripts at the repo root: [demo_agent_with_mcp.py](demo_agent_with_mcp.py), [demo_without_mcp.py](demo_without_mcp.py). Full package under [CODEFORGE/](CODEFORGE/).
+*An OpenEnv-compliant RL environment for voice-first Indic concierge agents under real-world schema drift.*
 
----
+[![Live Space](https://img.shields.io/badge/%F0%9F%A4%97%20Space-saumilyajj%2Fdriftcall-ff7a17?style=for-the-badge)](https://huggingface.co/spaces/saumilyajj/driftcall)
+[![Trained LoRA](https://img.shields.io/badge/%F0%9F%A4%97%20Weights-DGXAI%2Fgemma--3n--e2b--driftcall--lora-ff7a17?style=for-the-badge)](https://huggingface.co/DGXAI/gemma-3n-e2b-driftcall-lora)
+[![GitHub](https://img.shields.io/badge/GitHub-openenv--DGXAI-0e0e12?style=for-the-badge&logo=github)](https://github.com/saumilyagupta/openenv-DGXAI)
+[![License](https://img.shields.io/badge/License-Apache_2.0-0e0e12?style=for-the-badge)](https://www.apache.org/licenses/LICENSE-2.0)
 
-## Part I — Theoretical Overview
-
-### 1. Core Problem
-
-Modern code-generating LLMs fail along four orthogonal axes. Existing benchmarks measure at most one at a time.
-
-|        | Failure mode                   | Concrete example                                                        | Why benchmarks miss it                                                             |
-| ------ | ------------------------------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| **P1** | **API hallucination**          | `from magic_ai import solve`, `os.path.joiiin(...)`                     | Pass/fail benchmarks only check output text, never whether imported symbols exist. |
-| **P2** | **Self-grading contamination** | LLM writes code _and_ its own tests; both pass because of `assert True` | Semantic bugs hide behind tautological assertions.                                 |
-| **P3** | **Confidence miscalibration**  | 99 % confidence on wrong code; hedging on correct code                  | Scalar metrics (accuracy, pass@k) ignore the posterior.                            |
-| **P4** | **Groundless synthesis**       | Code written without consulting docs, patterns, or prior art            | No benchmark rewards research-before-coding; none logs the audit trail.            |
-
-**Claim.** These four failure modes must be penalized _jointly, server-side, inside a single proper scoring rule_, or the agent routes around any one of them.
-
-Let $\mathcal{A}$ be an agent producing a code artifact $f$ and a declared confidence $c \in [0, 1]$. CodeForge defines a reward $R(f, c)$ such that:
-
-$$
-\arg\max_{f,\,c} \; \mathbb{E}[R(f, c)] \;=\; (f^\star,\; c^\star)
-\qquad\text{with}\qquad c^\star \approx \Pr[f \text{ correct} \mid \text{agent evidence}]
-$$
-
-i.e. reward is maximized only when the code is correct _and_ the agent's self-reported confidence is well-calibrated to actual quality.
+</div>
 
 ---
 
-### 2. System Architecture
-
-```mermaid
-flowchart TD
-    Agent["LLM Agent"]
-    MCP["MCP Server\n10 tools"]
-    API["FastAPI\n/reset /step /state"]
-    Env["CodeForgeEnvironment"]
-    KB["KB Indexer\nBM25 + Jaccard clusters"]
-    Sandbox["Python Sandbox\nruff mypy pytest imports"]
-    Grounder["AST Grounder\nimportlib.find_spec + hasattr"]
-    Grader["Grader\nquality + Brier"]
-    Ralph["Ralph Loop\nsynthesize / score / keep"]
-    Audit["Audit Ledger\nappend-only"]
-    Corpus[("skills_corpus.jsonl\n2648 nodes")]
-
-    Agent -->|tool call| MCP
-    MCP --> API
-    API --> Env
-    Env -->|submit| Sandbox
-    Env -->|submit| Grounder
-    Env -->|query_kb / query_cluster| KB
-    KB --> Corpus
-    Sandbox --> Grader
-    Grounder --> Grader
-    Grader -->|reward| Env
-    Env -->|run_ralph| Ralph
-    Ralph --> Sandbox
-    Ralph --> Grounder
-    Env -->|every step| Audit
-    Audit -->|get_audit| Agent
-```
-
-The agent has **zero control** over any node below `Env`. It emits actions; the server writes files to a temp dir, invokes subprocess tools with timeouts, parses AST, and returns a scalar reward.
+> **TL;DR.** Production agents silently break when vendor APIs change.
+> DriftCall is an OpenEnv-compliant RL gym where a Gemma-3n-E2B agent
+> must complete real Indian concierge tasks (flights · cabs · food ·
+> hotels · payments) while the underlying APIs mutate mid-episode.
+> Five deterministic rewards, **zero LLM judges**, five Indic languages,
+> 20 hand-authored drift patterns. After 500 GRPO steps on a single
+> V100, drift-detection recall jumps **+65 pp** and the model's
+> confidence becomes calibrated to its actual success rate.
 
 ---
 
-### 3. MDP Formulation
+## §1 · Why this exists
 
-CodeForge is a finite-horizon, partially observable MDP $\langle \mathcal{S}, \mathcal{A}, \mathcal{O}, P, R, B \rangle$:
+Every production agent eventually faces an API that **changed overnight**.
+The airline silently renames `price → total_fare_inr`. The payments app
+adds a ₹199 convenience fee. The food vendor redefines `veg_only` to
+exclude egg. Your agent — trained on the old world — keeps reading the
+old fields and silently fails. By the time PagerDuty fires, hundreds of
+bookings are dead.
 
-- **State** $s \in \mathcal{S}$: the tuple `(task_id, current_files, budget, audit_ledger)`.
-- **Action** $a \in \mathcal{A}$: one of 6 discrete action types (§ 6).
-- **Observation** $o \in \mathcal{O}$: a redacted view of the state — no hidden tests, no grader internals.
-- **Budget** $B \in \{4, 6, 10\}$ depending on task level; each action costs $c(a) \in \{0, 1, N\}$.
-- **Termination:** $B_t \le 0 \;\lor\; q_t \ge \tau^\star$.
-
-A task is the 5-tuple $\mathcal{T} = (\mathrm{brief},\ \mathcal{F}_0,\ B,\ \tau^\star,\ T_H)$ where $\mathcal{F}_0$ is the initial file set, $\tau^\star$ the target quality, and $T_H$ a pytest suite the agent *never sees*, injected into the sandbox at grading time. $T_H$ is the server-side defense against **P2**.
+**DriftCall is an RL gym that trains small models to notice, adapt,
+and explain.** Not just for English, not just for one vendor, not just
+when nothing breaks.
 
 ---
 
-### 4. Reward Model
-
-#### 4.1 Pipeline
+## §2 · System architecture
 
 ```mermaid
 flowchart LR
-    Submit["submit(files, confidence c)"]
-    FW["Filename Allowlist\n^[a-z][a-z0-9_]*.py$"]
-    SZ["Size Guards\n<=10 files, <=50KB each, <=200KB total"]
-    Tools["Sandbox Tools\nruff mypy pytest imports"]
-    Hidden["Hidden tests T_hidden\ninjected at grading"]
-    Ground["AST Grounder\nast.parse + find_spec + hasattr"]
-    Metric["Sandbox score s_sb"]
-    G["Groundedness s_gr"]
-    Q["Quality q = 0.6*s_sb + 0.4*s_gr"]
-    Br["Brier penalty\nbeta = min((c-q)^2, 0.5)"]
-    Rew["Reward R = q * (1 - beta)"]
+  subgraph User["🗣️ Indic Voice User"]
+    U_mic[Mic / Text]
+  end
 
-    Submit --> FW --> SZ --> Tools
-    SZ --> Ground
-    Tools --> Hidden
-    Hidden --> Metric
-    Ground --> G
-    Metric --> Q
-    G --> Q
-    Q --> Br
-    Q --> Rew
-    Br --> Rew
+  subgraph Boundary["🔊 Voice Boundary"]
+    ASR["faster-whisper-small<br/>(int8, 5 languages)"]
+    TTS["Kokoro-82M<br/>(CPU realtime)"]
+  end
+
+  subgraph Env["🧭 DriftCall Env (OpenEnv-compliant FastAPI)"]
+    direction TB
+    Reset["/reset"]
+    Step["/step"]
+    State["/state"]
+    Close["/close"]
+    Loop["episode loop"]
+    Reset --> Loop
+    Loop --> Step
+    Step --> Loop
+    Loop --> State
+    Loop --> Close
+  end
+
+  subgraph Vendors["📡 5 Mock Vendors"]
+    Air["airline · v1/v2/v3"]
+    Cab["cab · v1/v2"]
+    Rest["restaurant · v1/v2"]
+    Hot["hotel · v1/v2"]
+    Pay["payment · v1/v2/v3"]
+  end
+
+  subgraph Drift["⚡ Drift Engine"]
+    Schedule["pre-computed schedule<br/>(20 patterns × 5 axes)"]
+    Inject["mid-episode mutator"]
+    Schedule --> Inject
+  end
+
+  subgraph Rewards["🎯 5 Rewards (deterministic)"]
+    R1["R1 task completion"]
+    R2["R2 drift detection"]
+    R3["R3 constraint adherence"]
+    R4["R4 format compliance"]
+    R5["R5 anti-hack penalty"]
+    Brier["Brier calibration"]
+    R1 --> Brier
+    R2 --> Brier
+    R3 --> Brier
+    R4 --> Brier
+    R5 --> Brier
+  end
+
+  subgraph Trainer["🏋️ GRPO Trainer (Unsloth + TRL)"]
+    Roll["rollouts G=8"]
+    Adv["group-relative advantage"]
+    PPO["PPO-clipped + adaptive KL"]
+    Roll --> Adv --> PPO --> Roll
+  end
+
+  subgraph Brain["🧠 Gemma-3n-E2B + LoRA r=16"]
+  end
+
+  U_mic --> ASR --> Reset
+  Brain -. action .-> Step
+  Step --> Vendors
+  Inject -. mutates .-> Vendors
+  Vendors --> Step
+  Step --> Brier
+  Brier -- reward --> Trainer
+  Trainer -. updates .-> Brain
+  State --> TTS --> U_mic
 ```
-
-#### 4.2 Layer 1 — Sandbox Composite $s_{\text{sb}}$
-
-Let $n_r, n_m, n_u$ be ruff errors, mypy errors, unresolved imports; let $\mathbb{1}_p \in \{0, 1\}$ be the pytest-fail indicator. Then
-
-$$
-s_{\text{sb}} \;=\; \max\!\Bigl(0,\; 1 - \pi_{\text{imp}} - \pi_{\text{ruff}} - \pi_{\text{mypy}} - \pi_{\text{pytest}}\Bigr)
-$$
-
-with
-
-$$
-\pi_{\text{imp}} = \min(1,\, 0.1\,n_u),\quad
-\pi_{\text{ruff}} = \frac{\min(n_r, 20)}{40},\quad
-\pi_{\text{mypy}} = \frac{\min(n_m, 20)}{40},\quad
-\pi_{\text{pytest}} = 0.5\,\mathbb{1}_p
-$$
-
-Penalty-only, no double-counting. Missing tool binaries report `unavailable` and contribute $0$ penalty (graceful degradation).
-
-#### 4.3 Layer 2 — AST Groundedness $s_{\text{gr}}$
-
-Let $\Sigma(f)$ be the set of imported modules and accessed attributes extracted from $f$ via `ast.parse`. For a symbol $\sigma$ with module $\sigma_m$ and attribute $\sigma_a$, define the resolution predicate
-
-$$
-\rho(\sigma) \;=\;
-\begin{cases}
-1 & \text{if module } \sigma_m \text{ resolves and attribute } \sigma_a \text{ exists on it} \\
-0 & \text{otherwise}
-\end{cases}
-$$
-
-Concretely, $\rho(\sigma) = 1$ iff `importlib.util.find_spec(σ_m)` is not `None` **and** `hasattr(σ_m, σ_a)`.
-
-Then
-
-$$
-s_{\text{gr}}(f) \;=\;
-\begin{cases}
-0.0 & f \text{ raises SyntaxError} \\
-0.5 & |\Sigma(f)| = 0 \quad \text{(neutral, not a free pass)} \\[4pt]
-\dfrac{1}{|\Sigma(f)|} \displaystyle\sum_{\sigma \in \Sigma(f)} \rho(\sigma) & \text{otherwise}
-\end{cases}
-$$
-
-This directly attacks **P1**: hallucinated symbols have $\rho = 0$.
-
-#### 4.4 Layer 3 — Quality and Brier-Calibrated Reward
-
-Composite quality:
-
-$$
-q(f) \;=\; 0.6 \cdot s_{\text{sb}}(f) \;+\; 0.4 \cdot s_{\text{gr}}(f) \;\in\; [0, 1]
-$$
-
-Brier penalty (clipped quadratic, a _proper_ scoring rule):
-
-$$
-\beta(c, q) \;=\; \min\!\bigl((c - q)^2,\; 0.5\bigr)
-$$
-
-Final reward:
-
-$$
-\boxed{\;R(f, c) \;=\; q(f) \cdot \bigl(1 - \beta(c,\, q(f))\bigr)\;} \;\in\; [0, 1]
-$$
-
-Convention: $c \leftarrow 0.5$ when $c = \texttt{None}$ (attacks **P3** — no free pass for omitted confidence).
-
-#### 4.5 Incentive Analysis
-
-Because $\beta$ is a proper scoring rule, for any fixed $q$ the reward is strictly maximized at $c = q$. Combined with the ceiling $R \le q$:
-
-| Scenario                     |  $c$ |  $q$ | $\beta$ |       $R$ |
-| ---------------------------- | ---: | ---: | ------: | --------: |
-| Correct, calibrated          | 0.85 | 0.90 |   0.003 | **0.898** |
-| Correct, overconfident       | 0.99 | 0.70 |   0.084 |     0.641 |
-| Wrong, dishonestly confident | 0.90 | 0.30 |   0.360 |     0.192 |
-| Omitted confidence (→ 0.5)   |    — | 0.80 |   0.090 |     0.728 |
-
-No amount of calibration recovers bad code ($R \le q$); no overconfidence beats honest calibration ($R \le 1 - \beta$).
 
 ---
 
-### 5. Task Design
+## §3 · The five drift axes
 
-| Level  | ID                  | $B$ | $\tau^\star$ | Construction                                        | Hidden tests $T_H$                          |
-| ------ | ------------------- | --: | ---------------------: | --------------------------------------------------- | --------------------------------------------- |
-| easy   | `greet_single_file` |   4 |                   0.90 | One file, `greet(name: str) -> str`                 | `assert greet("Alice") == "Hello, Alice!"`    |
-| medium | `greet_with_tests`  |   6 |                   0.80 | `greet` + pytest + `ValueError` on `None`           | Raises on `None`, correct on normal input     |
-| hard   | `multi_file_module` |  10 |                   0.70 | `main.py` + `core.py` + `test_core.py`, mypy-strict | Cross-file import resolution + semantic check |
+```mermaid
+mindmap
+  root((Drift))
+    Schema
+      field rename
+      field removal
+      type change
+      enum value swap
+    Policy
+      booking-window shrink
+      min-order bump
+      cancellation cutoff
+    T&C
+      veg_only excludes egg
+      free-cancel becomes paid
+      pet-policy reversal
+    Pricing
+      hidden convenience fee
+      surge-pricing tier
+      currency switch
+    Auth
+      MFA threshold
+      scope upgrade
+      rate-limit tighten
+```
+
+20 hand-authored patterns × 5 domains × 4 languages × 5 cities × 5 templates ≈ **200 000+ unique episode variants**, all from seed.
 
 ---
 
-### 6. Action & Observation Space
+## §4 · Episode lifecycle
 
-#### Actions $\mathcal{A}$
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as User (Hinglish)
+    participant ASR as faster-whisper
+    participant E as DriftCallEnv
+    participant V as Vendor (airline v1)
+    participant D as Drift Engine
+    participant A as Agent (Gemma-3n + LoRA)
+    participant R as Reward Engine
+    participant TTS as Kokoro
 
-| Action          | Cost $c(a)$ | Step reward | Effect                                                            |
-| --------------- | :---------: | ----------- | ----------------------------------------------------------------- |
-| `query_kb`      |      1      | 0 (shaping) | BM25 retrieval over 2,648 corpus nodes, returns top-$k$ citations |
-| `query_cluster` |      1      | 0 (shaping) | Node IDs in a named Jaccard cluster                               |
-| `interrogate`   |      1      | 0 (shaping) | 5 Socratic questions grounded in corpus citations                 |
-| `run_ralph`     |     $N$     | calibrated  | Autonomous $N$-iter synthesize → score → keep-if-better           |
-| `submit`        |      1      | $R(f, c)$   | Run § 4 pipeline; update `current_files` iff $q$ improves         |
-| `get_audit`     |      0      | 0           | Return full append-only audit ledger                              |
-
-`get_audit` is free — reflection is never penalized, attacking **P4** by making research observable _and_ cheap to review.
-
-#### Observation $\mathcal{O}$
-
-| Field                                               | Type                      | Purpose                       |
-| --------------------------------------------------- | ------------------------- | ----------------------------- |
-| `episode_id`, `task_id`, `task_level`, `task_brief` | `str`                     | Task identity + NL brief      |
-| `budget_remaining`                                  | `int`                     | $B_t = B - \sum_{i<t} c(a_i)$ |
-| `initial_files`, `current_files`                    | `dict[str,str]`           | File state $f_t$              |
-| `last_citations`                                    | `list[Citation]`          | From last `query_*`           |
-| `last_interrogation_questions`                      | `list[str]`               | From last `interrogate`       |
-| `last_grounding`                                    | `GroundingReport \| null` | Per-symbol $\rho$ breakdown   |
-| `previous_score`, `last_reward`                     | `float`                   | $q_t$, $R_t$                  |
-| `is_done`                                           | `bool`                    | Termination flag              |
-| `cumulative_audit_summary`                          | `AuditReport \| null`     | Populated by `get_audit`      |
+    U->>ASR: "Bhai Friday ko Bangalore, 8000 ke andar"
+    ASR->>E: transcript + lang=hi-en
+    E->>A: observation { goal, tools, lang }
+    A->>E: tool_call airline.search
+    E->>V: search(...)
+    V-->>E: results [v1 schema]
+    A->>E: tool_call airline.book
+    E->>D: turn==4 ? fire pattern airline.price_rename
+    D->>V: bump v1 → v2  (price → total_fare_inr)
+    E->>V: book(...)
+    V-->>E: 422 schema_error
+    A->>E: probe_schema  (drift detected!)
+    E->>A: schema_v=v2 disclosed
+    A->>E: tool_call airline.book {schema_v:"v2"}
+    V-->>E: 200 booking_id
+    A->>E: speak "Bhai, ₹4,250 — book kar dun?"
+    E->>R: compute R1..R5 + Brier
+    R-->>E: reward 0.84
+    E->>TTS: reply text
+    TTS-->>U: spoken Hindi confirmation
+```
 
 ---
 
-### 7. Anti-Exploit Guarantees
+## §5 · Reward function (no LLM judge)
 
-| Attack                                 | Mitigation                     | Formalism                                                   |
-| -------------------------------------- | ------------------------------ | ----------------------------------------------------------- |
-| `import nonexistent_lib`               | AST grounder                   | $\rho(\sigma) = 0 \Rightarrow s_{\text{gr}} \downarrow$     |
-| `os.path.joiiin()`                     | Full-path `hasattr` resolution | Leaf-attr check, not just module                            |
-| High confidence on bad code            | Brier penalty                  | $\beta = (c-q)^2$, maximal at $c=1,\,q=0$                   |
-| Omit `confidence`                      | None → 0.5                     | Still incurs $\beta = (0.5 - q)^2$                          |
-| `conftest.py` injection                | Filename allowlist             | Regex `^[a-z][a-z0-9_]*\.py$`                               |
-| File-count / size DoS                  | Hard limits                    | ≤ 10 files, ≤ 50 KB each, ≤ 200 KB total                    |
-| Clean code + trivial tests             | Hidden test injection          | $T_H$ ⊂ pytest run, invisible to agent                      |
-| Zero-import "free groundedness"        | Neutral default                | $\lvert\Sigma(f)\rvert = 0 \Rightarrow s_{\text{gr}} = 0.5$ |
-| Unparseable code for free groundedness | SyntaxError trap               | $s_{\text{gr}} = 0.0$                                       |
+```mermaid
+flowchart LR
+  Audit[(audit trail)] --> R1[R1 task completion<br/>binary]
+  Audit --> R2[R2 drift detection<br/>binary, ≤2 turn lag]
+  Audit --> R3[R3 constraint adherence<br/>0-1]
+  Audit --> R4[R4 format compliance<br/>0-1]
+  Audit --> R5[R5 anti-hack penalty<br/>−1 to 0]
+
+  R1 --> Q{quality<br/>weighted sum}
+  R2 --> Q
+  R3 --> Q
+  R4 --> Q
+  R5 --> Q
+
+  Q --> Brier
+  Conf[stated confidence] --> Brier{(confidence − R1)²}
+  Brier --> Reward([reward = quality × (1−brier)])
+
+  classDef formula fill:#0e0e12,stroke:#ff7a17,color:#f0eae0
+  class Q,Brier,Reward formula
+```
+
+```text
+quality = 0.50·R1  +  0.20·R2  +  0.15·R3  +  0.10·R4  +  0.05·min(R5,0)
+brier   = (confidence − R1)²
+reward  = quality × (1 − brier)        ← clamped to [0, 1]
+```
+
+The Brier term is borrowed from proper scoring rules. It means the agent
+gets **maximum reward only when its stated confidence matches its actual
+success rate**.
 
 ---
 
-## Part II — Technical Details
+## §6 · Three-stage curriculum
 
-Everything below is implementation. Part I is the specification.
-
-### 8. Installation
-
-**Prerequisites.** Python 3.11+. `ruff`, `mypy`, `pytest` (auto-installed inside Docker).
-
-**Docker (matches HF Space deployment):**
-
-```bash
-cd CODEFORGE
-docker build -t code-forge .
-docker run -p 7860:7860 code-forge
+```mermaid
+gantt
+  title GRPO Curriculum (500 steps total)
+  dateFormat X
+  axisFormat %s
+  section Stage 1 — Warmup
+  No drift · learn tool use & format        :s1, 0, 150
+  section Stage 2 — Single Drift
+  1 drift per episode · 5 languages         :s2, 150, 200
+  section Stage 3 — Compound
+  2+ drifts per episode · cascading recovery :s3, 350, 150
 ```
 
-**Local:**
+| Stage | Steps | Drift | Lang Mix | Goal |
+|---|---|---|---|---|
+| 1 — Warmup | 150 | none | 50 % EN · 30 % HI-EN · 20 % HI | tool use & format |
+| 2 — Single Drift | 200 | 1 / episode | 30 % EN · 30 % HI-EN · 20 % HI · 10 % TA · 10 % KN | drift detection |
+| 3 — Compound | 150 | 2 / episode | same as Stage 2 | cascading recovery |
 
-```bash
-cd CODEFORGE
-pip install -r requirements.txt
-pip install ruff mypy pytest
-uvicorn codeforge.app:app --host 0.0.0.0 --port 7860
-```
-
-**Windows UTF-8 fix for demo scripts:**
-
-```powershell
-$env:PYTHONIOENCODING="utf-8"; $env:PYTHONUTF8="1"
-```
-
-### 9. Environment Variables
-
-Loaded from `.env` at repo root via `python-dotenv`.
-
-| Variable                 | Default                            | Use                           |
-| ------------------------ | ---------------------------------- | ----------------------------- |
-| `API_BASE_URL`           | `http://localhost:7860`            | [inference.py](inference.py)  |
-| `GROUNDLOOP_CORPUS_PATH` | `codeforge/kb/skills_corpus.jsonl` | Skill corpus path             |
-| `CODEFORGE_MAX_SESSIONS` | `10`                               | Max concurrent MCP sessions   |
-| `CODEFORGE_SESSION_TTL`  | `3600`                             | Session timeout (seconds)     |
-| `ANTHROPIC_API_KEY`      | —                                  | LLM synthesizer in Ralph      |
-| `OPENAI_API_KEY`         | —                                  | OpenAI-compatible synthesizer |
-
-### 10. Head-to-Head Demos
-
-```bash
-python demo_agent_with_mcp.py    # Agent queries KB, interrogates, submits
-python demo_without_mcp.py       # Agent codes cold, gets burned by hidden tests
-```
-
-Both scripts instantiate `CodeForgeMCPServer` in-process against the baked-in corpus. No separate server needed.
-
-Full walkthroughs, cheater-agent exploits, calibration comparisons → [CODEFORGE/EXAMPLES.md](CODEFORGE/EXAMPLES.md).
-
-### 11. REST API
-
-| Endpoint | Method | Body / Effect                                  |
-| -------- | ------ | ---------------------------------------------- |
-| `/`      | GET    | Health check                                   |
-| `/tasks` | GET    | Task list + action schema                      |
-| `/reset` | POST   | `{"task_level": "easy" \| "medium" \| "hard"}` |
-| `/step`  | POST   | `{"action": <CodeForgeAction>}`                |
-| `/state` | GET    | Current observation (no cost)                  |
-
-```bash
-curl -X POST http://localhost:7860/reset \
-  -H "Content-Type: application/json" \
-  -d '{"task_level": "easy"}'
-
-curl -X POST http://localhost:7860/step \
-  -H "Content-Type: application/json" \
-  -d '{
-    "action": {
-      "action_type": "submit",
-      "files": {
-        "main.py": "from __future__ import annotations\n\ndef greet(name: str) -> str:\n    return f\"Hello, {name}!\"\n"
-      },
-      "confidence": 0.9
-    }
-  }'
-```
-
-Baseline HTTP client:
-
-```bash
-cd CODEFORGE && uvicorn codeforge.app:app --host 0.0.0.0 --port 7860 &
-python inference.py
-```
-
-### 12. MCP Server
-
-**In-process Python:**
-
-```python
-from pathlib import Path
-from codeforge.mcp_server import CodeForgeMCPServer
-
-server = CodeForgeMCPServer(
-    corpus_path=Path("CODEFORGE/codeforge/kb/skills_corpus.jsonl"),
-)
-
-r = server.handle_tool("codeforge_reset", {"task_level": "easy"})
-sid = r["session_id"]
-
-server.handle_tool("codeforge_query_kb", {
-    "session_id": sid, "claim": "python greeting type hints", "top_k": 5,
-})
-
-r = server.handle_tool("codeforge_submit", {
-    "session_id": sid,
-    "files": {"main.py": "def greet(name: str) -> str:\n    return f'Hello, {name}!'\n"},
-    "confidence": 0.9,
-})
-print(r["observation"]["last_reward"])
-```
-
-**Registered tools (10):**
-
-| Tool                      | Cost | Returns                             |
-| ------------------------- | :--: | ----------------------------------- |
-| `codeforge_reset`         |  —   | New episode                         |
-| `codeforge_query_kb`      |  1   | BM25 citations                      |
-| `codeforge_query_cluster` |  1   | Cluster members                     |
-| `codeforge_interrogate`   |  1   | 5 Socratic questions with citations |
-| `codeforge_run_ralph`     |  N   | Ralph-loop result                   |
-| `codeforge_submit`        |  1   | Reward from § 4 pipeline            |
-| `codeforge_get_audit`     |  0   | Full audit trail                    |
-| `codeforge_state`         |  0   | Current observation (read-only)     |
-| `codeforge_list_clusters` |  0   | Cluster labels + sizes              |
-| `codeforge_list_tags`     |  0   | All corpus tags                     |
-
-**MCP resources (free):**
-
-- `codeforge://corpus/stats`
-- `codeforge://corpus/node/{id}`
-- `codeforge://tasks`
-- `codeforge://audit/{episode_id}`
-
-### 13. Skill Corpus
-
-Frozen corpus of **2,648 skill nodes** scraped from 242 real `SKILL.md` files (183 from [everything-claude-code](https://github.com/affaan-m/everything-claude-code), 59 locally installed). BM25 + Jaccard connected-component clustering. Read-only, baked into the Docker image.
-
-### 14. Project Structure
-
-```
-openenv-DGXAI/
-├── CODEFORGE/
-│   ├── codeforge/                 # 44 files
-│   │   ├── models.py              # 6 actions, observation, AuditEntry
-│   │   ├── grader.py              # R(f, c) — § 4.4
-│   │   ├── grounder.py            # s_gr — § 4.3
-│   │   ├── shaping.py             # Citation shaping bonus
-│   │   ├── tasks.py               # 3 levels + hidden tests
-│   │   ├── observation.py         # Observation builder
-│   │   ├── environment.py         # CodeForgeEnvironment
-│   │   ├── app.py                 # FastAPI + session isolation
-│   │   ├── mcp_server.py          # MCP server (10 tools)
-│   │   ├── sandbox/               # ruff / mypy / pytest / imports
-│   │   ├── kb/                    # BM25 + clustering + skills_corpus.jsonl
-│   │   ├── ralph/                 # Autonomous loop
-│   │   ├── interrogator/          # Socratic generator
-│   │   ├── audit/                 # Append-only ledger
-│   │   └── scraper/               # Corpus build pipeline
-│   ├── tests/                     # 429 tests, 93 % cov
-│   ├── inference.py               # REST baseline
-│   ├── Dockerfile                 # python:3.11-slim + ruff/mypy/pytest
-│   ├── openenv.yaml               # OpenEnv config
-│   ├── EXAMPLES.md                # Scenarios + exploits
-│   └── SYSTEM_DESIGN.md           # 1,942-line spec
-├── demo_agent_with_mcp.py
-├── demo_without_mcp.py
-├── inference.py                   # HTTP baseline
-└── README.md                      # this file
-```
-
-### 15. Quality Metrics
-
-| Metric                  |                          Value |
-| ----------------------- | -----------------------------: |
-| Source files            |                             44 |
-| Tests                   |                            429 |
-| Coverage                |                           93 % |
-| Ruff violations         |                              0 |
-| Mypy `--strict` errors  |                              0 |
-| Skill corpus nodes      |                          2,648 |
-| Critic reviews          | 10 module critics + 1 red-team |
-| Exploits found & closed |                              3 |
-
-### 16. Verification
-
-```bash
-cd CODEFORGE
-python -m pytest tests/ --cov=codeforge --cov-report=term -v
-ruff check codeforge/
-mypy --strict codeforge/
-```
-
-### 17. Documents
-
-- [CODEFORGE/README.md](CODEFORGE/README.md) — package README
-- [CODEFORGE/EXAMPLES.md](CODEFORGE/EXAMPLES.md) — worked scenarios, exploits, calibration
-- [CODEFORGE/SYSTEM_DESIGN.md](CODEFORGE/SYSTEM_DESIGN.md) — authoritative spec (1,942 lines)
-- [CODEFORGE/LAUNCH_PROMPT.md](CODEFORGE/LAUNCH_PROMPT.md) — launch/demo prompt
+500 GRPO steps × G=8 rollouts × ~6 turns ≈ **24 000 agent trajectories**, single V100, ~14 h wall-clock.
 
 ---
 
-## License
+## §7 · Headline results
 
-Part of the OpenEnv ecosystem. See the parent repository.
+<div align="center">
+
+|  &nbsp;&nbsp; **+65 pp** &nbsp;&nbsp; |  &nbsp;&nbsp; **3.5×** &nbsp;&nbsp; |  &nbsp;&nbsp; **40 %** &nbsp;&nbsp; |  &nbsp;&nbsp; **98 %+** &nbsp;&nbsp; |
+|:---:|:---:|:---:|:---:|
+| drift-detection<br/>recall | better<br/>calibration | fewer turns<br/>per task | valid JSON<br/>tool calls |
+
+</div>
+
+| Metric | Before (vanilla) | After (DriftCall LoRA) |
+|---|---:|---:|
+| Drift-detection recall | ~10 % | **75 %** |
+| Drift-aware booking success | ~10 % | **65 %** |
+| Language-match accuracy | ~80 % | **96 %** |
+| Calibration (Brier — lower better) | 0.28 | **0.08** |
+| Mean turns to complete | 6 (gives up) | **3–4** |
+| Valid JSON tool calls | ~60 % | **98 %+** |
+
+Full demo episodes (one per drift × language) live in [`BLOG.md`](DRIFTCALL/BLOG.md).
+
+---
+
+## §8 · Repository layout
+
+```mermaid
+flowchart TB
+  Root[openenv-DGXAI]
+  Root --> DC[DRIFTCALL/]
+  Root --> CF[CODEFORGE/]
+  Root --> Round1[server/, data/, models.py<br/>Round-1 EpistemicNav · do not touch]
+
+  DC --> Cells[cells/<br/>step_01..25_*.py — notebook source]
+  DC --> App[app.py<br/>FastAPI + OpenEnv]
+  DC --> DemoApp[demo/<br/>Gradio voice demo]
+  DC --> Scripts[scripts/<br/>train_driftcall_grpo.py]
+  DC --> Notebooks[notebooks/<br/>train_driftcall.ipynb<br/>colab_clone_and_train.ipynb]
+  DC --> Deploy[deploy/unified_space/<br/>Docker + build.sh]
+  DC --> Docs[docs/<br/>14 module specs + 14 test plans]
+  DC --> Blog[BLOG.md<br/>HF blog post]
+  DC --> Design[DESIGN.md<br/>master spec]
+
+  classDef hot fill:#ff7a17,stroke:#0e0e12,color:#0e0e12,stroke-width:2px
+  classDef cold fill:#1a1a22,stroke:#262630,color:#a8a29a
+  class DC hot
+  class Round1 cold
+```
+
+> **The active project is `DRIFTCALL/`**.
+> `CODEFORGE/` is a parallel research track. `server/`, `data/`, `models.py`
+> at the root are **Round-1 EpistemicNav** (already shipped 2026-04-08, kept
+> intact for judge verification — do not touch).
+
+---
+
+## §9 · Quickstart
+
+### Try the live Space (no install)
+
+| | |
+|---|---|
+| Site + API + demo | [https://huggingface.co/spaces/saumilyajj/driftcall](https://huggingface.co/spaces/saumilyajj/driftcall) |
+| `/training` (live GRPO loop) | `curl https://saumilyajj-driftcall.hf.space/training \| jq` |
+| `/demo/` (voice / text) | open `…/demo/` in your browser |
+| OpenEnv API | `POST /reset` + `/step` with `Authorization: Bearer driftcall-demo` and `X-Session-Id: <uuid>` |
+
+### Run locally
+
+```bash
+# 1. Clone & install
+git clone https://github.com/saumilyagupta/openenv-DGXAI
+cd openenv-DGXAI/DRIFTCALL
+python3.11 -m venv .venv && source .venv/bin/activate
+pip install -e '.[dev]'
+
+# 2. Tests
+python3 -m pytest tests/ -v
+
+# 3. Run the env
+export DRIFTCALL_ENV_TOKEN=dev-local-token
+uvicorn app:app --host 0.0.0.0 --port 7860
+
+# 4. Validate against OpenEnv schema
+openenv validate http://localhost:7860 --auth-bearer "$DRIFTCALL_ENV_TOKEN"
+```
+
+### Train your own LoRA in Colab
+
+```mermaid
+flowchart LR
+  A[Open Colab] --> B[Run §01 Clone]
+  B --> C[Run §02 Install]
+  C --> D[Run §03 HF auth]
+  D --> E[Run §04 Train<br/>scripts/train_driftcall_grpo.py]
+  E --> F[Run §05 Push LoRA<br/>→ DGXAI/...]
+  F --> G[Toggle 'trained' in /demo/]
+
+  classDef step fill:#ff7a17,stroke:#0e0e12,color:#0e0e12
+  class B,C,D,E,F step
+```
+
+[**→ Open `notebooks/colab_clone_and_train.ipynb` in Colab**](https://colab.research.google.com/github/saumilyagupta/openenv-DGXAI/blob/main/DRIFTCALL/notebooks/colab_clone_and_train.ipynb)
+
+---
+
+## §10 · Notebooks
+
+| Notebook | Purpose | Builder |
+|---|---|---|
+| [`DRIFTCALL/notebooks/train_driftcall.ipynb`](DRIFTCALL/notebooks/train_driftcall.ipynb) | Full curriculum (concatenation of `cells/step_NN_*.py`) | `python3 DRIFTCALL/notebooks/build_notebook.py` |
+| [`DRIFTCALL/notebooks/colab_clone_and_train.ipynb`](DRIFTCALL/notebooks/colab_clone_and_train.ipynb) | Self-contained: clone → install → train one stage → push LoRA | `python3 DRIFTCALL/notebooks/build_colab_train_notebook.py` |
+
+Both builders produce byte-identical `.ipynb` on each run (no
+`execution_count`, no outputs, no timestamps) so PRs stay reviewable.
+
+---
+
+## §11 · Weights & Biases (optional)
+
+Training auto-logs to W&B. Override priority (highest → lowest):
+
+```bash
+export WANDB_API_KEY=<key>
+export WANDB_PROJECT=driftcall
+export WANDB_ENTITY=<team>
+export WANDB_MODE=online        # online | offline | disabled
+```
+
+Custom step metrics (training.md §3.3.3):
+- `train/beta_adaptive` — current KL coefficient
+- `train/kl_measured` — measured KL between policy and reference
+- `train/kl_target` — target KL (default `BETA_KL = 0.04`)
+- `train/beta_clamped_to_min`, `train/beta_clamped_to_max` — saturation flags
+
+Run tags: `stage{N}`, `gemma-3n-e2b`, `bf16`/`fp16`, `adaptive-kl`/`static-kl`, `seed{N}`.
+
+---
+
+## §12 · Future work
+
+```mermaid
+flowchart LR
+  Core([DriftCall<br/>primitive])
+
+  Core --> Safety["🆘 Public Safety<br/>112 dispatch · GPS share<br/>distress detection"]
+  Core --> Edu["📚 Multilingual Teaching<br/>per-student language mix<br/>curriculum-anchored"]
+  Core --> Plat["🧱 Platform Thesis<br/>Indic voice plumbing<br/>health · ed · fin · gov"]
+
+  classDef vert fill:#ff7a17,stroke:#0e0e12,color:#0e0e12,font-weight:bold
+  classDef hub fill:#0e0e12,stroke:#ff7a17,color:#f0eae0,font-weight:bold,stroke-width:2px
+  class Core hub
+  class Safety,Edu,Plat vert
+```
+
+The same primitive — *deterministic agent · invariant intent · mutating
+environment* — generalises to emergency dispatch, multilingual classrooms,
+and a plumbing layer for the entire Indic voice stack. Detail: §6 of
+[`DRIFTCALL/BLOG.md`](DRIFTCALL/BLOG.md).
+
+---
+
+## §13 · Project docs
+
+| Doc | What |
+|---|---|
+| [`DRIFTCALL/DESIGN.md`](DRIFTCALL/DESIGN.md) | Master spec, v1.0 LOCKED |
+| [`DRIFTCALL/CLAUDE.md`](DRIFTCALL/CLAUDE.md) | Phase-C build plan, 25 numbered cells |
+| [`DRIFTCALL/BLOG.md`](DRIFTCALL/BLOG.md) | HF blog post (full results + 6 demo episodes) |
+| [`DRIFTCALL/docs/modules/`](DRIFTCALL/docs/modules) | 14 per-module specs (≥2 critic passes each) |
+| [`DRIFTCALL/docs/tests/`](DRIFTCALL/docs/tests) | 14 per-module test plans |
+| [`DRIFTCALL/openenv.yaml`](DRIFTCALL/openenv.yaml) | OpenEnv v1.0 manifest |
+
+---
+
+## §14 · The team
+
+Built in **48 hours** for the **Meta × PyTorch × Hugging Face OpenEnv
+Hackathon** (India, April 2026) by **Team DGX-AI**.
+
+| | |
+|---|---|
+| **Stack** | `Gemma-3n E2B` · `Unsloth 4-bit QLoRA` · `TRL GRPO` · `Kokoro-82M TTS` · `faster-whisper ASR` · `FastAPI` · `HF Spaces` |
+| **License** | Apache 2.0 |
+| **Reproducibility** | Single V100 32 GB · 500 GRPO steps · seeded · ~14 h wall-clock |
+| **Evaluation** | 50 held-out episodes · 200-episode reward-hacking probe · zero LLM judges |
+
+---
+
+<div align="center">
+
+### ✦
+
+> *Every production agent will eventually face an API that changed overnight.*
+>
+> *DriftCall is the RL gym where small models learn to **notice**, **adapt**, and **explain** — instead of silently failing. No LLM judge. No human labels. Just deterministic rewards from a world that keeps changing.*
+
+### ✦
+
+[**→ Open the live Space**](https://huggingface.co/spaces/saumilyajj/driftcall) &nbsp;·&nbsp; [**→ Read the blog**](DRIFTCALL/BLOG.md) &nbsp;·&nbsp; [**→ Pull the LoRA**](https://huggingface.co/DGXAI/gemma-3n-e2b-driftcall-lora) &nbsp;·&nbsp; [**→ Train your own**](https://colab.research.google.com/github/saumilyagupta/openenv-DGXAI/blob/main/DRIFTCALL/notebooks/colab_clone_and_train.ipynb)
+
+</div>
