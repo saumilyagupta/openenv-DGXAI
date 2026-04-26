@@ -253,13 +253,15 @@ model.eval()</code></pre>
 _SOURCE_BODY = f"""
 <h1>Project <em>source</em></h1>
 <p class="lede">
-  Mono-repo. The canonical sources live at the repo root; the four deploy
-  targets (env, demo, site, unified) all rsync from those into their own
-  build directories on push. Branch <code>google/gemma-3n-E4B-it</code>.
+  This Space bundles the entire DriftCall project — runtime modules,
+  training scripts, the Colab-runnable notebook, design docs, the test
+  suite, and the spec corpus. Browse the full file tree under the
+  <a class="inline" href="https://huggingface.co/spaces/saumilyajj/driftcall/tree/main" target="_blank" rel="noopener">Files tab</a>
+  of this Space, or open the canonical mirror on GitHub.
 </p>
 
-<div class="file-tree"><span class="dir">DRIFTCALL/</span>
-├── <span class="dir">cells/</span>                   <span class="note"># 25 numbered notebook cells, also importable modules</span>
+<div class="file-tree"><span class="dir">/ (HF Space root)</span>
+├── <span class="dir">cells/</span>                   <span class="note"># importable runtime modules (used by the running app)</span>
 │   ├── step_04_models.py            <span class="note"># DriftCallAction, DriftCallObservation, ActionType</span>
 │   ├── step_05_vendors.py           <span class="note"># 5 mock vendor APIs</span>
 │   ├── step_06_drift_injector.py    <span class="note"># 20-pattern drift catalogue</span>
@@ -275,30 +277,40 @@ _SOURCE_BODY = f"""
 │   ├── step_19_eval_final.py        <span class="note"># 50-ep final eval (paired)</span>
 │   ├── step_20_probe.py             <span class="note"># 200-ep reward-hacking probe</span>
 │   ├── step_23_demo_gradio.py       <span class="note"># notebook variant of the demo</span>
-│   └── step_24_deploy_hf.py         <span class="note"># push_lora_to_hub + push_env_space + push_demo_space</span>
+│   └── step_24_deploy_hf.py         <span class="note"># push_lora_to_hub + push_*_space</span>
 ├── <span class="dir">data/</span>                    <span class="note"># briefs, drift patterns, API schemas (authored fixtures)</span>
-├── <span class="dir">scripts/</span>
-│   └── train_driftcall_grpo.py      <span class="note"># native PyTorch GRPO loop (1300 LOC)</span>
-├── <span class="dir">demo/</span>
-│   └── app_gradio.py                <span class="note"># standalone Gradio demo (also bundled here)</span>
-├── <span class="dir">frontend/</span>                <span class="note"># Vite + React + TS site you're looking at</span>
-│   ├── src/                         <span class="note"># Hero, RewardGrid, Demo, Results, Architecture …</span>
-│   └── vendor/pretext/              <span class="note"># vendored @chenglou/pretext (no npm dep)</span>
-├── <span class="dir">deploy/</span>
-│   ├── env_space/                   <span class="note"># canonical OpenEnv Space build target</span>
-│   ├── demo_space/                  <span class="note"># Gradio Space build target</span>
-│   ├── frontend_space/              <span class="note"># static site Space build target</span>
-│   ├── unified_space/               <span class="note"># THIS Space — everything under one origin</span>
-│   ├── inference/                   <span class="note"># OpenEnv gym client + GemmaPolicy</span>
-│   └── build_all.sh                 <span class="note"># one-shot deploy of every target</span>
+├── <span class="dir">scripts/</span>                 <span class="note"># training scripts (bundled, not run on this Space)</span>
+│   ├── train_driftcall_grpo.py      <span class="note"># native PyTorch GRPO loop (1300 LOC)</span>
+│   ├── train_full_gemma3n.sh        <span class="note"># orchestrator: stage 1 → 2 → 3</span>
+│   ├── smoke_gemma3n_boot.py        <span class="note"># one-off model boot smoke</span>
+│   └── run_driftcall_train.py       <span class="note"># legacy TRL-based path (deprecated)</span>
+├── <span class="dir">notebooks/</span>               <span class="note"># Colab-runnable artefact</span>
+│   ├── train_driftcall.ipynb        <span class="note"># the 25-cell training notebook</span>
+│   └── build_notebook.py            <span class="note"># jupytext concatenator</span>
+├── <span class="dir">docs/</span>                    <span class="note"># 14 module specs + 14 test plans + critic transcripts</span>
+│   ├── modules/                     <span class="note"># env.md, rewards.md, training.md, …</span>
+│   ├── tests/                       <span class="note"># test plan docs</span>
+│   ├── critics/                     <span class="note"># reviewer transcripts</span>
+│   └── api_contracts/               <span class="note"># vendor API schema specs</span>
+├── <span class="dir">tests/</span>                   <span class="note"># pytest suite (35+ files)</span>
+├── <span class="dir">site/</span>                    <span class="note"># Vite-built React frontend (mounted at /)</span>
 ├── app.py                           <span class="note"># OpenEnv FastAPI server (786 LOC)</span>
+├── demo_app.py                      <span class="note"># Gradio demo (mounted at /demo)</span>
+├── unified_app.py                   <span class="note"># this Space's entrypoint</span>
 ├── openenv.yaml                     <span class="note"># OpenEnv v1.0 manifest</span>
-├── DESIGN.md                        <span class="note"># 54 KB design doc, 14 module specs</span>
-└── pyproject.toml · requirements.txt · Dockerfile · README.md</div>
+├── Dockerfile · requirements.txt    <span class="note"># build configuration</span>
+├── DESIGN.md                        <span class="note"># 54 KB design doc, 20 sections</span>
+├── CLAUDE.md                        <span class="note"># development guide / project rules</span>
+├── PROJECT_README.md                <span class="note"># top-level project README</span>
+├── pyproject.toml                   <span class="note"># Python project metadata</span>
+└── README.md                        <span class="note"># Space card (HF page renders this)</span></div>
 
 <p style="margin-top:2.5rem">
   <a class="btn" href="{SOURCE_URL}" target="_blank" rel="noopener">
     open on github <span aria-hidden>↗</span>
+  </a>
+  <a class="btn btn-ghost" href="https://huggingface.co/spaces/saumilyajj/driftcall/tree/main" target="_blank" rel="noopener">
+    browse files on hf
   </a>
   <a class="btn btn-ghost" href="/docs">openenv api docs</a>
 </p>

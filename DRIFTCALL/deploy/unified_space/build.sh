@@ -54,11 +54,42 @@ cp "$REPO_ROOT/openenv.yaml"      "$SPACE_DIR/openenv.yaml"
 # as a top-level module. The original lives at demo/app_gradio.py.
 cp "$REPO_ROOT/demo/app_gradio.py"  "$SPACE_DIR/demo_app.py"
 
+# Importable runtime modules (used by app.py at request time).
 rsync -a --delete \
     --exclude '__pycache__' --exclude '*.pyc' \
     "$REPO_ROOT/cells/"  "$SPACE_DIR/cells/"
 rsync -a --delete \
     "$REPO_ROOT/data/"   "$SPACE_DIR/data/"
+
+# Project content browsable via the HF Space "Files" tab — not imported
+# by the running container, but bundled so the Space is a complete
+# project mirror (per user request).
+EXTRA_CONTENT=(
+    "scripts"      # training scripts: train_driftcall_grpo.py, train_full_gemma3n.sh, smoke_gemma3n_boot.py
+    "notebooks"    # Colab-runnable notebook + builder
+    "docs"         # 14 module specs + 14 test plans + DESIGN drafts
+    "tests"        # pytest suite (35+ files)
+)
+for d in "${EXTRA_CONTENT[@]}"; do
+    if [[ -d "$REPO_ROOT/$d" ]]; then
+        rsync -a --delete \
+            --exclude '__pycache__' --exclude '*.pyc' \
+            --exclude '.pytest_cache' --exclude '.coverage' \
+            --exclude '*.ipynb_checkpoints' \
+            "$REPO_ROOT/$d/" "$SPACE_DIR/$d/"
+    fi
+done
+
+# Top-level docs / metadata files. README.md is renamed to PROJECT_README.md
+# so it doesn't shadow the Space-card README.md that HF uses for the page.
+for f in DESIGN.md CLAUDE.md pyproject.toml; do
+    if [[ -f "$REPO_ROOT/$f" ]]; then
+        cp "$REPO_ROOT/$f" "$SPACE_DIR/$f"
+    fi
+done
+if [[ -f "$REPO_ROOT/README.md" ]]; then
+    cp "$REPO_ROOT/README.md" "$SPACE_DIR/PROJECT_README.md"
+fi
 
 # 4) Copy unified-specific files (requirements.txt OVERRIDES the root copy
 #    because we add Gradio + model deps for the bundled /demo).
