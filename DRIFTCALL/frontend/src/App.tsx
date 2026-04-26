@@ -1,6 +1,7 @@
 import { Architecture } from "./components/Architecture";
 import { Demo } from "./components/Demo";
 import { Footer } from "./components/Footer";
+import { Future } from "./components/Future";
 import { Hero } from "./components/Hero";
 import { Premise } from "./components/Premise";
 import { Results } from "./components/Results";
@@ -15,6 +16,7 @@ const NAV = [
   { id: "demo", label: "demo" },
   { id: "results", label: "results" },
   { id: "architecture", label: "arch" },
+  { id: "future", label: "future" },
   { id: "resources", label: "links" },
 ] as const;
 
@@ -44,6 +46,7 @@ export function App(): JSX.Element {
         <Demo />
         <Results />
         <Architecture />
+        <Future />
         <Resources />
       </main>
 

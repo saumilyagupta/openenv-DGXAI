@@ -1,0 +1,130 @@
+.future__shell { display: grid; gap: clamp(2rem, 5vw, 4rem); }
+
+.future__header { display: grid; gap: 1rem; max-width: 64ch; }
+.future__title {
+  font-size: var(--step-xl);
+  font-style: italic;
+  letter-spacing: -0.022em;
+  line-height: 0.95;
+}
+.future__title em { color: var(--saffron); font-style: italic; }
+.future__sub {
+  font-size: var(--step-m);
+  color: var(--paper-soft);
+  line-height: 1.55;
+  max-width: 64ch;
+}
+
+/* ───── Grid: three full-width editorial cards ───── */
+.future__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+  border-top: var(--line-thin);
+}
+
+.future__card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  padding-block: clamp(2rem, 4vw, 3.25rem);
+  border-bottom: var(--line-thin);
+}
+
+@media (min-width: 880px) {
+  .future__card {
+    grid-template-columns: 11rem 1fr;
+    gap: 2.5rem;
+  }
+}
+
+.future__card-rail {
+  display: grid;
+  align-content: start;
+  gap: 0.7rem;
+}
+.future__num {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(3.5rem, 6vw, 5rem);
+  color: var(--saffron);
+  line-height: 0.85;
+  letter-spacing: -0.04em;
+}
+.future__kicker {
+  font-family: var(--font-mono);
+  font-size: var(--step-xxs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+.future__card-body {
+  display: grid;
+  gap: 1.25rem;
+}
+.future__card-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.6rem, 2.6vw, 2.4rem);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--paper);
+  max-width: 24ch;
+}
+
+.future__pull {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.15rem, 1.6vw, 1.45rem);
+  line-height: 1.4;
+  color: var(--paper-soft);
+  border-left: 2px solid var(--saffron);
+  padding-left: 1.1rem;
+  max-width: 56ch;
+}
+
+.future__para {
+  font-size: var(--step-m);
+  color: var(--paper-soft);
+  line-height: 1.6;
+  max-width: 60ch;
+}
+
+/* ───── Signals strip — small typographic ledger ───── */
+.future__signals {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-top: var(--line-thin);
+}
+@media (min-width: 720px) {
+  .future__signals { grid-template-columns: repeat(2, 1fr); }
+}
+.future__signals li {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.85rem;
+  align-items: baseline;
+  padding: 0.85rem 0;
+  border-bottom: var(--line-thin);
+}
+.future__signals li:last-child,
+.future__signals li:nth-last-child(2):nth-child(odd) { border-bottom: 0; }
+.future__sig-key {
+  font-size: var(--step-xxs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ash-deep);
+}
+.future__sig-val {
+  font-size: var(--step-s);
+  color: var(--paper);
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
