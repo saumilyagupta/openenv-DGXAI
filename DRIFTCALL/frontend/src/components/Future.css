@@ -1,5 +1,83 @@
-.future__shell { display: grid; gap: clamp(2rem, 5vw, 4rem); }
+/* ─────────────────────────────────────────────────────────────
+ * §07 Future — editorial-brutalist climax.
+ * Three slab cards alternate ink/paper, each anchored by a
+ * bleeding italic numeral. A diagonal saffron thread runs
+ * the full height; a stencil "FUTURE" wordmark sits behind.
+ * ───────────────────────────────────────────────────────────── */
 
+.future {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* ── stencil wordmark — the spine of the section ─────────── */
+.future__wordmark {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  align-items: stretch;
+  font-family: var(--font-display);
+  font-style: italic;
+  letter-spacing: -0.06em;
+  line-height: 0.78;
+  text-transform: uppercase;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(168, 162, 154, 0.10);
+  font-size: clamp(8rem, 26vw, 22rem);
+  user-select: none;
+}
+.future__wordmark span {
+  display: block;
+  white-space: nowrap;
+}
+.future__wordmark span:nth-child(1) {
+  text-align: left;
+  padding-left: clamp(0.5rem, 2vw, 2rem);
+  align-self: end;
+}
+.future__wordmark span:nth-child(2) {
+  text-align: right;
+  padding-right: clamp(0.5rem, 2vw, 2rem);
+  align-self: start;
+  -webkit-text-stroke-color: rgba(255, 122, 23, 0.12);
+}
+
+/* ── diagonal saffron thread ─────────────────────────────── */
+.future__diagonal {
+  position: absolute;
+  top: 8%;
+  bottom: 6%;
+  left: 50%;
+  width: 1px;
+  z-index: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--saffron) 18%,
+    var(--saffron-deep) 50%,
+    var(--saffron) 82%,
+    transparent 100%
+  );
+  transform-origin: 50% 50%;
+  transform: rotate(7deg);
+  opacity: 0.55;
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px var(--saffron-glow));
+}
+
+/* ── shell layout ────────────────────────────────────────── */
+.future__shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: clamp(2.5rem, 6vw, 5rem);
+}
+
+/* ── header — keeps original treatment but pulls saffron harder */
 .future__header { display: grid; gap: 1rem; max-width: 64ch; }
 .future__title {
   font-size: var(--step-xl);
@@ -15,116 +93,334 @@
   max-width: 64ch;
 }
 
-/* ───── Grid: three full-width editorial cards ───── */
-.future__grid {
+/* ── slab stack ──────────────────────────────────────────── */
+.future__stack {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0;
-  border-top: var(--line-thin);
+  gap: clamp(2.5rem, 5vw, 4rem);
 }
 
-.future__card {
+/* ── individual slab — alternating dark/light ────────────── */
+.future__slab {
+  position: relative;
+  isolation: isolate;
+  transition: transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* shadow plate — the offset "second print" behind the slab */
+.future__plate {
+  position: absolute;
+  inset: 14px -14px -14px 14px;
+  z-index: -1;
+  border: 1px solid var(--ink-edge);
+  background: transparent;
+  pointer-events: none;
+  transition: inset 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.future__slab[data-variant="dark"] .future__plate {
+  border-color: rgba(255, 122, 23, 0.45);
+  background: linear-gradient(135deg, transparent 60%, rgba(255, 122, 23, 0.05));
+}
+.future__slab[data-variant="light"] .future__plate {
+  border-color: rgba(14, 14, 18, 0.55);
+  background: linear-gradient(135deg, transparent 60%, rgba(14, 14, 18, 0.04));
+}
+
+.future__slab[data-anchor="right"] .future__plate {
+  inset: 14px 14px -14px -14px;
+}
+
+.future__slab:hover .future__plate {
+  inset: 22px -22px -22px 22px;
+}
+.future__slab[data-anchor="right"]:hover .future__plate {
+  inset: 22px 22px -22px -22px;
+}
+
+/* slab inner — the actual painted surface */
+.future__slab-inner {
+  position: relative;
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  padding-block: clamp(2rem, 4vw, 3.25rem);
-  border-bottom: var(--line-thin);
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  padding: clamp(2rem, 4vw, 3.5rem) clamp(1.5rem, 3.5vw, 3rem);
+  border: 1px solid var(--ink-edge);
+  grid-template-areas:
+    "numeral"
+    "col"
+    "signals";
 }
 
-@media (min-width: 880px) {
-  .future__card {
-    grid-template-columns: 11rem 1fr;
-    gap: 2.5rem;
+@media (min-width: 980px) {
+  .future__slab-inner {
+    grid-template-columns: 13rem 1fr;
+    grid-template-areas:
+      "numeral col"
+      "signals signals";
+    column-gap: clamp(2rem, 4vw, 3.5rem);
+  }
+  .future__slab[data-anchor="right"] .future__slab-inner {
+    grid-template-columns: 1fr 13rem;
+    grid-template-areas:
+      "col numeral"
+      "signals signals";
   }
 }
 
-.future__card-rail {
+/* dark variant — saffron on ink */
+.future__slab[data-variant="dark"] .future__slab-inner {
+  background: linear-gradient(
+    180deg,
+    var(--ink-base) 0%,
+    var(--ink-deep) 100%
+  );
+  color: var(--paper);
+}
+
+/* light variant — ink on paper, the page inverts */
+.future__slab[data-variant="light"] .future__slab-inner {
+  background: linear-gradient(
+    180deg,
+    var(--paper) 0%,
+    #e6dfd2 100%
+  );
+  color: var(--ink-base);
+  border-color: var(--ink-edge);
+}
+
+/* ── numeral — the architectural anchor ──────────────────── */
+.future__numeral {
+  grid-area: numeral;
   display: grid;
   align-content: start;
-  gap: 0.7rem;
+  gap: 0.6rem;
+  position: relative;
 }
-.future__num {
+.future__slab[data-anchor="right"] .future__numeral {
+  text-align: right;
+  justify-items: end;
+}
+
+.future__numeral-digit {
   font-family: var(--font-display);
   font-style: italic;
-  font-size: clamp(3.5rem, 6vw, 5rem);
+  font-size: clamp(6rem, 13vw, 11rem);
+  line-height: 0.78;
+  letter-spacing: -0.05em;
   color: var(--saffron);
-  line-height: 0.85;
-  letter-spacing: -0.04em;
+  display: block;
+  text-shadow: 0 0 22px var(--saffron-glow);
 }
+.future__slab[data-variant="light"] .future__numeral-digit {
+  color: var(--saffron-deep);
+  text-shadow: none;
+}
+
+.future__numeral-rule {
+  display: block;
+  width: 4.5rem;
+  height: 2px;
+  background: var(--saffron);
+  margin-top: 0.4rem;
+}
+.future__slab[data-variant="light"] .future__numeral-rule {
+  background: var(--saffron-deep);
+}
+.future__slab[data-anchor="right"] .future__numeral-rule {
+  justify-self: end;
+}
+
+/* ── content column ──────────────────────────────────────── */
+.future__col {
+  grid-area: col;
+  display: grid;
+  gap: 1.4rem;
+  align-content: start;
+  max-width: 62ch;
+}
+.future__slab[data-anchor="right"] .future__col {
+  justify-self: start;
+}
+
 .future__kicker {
-  font-family: var(--font-mono);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
   font-size: var(--step-xxs);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--ash);
 }
-
-.future__card-body {
-  display: grid;
-  gap: 1.25rem;
+.future__slab[data-variant="light"] .future__kicker {
+  color: var(--ash-mute);
 }
-.future__card-title {
+.future__kicker-tick {
+  width: 1.4rem;
+  height: 1px;
+  background: var(--saffron);
+  display: inline-block;
+}
+
+.future__slab-title {
   font-family: var(--font-display);
   font-style: italic;
-  font-size: clamp(1.6rem, 2.6vw, 2.4rem);
-  letter-spacing: -0.02em;
-  line-height: 1.05;
-  color: var(--paper);
-  max-width: 24ch;
+  font-size: clamp(1.9rem, 3.4vw, 3rem);
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+  margin: 0;
+  max-width: 22ch;
+  color: inherit;
 }
 
 .future__pull {
   font-family: var(--font-display);
   font-style: italic;
-  font-size: clamp(1.15rem, 1.6vw, 1.45rem);
-  line-height: 1.4;
-  color: var(--paper-soft);
-  border-left: 2px solid var(--saffron);
-  padding-left: 1.1rem;
+  font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+  line-height: 1.38;
+  border-left: 3px solid var(--saffron);
+  padding: 0.1rem 0 0.1rem 1.2rem;
   max-width: 56ch;
+  color: inherit;
+  position: relative;
+}
+.future__slab[data-variant="dark"] .future__pull { color: var(--paper); }
+.future__slab[data-variant="light"] .future__pull {
+  color: var(--ink-base);
+  border-left-color: var(--saffron-deep);
 }
 
+.future__paras {
+  display: grid;
+  gap: 0.95rem;
+}
 .future__para {
   font-size: var(--step-m);
-  color: var(--paper-soft);
-  line-height: 1.6;
+  line-height: 1.62;
   max-width: 60ch;
 }
+.future__slab[data-variant="dark"] .future__para { color: var(--paper-soft); }
+.future__slab[data-variant="light"] .future__para { color: #2a2a32; }
 
-/* ───── Signals strip — small typographic ledger ───── */
+/* ── signals strip — full-width ledger across the slab base ─ */
 .future__signals {
+  grid-area: signals;
   list-style: none;
-  margin: 0.5rem 0 0;
-  padding: 0;
+  margin: 0;
+  padding: 1.4rem 0 0;
   display: grid;
   grid-template-columns: 1fr;
   gap: 0;
-  border-top: var(--line-thin);
+  border-top: 1px solid currentColor;
+  /* dim the rule */
+  border-color: rgba(168, 162, 154, 0.25);
 }
+.future__slab[data-variant="light"] .future__signals {
+  border-color: rgba(14, 14, 18, 0.18);
+}
+
 @media (min-width: 720px) {
   .future__signals { grid-template-columns: repeat(2, 1fr); }
 }
+@media (min-width: 1100px) {
+  .future__signals { grid-template-columns: repeat(4, 1fr); }
+}
+
 .future__signals li {
   display: grid;
-  grid-template-columns: 5.5rem 1fr;
-  gap: 0.85rem;
-  align-items: baseline;
-  padding: 0.85rem 0;
-  border-bottom: var(--line-thin);
+  gap: 0.5rem;
+  align-content: start;
+  padding: 1.1rem clamp(0.8rem, 1.6vw, 1.4rem) 1.1rem 0;
+  border-right: 1px solid rgba(168, 162, 154, 0.18);
+  position: relative;
+  /* fade-in on enter */
+  opacity: 0;
+  transform: translateY(8px);
+  animation: futureSigIn 520ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation-delay: calc(var(--sig-i, 0) * 80ms + 120ms);
 }
-.future__signals li:last-child,
-.future__signals li:nth-last-child(2):nth-child(odd) { border-bottom: 0; }
+.future__slab[data-variant="light"] .future__signals li {
+  border-right-color: rgba(14, 14, 18, 0.12);
+}
+.future__signals li:last-child { border-right: 0; }
+@media (max-width: 1099.98px) {
+  .future__signals li:nth-child(2n) { border-right: 0; }
+}
+@media (max-width: 719.98px) {
+  .future__signals li { border-right: 0; border-bottom: 1px solid rgba(168, 162, 154, 0.18); }
+  .future__signals li:last-child { border-bottom: 0; }
+}
+
+@keyframes futureSigIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .future__sig-key {
   font-size: var(--step-xxs);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--ash-deep);
+  color: var(--saffron);
+  position: relative;
+  padding-left: 0.85rem;
 }
+.future__slab[data-variant="light"] .future__sig-key { color: var(--saffron-deep); }
+
+.future__sig-key::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0.4rem;
+  height: 0.4rem;
+  background: var(--saffron);
+  transform: translateY(-50%) rotate(45deg);
+}
+.future__slab[data-variant="light"] .future__sig-key::before { background: var(--saffron-deep); }
+
 .future__sig-val {
   font-size: var(--step-s);
-  color: var(--paper);
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+  color: inherit;
+}
+
+/* ── footer line — closing typographic gesture ───────────── */
+.future__footer {
+  display: grid;
+  gap: 1rem;
+  margin-top: clamp(1rem, 2vw, 2rem);
+}
+.future__footer-rule {
+  display: block;
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--saffron) 30%,
+    var(--saffron) 70%,
+    transparent
+  );
+  opacity: 0.6;
+}
+.future__footer-line {
+  font-size: var(--step-m);
+  color: var(--paper-soft);
+  line-height: 1.45;
+  text-align: center;
+}
+.future__footer-line em {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--saffron);
+  font-size: 1.15em;
   letter-spacing: -0.01em;
-  line-height: 1.4;
+}
+
+/* ── motion: respect reduced-motion ──────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .future__slab, .future__plate, .future__signals li { transition: none; animation: none; }
+  .future__signals li { opacity: 1; transform: none; }
+  .future__diagonal { display: none; }
 }

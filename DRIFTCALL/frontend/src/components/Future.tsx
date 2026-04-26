@@ -8,6 +8,8 @@ interface Direction {
   pull: string;
   body: string[];
   signals: { label: string; detail: string }[];
+  variant: "dark" | "light";
+  anchor: "left" | "right";
 }
 
 const DIRECTIONS: Direction[] = [
@@ -27,6 +29,8 @@ const DIRECTIONS: Direction[] = [
       { label: "action", detail: "112 dispatch · GPS share · live caller bridge" },
       { label: "fallback", detail: "SMS to emergency contacts when bandwidth dies" },
     ],
+    variant: "dark",
+    anchor: "left",
   },
   {
     id: "education",
@@ -44,6 +48,8 @@ const DIRECTIONS: Direction[] = [
       { label: "reward", detail: "concept retention · constraint adherence · idiom fit" },
       { label: "scope", detail: "K-12 first · vocational + adult upskilling next" },
     ],
+    variant: "light",
+    anchor: "right",
   },
   {
     id: "platform",
@@ -61,12 +67,23 @@ const DIRECTIONS: Direction[] = [
       { label: "moat", detail: "20-pattern drift catalogue · 5-language briefs · deterministic rewards" },
       { label: "scale-out", detail: "Indic → SEA → LATAM — one vendor surface at a time" },
     ],
+    variant: "dark",
+    anchor: "left",
   },
 ];
 
 export function Future(): JSX.Element {
   return (
     <section className="section future" id="future">
+      {/* Stencil wordmark — the section's spinal column. */}
+      <div className="future__wordmark" aria-hidden>
+        <span>FUT</span>
+        <span>URE</span>
+      </div>
+
+      {/* Saffron diagonal that threads all three cards. */}
+      <div className="future__diagonal" aria-hidden />
+
       <div className="shell future__shell">
         <header className="future__header">
           <span className="eyebrow">§07 — future work</span>
@@ -83,24 +100,44 @@ export function Future(): JSX.Element {
           </p>
         </header>
 
-        <ol className="future__grid">
-          {DIRECTIONS.map((d) => (
-            <li className="future__card" key={d.id} id={`future-${d.id}`}>
-              <div className="future__card-rail">
-                <span className="future__num">{d.num}</span>
-                <span className="future__kicker">{d.kicker}</span>
-              </div>
-              <div className="future__card-body">
-                <h3 className="future__card-title">{d.title}</h3>
-                <p className="future__pull">{d.pull}</p>
-                {d.body.map((p, i) => (
-                  <p className="future__para" key={i}>
-                    {p}
-                  </p>
-                ))}
+        <ol className="future__stack">
+          {DIRECTIONS.map((d, i) => (
+            <li
+              className="future__slab"
+              data-variant={d.variant}
+              data-anchor={d.anchor}
+              data-index={i}
+              key={d.id}
+              id={`future-${d.id}`}
+            >
+              {/* Stacked-print shadow plate behind the slab. */}
+              <span className="future__plate" aria-hidden />
+
+              <div className="future__slab-inner">
+                <aside className="future__numeral" aria-hidden>
+                  <span className="future__numeral-digit">{d.num}</span>
+                  <span className="future__numeral-rule" />
+                </aside>
+
+                <div className="future__col">
+                  <span className="future__kicker mono">
+                    <span className="future__kicker-tick" aria-hidden />
+                    {d.kicker}
+                  </span>
+                  <h3 className="future__slab-title">{d.title}</h3>
+                  <p className="future__pull">{d.pull}</p>
+                  <div className="future__paras">
+                    {d.body.map((p, j) => (
+                      <p className="future__para" key={j}>
+                        {p}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+
                 <ul className="future__signals" aria-label="signals & surface">
-                  {d.signals.map((s) => (
-                    <li key={s.label}>
+                  {d.signals.map((s, k) => (
+                    <li key={s.label} style={{ ["--sig-i" as string]: k }}>
                       <span className="mono future__sig-key">{s.label}</span>
                       <span className="future__sig-val">{s.detail}</span>
                     </li>
@@ -110,6 +147,14 @@ export function Future(): JSX.Element {
             </li>
           ))}
         </ol>
+
+        <footer className="future__footer">
+          <span className="mono future__footer-rule" aria-hidden />
+          <p className="future__footer-line">
+            <em>three directions, one substrate.</em>
+            <span className="mono"> the env runs already · the rest is a vendor surface away.</span>
+          </p>
+        </footer>
       </div>
     </section>
   );
