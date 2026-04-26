@@ -56,6 +56,7 @@ _audio.get_tts_engine = _noop_engine          # type: ignore[assignment]
 _audio.get_asr_engine = _noop_engine          # type: ignore[assignment]
 
 from app import app as openenv_app  # noqa: E402  # type: ignore[import-not-found]
+from online_trainer import get_online_trainer  # noqa: E402  # type: ignore[import-not-found]
 
 LORA_HUB_URL = "https://huggingface.co/DGXAI/gemma-3n-e2b-driftcall-lora"
 SOURCE_URL = "https://github.com/saumilyagupta/openenv-DGXAI"
@@ -370,6 +371,29 @@ def build_unified_app() -> FastAPI:
     @app.get("/source", include_in_schema=False)
     async def serve_source_page() -> HTMLResponse:
         return HTMLResponse(_page("DriftCall — source", "/source", _SOURCE_BODY, "/source"))
+
+    # ── Live online RL — subprocess wrapper around scripts/train_driftcall_grpo.py.
+    @app.get("/training", include_in_schema=False)
+    async def training_status() -> Any:
+        return get_online_trainer().status()
+
+    @app.post("/training/start", include_in_schema=False)
+    async def training_start() -> Any:
+        return get_online_trainer().start()
+
+    @app.post("/training/stop", include_in_schema=False)
+    async def training_stop() -> Any:
+        return get_online_trainer().stop()
+
+    # Auto-start the trainer on first FastAPI lifespan tick — opt-in via env.
+    if os.environ.get("DRIFTCALL_ONLINE_AUTOSTART", "1") == "1":
+        @app.on_event("startup")
+        async def _autostart_trainer() -> None:
+            try:
+                get_online_trainer().start()
+            except Exception:
+                import logging
+                logging.getLogger("unified").exception("online trainer autostart failed")
 
     # Mount the Gradio voice demo at /demo — runs locally, no iframe.
     # Gradio mounts under /demo/ (with trailing slash). Register a

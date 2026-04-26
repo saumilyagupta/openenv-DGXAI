@@ -4,6 +4,7 @@ emoji: 🌀
 colorFrom: indigo
 colorTo: pink
 sdk: docker
+hardware: a10g-small
 pinned: true
 license: apache-2.0
 short_description: OpenEnv env + site · canonical /reset · one Space

@@ -50,7 +50,8 @@ WORKDIR /app
 
 COPY cells/        ./cells/
 COPY data/         ./data/
-COPY app.py demo_app.py openenv.yaml unified_app.py ./
+COPY scripts/      ./scripts/
+COPY app.py demo_app.py openenv.yaml unified_app.py online_trainer.py ./
 COPY site/         ./site/
 
 EXPOSE 7860

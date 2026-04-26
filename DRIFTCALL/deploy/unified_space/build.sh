@@ -94,7 +94,8 @@ fi
 # 4) Copy unified-specific files (requirements.txt OVERRIDES the root copy
 #    because we add Gradio + model deps for the bundled /demo).
 cp "$REPO_ROOT/deploy/unified_space/requirements.txt" "$SPACE_DIR/requirements.txt"
-cp "$REPO_ROOT/deploy/unified_space/unified_app.py"  "$SPACE_DIR/unified_app.py"
+cp "$REPO_ROOT/deploy/unified_space/unified_app.py"   "$SPACE_DIR/unified_app.py"
+cp "$REPO_ROOT/deploy/unified_space/online_trainer.py" "$SPACE_DIR/online_trainer.py"
 cp "$REPO_ROOT/deploy/unified_space/Dockerfile"       "$SPACE_DIR/Dockerfile"
 cp "$REPO_ROOT/deploy/unified_space/README.md"        "$SPACE_DIR/README.md"
 cp "$REPO_ROOT/deploy/unified_space/.gitignore"       "$SPACE_DIR/.gitignore"
