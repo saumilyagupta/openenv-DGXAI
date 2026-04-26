@@ -1,0 +1,161 @@
+@import "./tokens.css";
+
+/* ───── Reset ───── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { margin: 0; padding: 0; height: 100%; }
+img, svg, video { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+a { color: inherit; }
+
+/* ───── Page chrome ───── */
+html {
+  background: var(--ink-deep);
+  color: var(--paper);
+  font-family: var(--font-body);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "ss02", "cv01", "cv11";
+}
+
+body {
+  font-feature-settings: "ss01", "ss02";
+  letter-spacing: -0.005em;
+  background:
+    radial-gradient(circle at 80% -10%, rgba(255, 122, 23, 0.07), transparent 55%),
+    radial-gradient(circle at 5% 110%, rgba(44, 179, 157, 0.04), transparent 60%),
+    var(--ink-deep);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Film grain overlay — adds analog texture without performance cost. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.65'/></svg>");
+  mix-blend-mode: overlay;
+}
+
+::selection {
+  background: var(--saffron);
+  color: var(--ink-deep);
+}
+
+/* ───── Typography ───── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  color: var(--paper);
+}
+
+p { margin: 0; }
+
+.serif { font-family: var(--font-display); }
+.italic { font-style: italic; }
+.mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "calt", "ss01";
+  letter-spacing: -0.02em;
+}
+.devanagari { font-family: var(--font-devanagari); }
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: var(--step-xxs);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--saffron);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  font-family: var(--font-mono);
+  font-size: var(--step-xxs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+.eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 1.6em;
+  height: 1px;
+  background: var(--saffron);
+}
+
+a.inline {
+  color: var(--paper);
+  text-decoration: underline;
+  text-decoration-color: var(--saffron);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition: color 200ms var(--ease-out-quart);
+}
+a.inline:hover { color: var(--saffron); }
+
+/* ───── Layout primitives ───── */
+.shell {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+}
+
+.section {
+  position: relative;
+  padding-block: clamp(5rem, 10vw, 9rem);
+  border-top: var(--line-thin);
+}
+
+.rule {
+  height: 1px;
+  background: var(--ink-edge);
+  margin-block: 2rem;
+}
+
+.row {
+  display: grid;
+  gap: var(--gutter);
+}
+
+/* ───── Animation utilities ───── */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes drift {
+  0%, 100% { transform: translateX(0) skewX(0deg); }
+  50%      { transform: translateX(6px) skewX(-1.5deg); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes blink {
+  0%, 60% { opacity: 1; }
+  61%, 100% { opacity: 0; }
+}
+
+.rise { animation: rise 900ms var(--ease-out-expo) both; }
+
+/* ───── Focus ───── */
+:focus-visible {
+  outline: 2px solid var(--saffron);
+  outline-offset: 3px;
+}
+
+/* ───── Scrollbar (webkit) ───── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--ink-deep); }
+::-webkit-scrollbar-thumb { background: var(--ink-edge); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--saffron-deep); }

@@ -1,0 +1,91 @@
+.results__shell { display: grid; gap: clamp(2rem, 5vw, 4rem); }
+
+.results__header {
+  display: grid;
+  gap: 1rem;
+  max-width: 64ch;
+}
+.results__title {
+  font-size: var(--step-xl);
+  font-style: italic;
+  letter-spacing: -0.022em;
+  line-height: 0.95;
+}
+.results__title em { color: var(--saffron); font-style: italic; }
+.results__sub {
+  font-size: var(--step-m);
+  color: var(--paper-soft);
+  line-height: 1.55;
+  max-width: 60ch;
+}
+
+.results__grid {
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 980px) {
+  .results__grid { grid-template-columns: 1.4fr 1fr; align-items: stretch; }
+}
+
+/* ───── Chart ───── */
+.results__chart {
+  display: grid;
+  gap: 0.85rem;
+  background: var(--ink-surface);
+  border: var(--line-thin);
+  padding: 1.5rem;
+}
+.results__chart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: var(--step-xxs);
+  color: var(--ash);
+}
+.results__chart-y { color: var(--saffron); letter-spacing: -0.01em; }
+.results__chart-foot {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--step-xxs);
+  color: var(--ash-deep);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.results__curve {
+  width: 100%;
+  height: clamp(220px, 30vh, 320px);
+  display: block;
+}
+
+/* ───── Table ───── */
+.results__table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--ink-base);
+  border: var(--line-thin);
+  font-size: var(--step-s);
+}
+.results__table th, .results__table td {
+  padding: 0.95rem 1rem;
+  text-align: left;
+  border-bottom: var(--line-thin);
+  vertical-align: baseline;
+}
+.results__table thead th {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: var(--step-xxs);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+.results__th-base { color: var(--ash); }
+.results__th-trained { color: var(--saffron); }
+.results__cell-label { color: var(--paper); font-weight: 500; }
+.results__cell-base { color: var(--ash); }
+.results__cell-trained { color: var(--saffron); }
+.results__cell-delta.is-better { color: var(--rasa-teal); }
+.results__cell-delta.is-worse { color: var(--saffron-deep); }
+.results__table tr:last-child th,
+.results__table tr:last-child td { border-bottom: 0; }

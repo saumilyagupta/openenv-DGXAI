@@ -1,0 +1,202 @@
+.reward__shell { display: grid; gap: clamp(2rem, 5vw, 4rem); }
+
+.reward__header {
+  display: grid;
+  gap: 1rem;
+  max-width: 50ch;
+}
+.reward__title {
+  font-size: var(--step-xl);
+  font-style: italic;
+  line-height: 0.95;
+  letter-spacing: -0.022em;
+  color: var(--paper);
+}
+.reward__title em {
+  font-style: italic;
+  color: var(--saffron);
+}
+.reward__sub {
+  font-size: var(--step-m);
+  color: var(--paper-soft);
+  line-height: 1.55;
+  max-width: 60ch;
+}
+.reward__sub em {
+  font-style: italic;
+  color: var(--paper);
+}
+.reward__sub code {
+  background: var(--ink-surface);
+  border: var(--line-thin);
+  padding: 0.05em 0.4em;
+  font-size: 0.9em;
+  color: var(--saffron-soft);
+}
+
+/* Asymmetric 5-card grid: R1 spans wider (it's the heaviest weight). */
+.reward__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+  grid-template-columns: 1fr;
+  border: var(--line-thin);
+}
+@media (min-width: 720px) {
+  .reward__grid {
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: auto auto;
+  }
+  .reward__card:nth-child(1) { grid-column: span 4; grid-row: 1; }
+  .reward__card:nth-child(2) { grid-column: span 2; grid-row: 1; }
+  .reward__card:nth-child(3) { grid-column: span 2; grid-row: 2; }
+  .reward__card:nth-child(4) { grid-column: span 2; grid-row: 2; }
+  .reward__card:nth-child(5) { grid-column: span 2; grid-row: 2; }
+}
+
+.reward__card {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  padding: clamp(1.5rem, 2.5vw, 2.25rem);
+  background: var(--ink-surface);
+  border-right: var(--line-thin);
+  border-bottom: var(--line-thin);
+  transition: background 240ms var(--ease-out-quart),
+    transform 240ms var(--ease-out-quart);
+  animation: rise 800ms var(--ease-out-expo) both;
+}
+.reward__card:hover {
+  background: var(--ink-elevated);
+  transform: translateY(-1px);
+}
+.reward__card:hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-top: 2px solid var(--saffron);
+}
+
+.reward__card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.reward__id {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(2.5rem, 4vw, 3.5rem);
+  color: var(--saffron);
+  line-height: 1;
+}
+.reward__weight {
+  font-size: var(--step-xs);
+  color: var(--ash);
+  letter-spacing: -0.01em;
+}
+
+.reward__name {
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: clamp(1.2rem, 1.8vw, 1.55rem);
+  letter-spacing: -0.015em;
+  color: var(--paper);
+  line-height: 1.1;
+}
+
+.reward__blurb {
+  font-size: var(--step-s);
+  line-height: 1.55;
+  color: var(--paper-soft);
+}
+
+.reward__impl {
+  margin-top: auto;
+  font-size: var(--step-xxs);
+  color: var(--ash-deep);
+  word-break: break-all;
+  letter-spacing: 0;
+}
+
+/* ───── Pipeline strip ───── */
+.reward__pipeline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 0.9rem;
+  padding-block: 1.5rem;
+  border-top: var(--line-thin);
+  border-bottom: var(--line-thin);
+}
+.reward__pipe-step {
+  font-size: var(--step-s);
+  padding: 0.5rem 0.85rem;
+  background: var(--ink-base);
+  border: var(--line-thin);
+  color: var(--paper-soft);
+}
+.reward__pipe-step--final {
+  background: var(--saffron);
+  color: var(--ink-deep);
+  border-color: var(--saffron);
+}
+.reward__pipe-arrow {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--saffron);
+  font-size: var(--step-l);
+  line-height: 1;
+}
+
+/* ───── Drift wall ───── */
+.reward__drift {
+  display: grid;
+  gap: 1.25rem;
+}
+.reward__drift-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.reward__drift-count {
+  color: var(--saffron);
+  font-size: var(--step-s);
+}
+.reward__drift-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  border-top: var(--line-thin);
+}
+@media (min-width: 720px) {
+  .reward__drift-list { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 1080px) {
+  .reward__drift-list { grid-template-columns: repeat(5, 1fr); }
+}
+.reward__drift-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.7rem 0.5rem;
+  border-bottom: var(--line-thin);
+  border-right: var(--line-thin);
+}
+.reward__drift-num {
+  font-size: var(--step-xxs);
+  color: var(--ash-deep);
+  letter-spacing: 0.1em;
+}
+.reward__drift-name {
+  font-size: var(--step-s);
+  color: var(--paper);
+  letter-spacing: -0.01em;
+}

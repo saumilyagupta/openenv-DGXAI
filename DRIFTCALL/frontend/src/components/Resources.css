@@ -1,0 +1,82 @@
+.resources__shell { display: grid; gap: clamp(2rem, 5vw, 4rem); }
+
+.resources__header { display: grid; gap: 1rem; max-width: 64ch; }
+.resources__title {
+  font-size: var(--step-xl);
+  font-style: italic;
+  letter-spacing: -0.022em;
+  line-height: 0.95;
+}
+
+.resources__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border: var(--line-thin);
+}
+@media (min-width: 880px) {
+  .resources__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.resources__tile {
+  position: relative;
+  display: grid;
+  gap: 0.85rem;
+  padding: clamp(1.5rem, 2.5vw, 2.25rem);
+  text-decoration: none;
+  background: var(--ink-surface);
+  border-right: var(--line-thin);
+  border-bottom: var(--line-thin);
+  color: var(--paper);
+  transition: background 240ms var(--ease-out-quart);
+  isolation: isolate;
+  overflow: hidden;
+}
+.resources__tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--saffron-glow), transparent 40%);
+  opacity: 0;
+  transition: opacity 280ms var(--ease-out-quart);
+  pointer-events: none;
+}
+.resources__tile:hover { background: var(--ink-elevated); }
+.resources__tile:hover::before { opacity: 1; }
+.resources__tile:hover .resources__title-text { color: var(--saffron); }
+
+.resources__tile--accent {
+  background: var(--ink-elevated);
+}
+.resources__tile--accent .resources__title-text { color: var(--saffron); }
+
+.resources__suffix {
+  font-size: var(--step-xxs);
+  letter-spacing: 0.18em;
+  color: var(--ash);
+  text-transform: uppercase;
+}
+.resources__label {
+  font-family: var(--font-mono);
+  font-size: var(--step-xxs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--saffron);
+}
+.resources__title-text {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.3rem, 2vw, 1.85rem);
+  color: var(--paper);
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+  transition: color 220ms var(--ease-out-quart);
+}
+.resources__desc {
+  font-size: var(--step-s);
+  color: var(--paper-soft);
+  line-height: 1.55;
+}

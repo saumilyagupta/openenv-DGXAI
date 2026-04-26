@@ -1,0 +1,139 @@
+.arch__shell { display: grid; gap: clamp(2rem, 5vw, 4rem); }
+
+.arch__header { display: grid; gap: 1rem; max-width: 64ch; }
+.arch__title {
+  font-size: var(--step-xl);
+  font-style: italic;
+  letter-spacing: -0.022em;
+  line-height: 0.95;
+}
+.arch__title em { color: var(--saffron); font-style: italic; }
+.arch__sub {
+  font-size: var(--step-m);
+  color: var(--paper-soft);
+  line-height: 1.55;
+  max-width: 60ch;
+}
+.arch__sub code {
+  background: var(--ink-surface);
+  border: var(--line-thin);
+  padding: 0.05em 0.4em;
+  font-size: 0.85em;
+  color: var(--saffron-soft);
+}
+
+/* SVG diagram */
+.arch__diagram {
+  background: var(--ink-base);
+  border: var(--line-thin);
+  padding: clamp(1rem, 2vw, 2rem);
+}
+.arch__diagram svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  font-family: var(--font-mono);
+}
+
+.arch__node rect {
+  fill: var(--ink-surface);
+  stroke: var(--ink-edge);
+  stroke-width: 1;
+}
+.arch__node--accent rect {
+  fill: var(--ink-elevated);
+  stroke: var(--saffron);
+  stroke-width: 1.5;
+}
+.arch__node--ghost rect {
+  fill: var(--ink-base);
+  stroke: var(--ink-edge);
+  stroke-dasharray: 4 4;
+}
+.arch__node-kicker {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  fill: var(--ash-deep);
+  text-transform: uppercase;
+}
+.arch__node-title {
+  font-size: 16px;
+  fill: var(--paper);
+  letter-spacing: -0.01em;
+  font-weight: 500;
+}
+.arch__node--accent .arch__node-title { fill: var(--saffron); }
+.arch__node-line {
+  font-size: 12px;
+  fill: var(--paper-soft);
+  letter-spacing: -0.01em;
+}
+.arch__node-sub, .arch__node-foot {
+  font-size: 11px;
+  fill: var(--ash);
+  letter-spacing: 0.05em;
+}
+
+.arch__edge {
+  stroke: var(--saffron);
+  stroke-width: 1.4;
+  opacity: 0.85;
+}
+.arch__edge--soft {
+  stroke: var(--ink-edge);
+  stroke-width: 1;
+  opacity: 0.7;
+}
+.arch__edge-label {
+  font-size: 10.5px;
+  fill: var(--ash);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ───── Vendor strip ───── */
+.arch__vendors {
+  display: grid;
+  gap: 1rem;
+}
+.arch__vendors ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border: var(--line-thin);
+}
+@media (min-width: 720px) {
+  .arch__vendors ul { grid-template-columns: repeat(5, 1fr); }
+}
+.arch__vendors li {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+  padding: 1.2rem 1rem;
+  border-right: var(--line-thin);
+  border-bottom: var(--line-thin);
+  background: var(--ink-surface);
+}
+.arch__vendors li:last-child { border-right: 0; }
+.arch__vendor-glyph {
+  font-size: var(--step-l);
+  color: var(--saffron);
+  letter-spacing: 0.1em;
+  line-height: 1;
+}
+.arch__vendor-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--step-l);
+  color: var(--paper);
+  line-height: 1;
+}
+.arch__vendor-role {
+  font-size: var(--step-xxs);
+  color: var(--ash);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.cache/
+.vite/
+.parcel-cache/
+.next/
+.DS_Store
+*.log

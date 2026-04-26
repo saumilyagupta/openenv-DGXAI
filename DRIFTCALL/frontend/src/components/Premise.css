@@ -1,0 +1,121 @@
+.premise__shell {
+  display: grid;
+  gap: clamp(2rem, 5vw, 4rem);
+}
+
+.premise__header {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.premise__title {
+  font-size: var(--step-xl);
+  font-style: italic;
+  line-height: 0.95;
+  letter-spacing: -0.022em;
+  color: var(--paper);
+  max-width: 18ch;
+}
+
+.premise__columns {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  border-top: var(--line-thin);
+  padding-top: clamp(1.5rem, 3vw, 2.5rem);
+}
+@media (min-width: 880px) {
+  .premise__columns { grid-template-columns: 1.1fr 0.95fr; gap: 2.75rem; }
+  .premise__lede { grid-column: 1 / 2; grid-row: 1 / 3; }
+  .premise__body { grid-column: 2 / 3; }
+}
+
+.premise__lede {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.25rem, 1.8vw, 1.6rem);
+  line-height: 1.32;
+  color: var(--paper);
+  letter-spacing: -0.012em;
+}
+.premise__lede em {
+  font-style: italic;
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  color: var(--saffron);
+  padding: 0 0.15em;
+}
+
+.premise__drop {
+  float: left;
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--saffron);
+  font-size: clamp(4.2rem, 7vw, 6.5rem);
+  line-height: 0.78;
+  margin-right: 0.18em;
+  margin-top: 0.06em;
+}
+
+.premise__body {
+  font-size: var(--step-m);
+  line-height: 1.6;
+  color: var(--paper-soft);
+}
+.premise__body strong {
+  color: var(--paper);
+  font-weight: 600;
+}
+
+/* ───── Language strip ───── */
+.premise__langs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  border-top: var(--line-thin);
+  border-bottom: var(--line-thin);
+}
+@media (min-width: 720px) {
+  .premise__langs { grid-template-columns: repeat(5, 1fr); }
+}
+
+.premise__langs li {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1.4rem 0.5rem 1.4rem 0;
+  border-right: var(--line-thin);
+  position: relative;
+}
+.premise__langs li:last-child { border-right: 0; }
+.premise__langs li::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -100vw;
+  inset-inline-end: 100%;
+  border-bottom: var(--line-thin);
+}
+
+.premise__lang-num {
+  font-size: var(--step-xxs);
+  letter-spacing: 0.18em;
+  color: var(--ash-deep);
+}
+
+.premise__lang-script {
+  font-family: var(--font-devanagari);
+  font-style: italic;
+  font-size: clamp(2rem, 3vw, 2.6rem);
+  color: var(--paper);
+  line-height: 1;
+}
+
+.premise__lang-name {
+  font-size: var(--step-xs);
+  color: var(--ash);
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+}

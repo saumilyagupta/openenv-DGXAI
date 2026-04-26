@@ -1,0 +1,70 @@
+/* ───────────────────────────────────────────────────────────────────
+   DriftCall design tokens — dark editorial brutalism, saffron accent.
+   No frameworks, no Tailwind, no design system kit.
+   ─────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Ink — deep grayscale ladder for surfaces + lines. */
+  --ink-deep: #0a0a0c;
+  --ink-base: #0e0e12;
+  --ink-surface: #14141a;
+  --ink-elevated: #1b1b22;
+  --ink-edge: #262630;
+  --ink-edge-soft: #1a1a22;
+
+  /* Paper — warm off-white for foreground, with descending mutes. */
+  --paper: #f0eae0;
+  --paper-soft: #d9d3c8;
+  --ash: #a8a29a;
+  --ash-deep: #6e6960;
+  --ash-mute: #4a4640;
+
+  /* Accent — saffron is the only saturated color in the system. */
+  --saffron: #ff7a17;
+  --saffron-soft: #ffb073;
+  --saffron-deep: #b94f00;
+  --saffron-glow: rgba(255, 122, 23, 0.38);
+
+  /* Secondary — used sparingly, only on data viz. */
+  --rasa-teal: #2cb39d;
+  --rasa-teal-soft: rgba(44, 179, 157, 0.18);
+
+  /* Devanagari watermark — barely visible, ambient only. */
+  --devanagari-glow: rgba(255, 122, 23, 0.06);
+
+  /* Type — display, body, mono, devanagari. */
+  --font-display: "Instrument Serif", "Tiempos Headline", "Cormorant Garamond",
+    Georgia, serif;
+  --font-body: "Geist", "Geist Sans", "Söhne", "Public Sans", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", "IBM Plex Mono", ui-monospace,
+    monospace;
+  --font-devanagari: "Tiro Devanagari Hindi", "Noto Serif Devanagari", serif;
+
+  /* Scale — modular, tuned for editorial spreads not landing-page templates. */
+  --step-xxxl: clamp(5rem, 14vw, 13.5rem);
+  --step-xxl: clamp(3rem, 8vw, 6.5rem);
+  --step-xl: clamp(2rem, 4vw, 3.25rem);
+  --step-l: clamp(1.5rem, 2.5vw, 2.125rem);
+  --step-m: 1.125rem;
+  --step-s: 0.95rem;
+  --step-xs: 0.825rem;
+  --step-xxs: 0.7rem;
+
+  /* Layout. */
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+  --max-width: 1480px;
+  --col-narrow: 720px;
+
+  /* Motion. */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+
+  /* Lines + radii. */
+  --line-thin: 1px solid var(--ink-edge);
+  --line-paper: 1px solid var(--paper-soft);
+  --radius-frame: 0px; /* sharp edges everywhere — brutalist */
+
+  /* Grain (data URL applied in globals). */
+  --grain-opacity: 0.075;
+}
