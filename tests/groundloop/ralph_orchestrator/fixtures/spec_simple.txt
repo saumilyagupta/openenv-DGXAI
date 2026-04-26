@@ -1,1 +1,0 @@
-Build a Python module that exposes a greet(name) -> str function using pytest idioms from the skills KB.

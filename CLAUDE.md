@@ -1,488 +1,380 @@
----
-description:
-alwaysApply: true
----
+# CLAUDE.md — DriftCall Phase C: Numbered-Cell Code Implementation
 
-# CLAUDE.md — CodeForge: Build It, Ship It, No Faking It
-
-**Last updated:** 2026-04-16
-**System design:** `CODEFORGE/SYSTEM_DESIGN.md` (1,941 lines, 20 sections, 8 critics reviewed)
-**Reference repos:** `CODEFORGE/graphify/`, `CODEFORGE/ralph/`, `CODEFORGE/everything-claude-code/`
+**Last updated:** 2026-04-25
+**Phase:** C (code implementation)
+**Predecessor:** Phase D complete — 14 module specs + 14 test plans, all critic-gated, cross-doc consistent.
+**Target artifact:** Colab-runnable notebook `notebooks/train_driftcall.ipynb` built by concatenating numbered cell `.py` files from `cells/`.
+**Event deadline:** Apr 26 2026, pitch day.
+**Compute:** 1× V100 32GB (local training) + $30 HF Space credit (deployment).
+**Base model:** `unsloth/gemma-3n-E2B-it`.
 
 ---
 
 ## 0. Prime Directive
 
-Build CodeForge as a production-grade MCP-exposed RL environment that **forces any LLM to write real, verified, grounded Python code**. No stubs. No fakes. No bandaids. No hallucinated APIs. If you don't know a library, read its docs or say so — never make it up.
+Implement DriftCall as **25 numbered Python cells** in `cells/step_NN_<name>.py` that each becomes one cell of the Colab notebook, and that each is *also* an importable module used by the FastAPI env server, the demo Space, and the test suite. Every cell's content is spec'd by a Phase D module doc; every test is spec'd by a Phase D test plan doc.
 
-The environment is the judge, not the LLM. Every reward traces to real sandbox output, real AST grounding, and real skill corpus citations.
+**The docs are the contract. Your job is to ship code that passes the contract.**
 
 **Stop conditions:**
-1. Genuinely destructive action (force push, hard reset, deleting user data, touching files outside this repo)
-2. All phase checklists green
+1. All batch checklists green + `notebooks/train_driftcall.ipynb` builds + runs end-to-end on Colab T4 / V100 + demo Space deploys.
+2. Any attempt to modify a Phase D doc without orchestrator approval → halt and escalate.
+3. Gemma 3n E2B fails to boot in Unsloth → halt and escalate (no fallback model — Gemma 3n E2B is the pinned choice).
 
-Everything else: proceed without asking.
-
-### 0.1 The System Design Doc Is The Source of Truth
-
-**`CODEFORGE/SYSTEM_DESIGN.md` is the authoritative specification. Every session MUST:**
-
-1. **Read it first.** Before writing any code, read the relevant section of `CODEFORGE/SYSTEM_DESIGN.md`. The exact target code for every module is in there — grader (§4.8.1), scoring (§4.8.2), grounder (§4.8.3), shaping (§4.8.4), Ralph reward (§4.8.5), MCP tools (§9.1), KB2 code graph (§4.3.2), session isolation (§15), error handling (§17).
-
-2. **Follow it exactly.** If SYSTEM_DESIGN.md says `_UNCERTAIN_FLOOR = 0.50`, the code says `_UNCERTAIN_FLOOR = 0.50`. If SYSTEM_DESIGN.md says `groundedness = 0.5 if total == 0`, the code says that. No creative reinterpretation.
-
-3. **Update it when reality changes.** If during implementation you discover that a spec in SYSTEM_DESIGN.md is wrong, incomplete, or needs adjustment — update the doc FIRST, then implement. The doc must always reflect the current truth, not a stale snapshot. Commit doc changes with `docs(codeforge): update SYSTEM_DESIGN.md — <what changed and why>`.
-
-4. **Never contradict it silently.** If your code diverges from the doc, that is a bug — either in the code or in the doc. Fix one or the other. Never leave them out of sync.
-
-5. **Reference it in commit messages.** When implementing a module, cite the section: `feat(codeforge-m3): query_cluster action (SYSTEM_DESIGN §4.3.1, §5.2)`
-
-**The relationship:** This CLAUDE.md tells you WHAT to do and in WHAT ORDER. SYSTEM_DESIGN.md tells you HOW everything works, the exact target code, the known bugs, and the architectural decisions. Both must stay in sync. Both must be read before any major decision.
+Everything else: proceed without interruption.
 
 ---
 
-## 1. What CodeForge Is
-
-An OpenEnv-compliant RL environment where an LLM agent receives a natural-language brief ("implement greet(name)") and must produce working Python code through iterative actions. Exposed via:
-
-- **REST API** (`/reset`, `/step`, `/state`) — OpenEnv judge compliance
-- **MCP Server** (tools + resources + prompts) — how engineers/LLMs actually use it
-
-**The invariant:** Every reward-earning action must trace to (a) a sandbox-verified programmatic signal, (b) a Layer-A grounded symbol, and (c) a Layer-B skill citation — recorded as a `(reward, evidence, policy)` triple.
-
----
-
-## 2. Architecture (read `CODEFORGE/SYSTEM_DESIGN.md` §2 for the full diagram)
+## 1. Source of Truth Hierarchy (frozen)
 
 ```
-LLM Agent ──▶ MCP Server ──▶ FastAPI ──▶ CodeForgeEnvironment
-                                              │
-                          ┌───────────────────┼───────────────────┐
-                          ▼                   ▼                   ▼
-                    Python Sandbox       AST Grounder        KB Indexer
-                    (ruff,mypy,pytest)   (import resolve)    (BM25+clusters)
-                          │                   │                   │
-                          └───────┬───────────┘                   │
-                                  ▼                               │
-                            Grader (reward)                       │
-                            quality = 0.6*sandbox + 0.4*ground    │
-                            + Brier calibration penalty           │
-                                                                  │
-                    Ralph Loop ◀──────────────────────────────────┘
-                    (synthesize → score → keep if better)
-                                  │
-                            Audit Ledger
-                            (every step recorded)
+DESIGN.md                     ← master spec, v1.0 LOCKED (5 post-gate corrections applied)
+docs/modules/*.md  (14)       ← per-module specs, ≥2 clean critic passes each
+docs/tests/*.md    (14)       ← per-module test plans with test IDs, fixtures, coverage targets
+   │
+   ▼  implementation derives from these
+cells/step_NN_<name>.py       ← numbered notebook cells = importable modules
+tests/test_step_NN_<name>.py  ← pytest per cell, mirrors docs/tests/*.md
+app.py                        ← FastAPI env server (imports from cells/)
+demo/app_gradio.py            ← Gradio demo Space (imports from cells/)
+notebooks/build_notebook.py   ← jupytext-based concatenator
+notebooks/train_driftcall.ipynb  ← generated Colab artifact (committed)
+data/                         ← task briefs, drift patterns, API schemas, audio fixtures
+Dockerfile, pyproject.toml, openenv.yaml, requirements.txt
 ```
 
----
-
-## 3. The 3 Layers of Reward (never confuse them)
-
-| Layer | File (in `CODEFORGE/codeforge/`) | Input | Output | Notes |
-|---|---|---|---|---|
-| **Reward Function** | `grader.py` | sandbox_score, groundedness, confidence | reward (0-1) | Floor=0.50 from day one. UNCHANGED across all phases. |
-| **Scoring Pipeline** | `sandbox/metric.py` | files, tools | composite_score (0-1) | Penalty-only (no double-counting). Has `tools` filter for subtask scoring. |
-| **Grounding Check** | `grounder.py` | source code | groundedness (0-1) | SyntaxError→0.0, zero symbols→0.5, full module path. Correct from day one. |
-
-Building from scratch means these are CORRECT from the start — not patched old code. The reward function does not change across phases. It takes two floats in, puts one float out.
+**Rule — never touch Phase D docs without escalation.** If a doc is wrong, stop code work, update the doc, re-run critic, then resume.
 
 ---
 
-## 4. Phases
+## 2. The 25 Numbered Cells
 
-### Phase 0: Foundation — Models + Reward System + Sandbox (build from scratch in `CODEFORGE/codeforge/`)
+Every `.py` file in `cells/` is named `step_NN_<snake_name>.py`, where `NN` is a zero-padded two-digit sequence. Each file:
 
-Build the core that everything else depends on. All critical bugs from SYSTEM_DESIGN §19 are the CORRECT implementation from day one — not patches on old code.
+1. **Is one notebook cell** (top-level code only; no `if __name__ == "__main__":`).
+2. **Is an importable module** — other cells import by `from cells.step_NN_name import X`.
+3. **Has a twin test file** `tests/test_step_NN_<snake_name>.py` matching the Phase D test plan.
+4. **Has a matching markdown preamble** `cells/step_NN_<snake_name>.md` (short — 1-3 sentences of context before the code).
 
-The existing `groundloop/` and `groundloop_env/` in the parent repo are REFERENCE IMPLEMENTATIONS. Read them to understand how things work. Do NOT modify them. Build clean in `CODEFORGE/codeforge/`.
-
-| # | What to build | Target file | Spec |
+| # | File | Phase D doc | Purpose |
 |---|---|---|---|
-| P0-1 | Data models (all 6 action types, full observation, AuditEntry) | `codeforge/models.py` | SYSTEM_DESIGN §8 |
-| P0-2 | Reward function (floor=0.50, correct from day one) | `codeforge/grader.py` | SYSTEM_DESIGN §4.8.1 |
-| P0-3 | AST grounder (SyntaxError→0.0, zero→0.5, full path resolution) | `codeforge/grounder.py` | SYSTEM_DESIGN §4.8.3 |
-| P0-4 | Sandbox (run real tools, fixed composite_score with tools filter) | `codeforge/sandbox/` | SYSTEM_DESIGN §4.1, §4.8.2 |
-| P0-5 | Task definitions (3 levels) | `codeforge/tasks.py` | SYSTEM_DESIGN §11 |
-| P0-6 | Tests for all of the above | `CODEFORGE/tests/` | Coverage >= 85% |
+| 01 | `step_01_install.py` | deploy_env_space.md §4 | `pip install` pinned deps + HF auth |
+| 02 | `step_02_imports.py` | — | Consolidated imports |
+| 03 | `step_03_fixtures.py` | datasets.md | Download / unpack `data/` |
+| 04 | `step_04_models.py` | models.md | 7 frozen dataclasses + ActionType |
+| 05 | `step_05_vendors.py` | vendors.md | 5 mock vendor modules + helpers |
+| 06 | `step_06_drift_injector.py` | drift_injector.md | 20-pattern catalogue + build_schedule + apply_drift |
+| 07 | `step_07_task_generator.py` | task_generator.md | generate() with blake2b seeding |
+| 08 | `step_08_rewards.py` | rewards.md | 5 reward functions + Brier + uncertain-floor |
+| 09 | `step_09_audio.py` | audio.md | TTSEngine + ASREngine + AudioTrace |
+| 10 | `step_10_env.py` | env.md | DriftCallEnv class |
+| 11 | `step_11_smoke_env.py` | env.md §8 | Run one Stage-1 episode locally |
+| 12 | `step_12_gemma_boot.py` | training.md §3.1 | Load Gemma 3n E2B (Unsloth, 4-bit, hardware-aware precision, dtype-slippage assert) |
+| 13 | `step_13_grpo_config.py` | training.md §2.4 | `build_grpo_config(stage)` + reward_fn wiring |
+| 14 | `step_14_custom_trainer.py` | training.md §3.2.3 | `DriftCallGRPOTrainer` + `EpisodeDatasetAdapter` |
+| 15 | `step_15_train_stage1.py` | training.md §3.5 | Stage 1: 150 GRPO steps, no drift |
+| 16 | `step_16_train_stage2.py` | training.md §3.5 | Stage 2: 200 steps, single drift |
+| 17 | `step_17_train_stage3.py` | training.md §3.5 | Stage 3: 150 steps, compound drift |
+| 18 | `step_18_eval_baseline.py` | evaluation.md §2.1 | Baseline eval on untrained E2B (50 eps) |
+| 19 | `step_19_eval_final.py` | evaluation.md §2.1 | Final eval on trained LoRA (50 eps, same 50 seeds) |
+| 20 | `step_20_probe.py` | evaluation.md §2.1 | 200-episode reward-hacking probe |
+| 21 | `step_21_plots.py` | evaluation.md §3.4 | 4 target curves (per-reward, drift-latency, per-lang, before/after) |
+| 22 | `step_22_summary.py` | pitch_demo.md | Before/after metrics table + narrative |
+| 23 | `step_23_demo_gradio.py` | deploy_demo_space.md | Inline Gradio demo for Colab |
+| 24 | `step_24_deploy_hf.py` | deploy_env_space.md + deploy_demo_space.md | Push trained LoRA + env Space + demo Space |
+| 25 | `step_25_conclusion.py` | pitch_demo.md | Final metrics, HF links, closing |
 
-**Quality gate:** All tests pass. `ruff check codeforge/` clean. `mypy --strict codeforge/` clean.
+**Companion non-cell files (not numbered, live outside `cells/`):**
 
-- [x] **P0** Foundation built, tested, green
-
-### Phase 1: All 6 Actions + Environment (build from scratch in `CODEFORGE/codeforge/`)
-
-Build the environment with ALL 6 actions wired from day one. Read the reference implementations in `groundloop/` and `groundloop_env/` for patterns, but write clean code in `CODEFORGE/codeforge/`.
-
-| Module | What to build | Target files | Spec |
-|---|---|---|---|
-| **M3** | KB indexer (BM25 + clustering) + `query_kb` + `query_cluster` handlers | `codeforge/kb/indexer.py`, `codeforge/kb/cluster.py`, `codeforge/kb/models.py`, `codeforge/kb/tokenizer.py` | SYSTEM_DESIGN §4.3.1 |
-| **M4** | Interrogator + `interrogate` handler | `codeforge/interrogator/` | SYSTEM_DESIGN §4.5 |
-| **M5** | Ralph loop + `run_ralph` handler + variable budget cost | `codeforge/ralph/` | SYSTEM_DESIGN §4.4, §4.8.5 |
-| **M6** | AuditLedger + AuditReporter + `get_audit` handler | `codeforge/audit/` | SYSTEM_DESIGN §12, §4.6 |
-| **M7** | Environment (all 6 actions, validation, file limits, filename allowlist) + observation builder | `codeforge/environment.py`, `codeforge/observation.py` | SYSTEM_DESIGN §4.9, §17 |
-| **M8** | FastAPI app (with session isolation) + full 6-action integration test + inference baseline | `codeforge/app.py`, `CODEFORGE/tests/test_e2e.py`, `CODEFORGE/inference.py` | SYSTEM_DESIGN §3.1, §15 |
-
-**Action surface after Phase 1:**
-
-| Action | Cost | Reward | What it does |
-|---|---|---|---|
-| `query_kb` | 1 | 0.0 | BM25 search over skill corpus |
-| `query_cluster` | 1 | 0.0 | Browse cluster members by label |
-| `interrogate` | 1 | 0.0 | Socratic questions citing skill nodes |
-| `run_ralph` | N (max_iters) | `calibrated_reward(final, confidence=0.75) - 0.05*wasted` | Autonomous improve loop |
-| `submit` | 1 | `calibrated_reward(sandbox, groundedness, confidence)` | Grade code via sandbox+grounder+Brier |
-| `get_audit` | 0 | 0.0 | Read-only audit trail |
-
-**Reward formula (after P0 fixes):**
-```
-quality   = 0.6 * sandbox_composite_score + 0.4 * groundedness
-brier     = min((confidence - quality)², 0.5)   # if confidence provided
-reward    = quality * (1 - brier)
-reward    = max(reward, 0.50) if confidence < 0.3 AND quality < 0.5   # uncertain floor
-reward    = clamp(0.0, 1.0), round to 3 decimals
-```
-
-**Quality gate per module:** tests pass, coverage >= 85%, ruff clean, mypy clean, fresh critic returns NOTHING_FURTHER.
-
-- [x] **M3** KB subsystem (indexer + cluster + tokenizer + models) in `codeforge/kb/`
-- [x] **M4** Interrogator in `codeforge/interrogator/`
-- [x] **M5** Ralph loop (loop + synthesizer protocol + stub + checkpoint) in `codeforge/ralph/`
-- [x] **M6** Audit (ledger + reporter) in `codeforge/audit/`
-- [x] **M7** Environment + observation builder in `codeforge/environment.py` + `codeforge/observation.py`
-- [x] **M8** FastAPI app + session isolation + e2e test + inference baseline
-
-### Phase 2: MCP Server + Deployment (M9)
-
-Expose the environment as an MCP server with tools, resources, and prompts. Deploy to HF Space.
-
-**MCP tools (8):** `codeforge_reset`, `codeforge_query_kb`, `codeforge_query_cluster`, `codeforge_interrogate`, `codeforge_run_ralph`, `codeforge_submit`, `codeforge_get_audit`, `codeforge_state`
-
-**MCP discovery tools (2, zero budget):** `codeforge_list_clusters`, `codeforge_list_tags`
-
-**MCP resources:** `codeforge://corpus/stats`, `codeforge://corpus/node/{id}`, `codeforge://tasks`, `codeforge://audit/{episode_id}`
-
-**MCP prompts:** `codeforge_system` (rules + constraints), `codeforge_task_brief` (dynamic per-reset)
-
-**Session isolation:** Session-keyed environment pool, not a global singleton. Max 10 concurrent sessions, 1hr TTL. SSE transport requires bearer token auth.
-
-**Deployment:**
-- Docker: FastAPI on 7860, MCP SSE on 7861, ruff/mypy/pytest installed in image
-- HF Space: `krrishchoudhary109/code-forge`, Docker SDK
-- Corpus baked into image
-
-See `SYSTEM_DESIGN.md §9` for full tool schemas, `§13` for deployment, `§14-15` for security + session isolation.
-
-- [x] **M9** MCP server functional (tools + resources + prompts)
-- [x] Corpus baked into Docker image
-- [x] `openenv validate` passes
-- [ ] HF Space deployed
-- [ ] Live baseline on deployed Space
-
-### Phase 3: Intelligence Layer (M10–M13)
-
-Post-submission enhancements. Two knowledge bases, real LLM synthesizer, task decomposition.
-
-**M10 — Code Knowledge Graph (KB2):**
-Build `codeforge/kb/code_graph.py`. `ast` stdlib + `networkx.DiGraph`. ~80 lines. No new deps. Extract module→imports→module, function→calls→function, class→inherits→class edges from the agent's `current_files`. New action: `query_code_graph` (0 budget). Reduces token usage by providing structural answers instead of dumping all file contents. See `SYSTEM_DESIGN.md §4.3.2`.
-
-**M11 — ECC Corpus Integration:**
-Clone `everything-claude-code` (already in `CODEFORGE/`). Add one `SourceRoot` glob pointing at `CODEFORGE/everything-claude-code/skills/*/SKILL.md`. Re-scrape. Corpus grows from ~1,006 to ~2,500+ nodes. Build `SkillCorpusManager` with add/remove/refresh (~100 lines). See `SYSTEM_DESIGN.md §4.3.1`.
-
-**M12 — LLM Synthesizer:**
-Implement `LLMSynthesizer(Synthesizer)` that wraps Claude/GPT API. Takes spec + current_files + citations + iteration, returns proposed_files + rationale + cited_node_ids. ~150 lines. The `Synthesizer` Protocol already exists — just implement it. See `SYSTEM_DESIGN.md §4.4 Honest Gaps`.
-
-**M13 — Task Planner + Incremental Scoring:**
-`Planner` decomposes specs into ordered subtasks. Each subtask has `target_files` and `tools`. Ralph runs on each subtask with subtask-scoped scoring (`composite_score(result, tools=subtask.tools)`). The `tools` filter on `composite_score()` is the only scoring pipeline change needed (3 lines). See `SYSTEM_DESIGN.md §4.8.2`.
-
-**Shaping rewards (Phase 3+):**
-After successful submit, retroactive +0.01 per prior query whose cited skills appear in submitted code, max 0.05. See `SYSTEM_DESIGN.md §4.8.4`.
-
-- [x] **M10** Code Knowledge Graph (KB2) shipped
-- [x] **M11** ECC corpus integrated, SkillCorpusManager working
-- [x] **M12** LLM Synthesizer passing real tests
-- [x] **M13** Planner + incremental scoring working
+- `app.py` — FastAPI env server (imports from `cells/`)
+- `demo/app_gradio.py` — standalone demo Space (imports from `cells/`, not the inline `step_23` variant)
+- `notebooks/build_notebook.py` — concatenates `cells/step_NN_*.py` + `cells/step_NN_*.md` into `notebooks/train_driftcall.ipynb`
+- `data/` — authored fixtures (YAML, JSON)
+- `tests/conftest.py` — shared pytest fixtures
+- `scripts/smoke_gemma3n_boot.py` — one-off smoke test
+- `Dockerfile`, `pyproject.toml`, `requirements.txt`, `openenv.yaml`, `.gitignore`, `README.md`
 
 ---
 
-## 5. Per-Module Workflow (rigid, every module, every phase)
+## 3. Methodology: TDD → 2 Fresh Critics → Merge
+
+Every cell follows this rigid loop:
 
 ```
-0. Read CODEFORGE/SYSTEM_DESIGN.md — find the section for this module, read the exact spec
-1. Implement (TDD: test first RED, implement GREEN, refactor)
-   - python3 -m pytest tests/ -v → all pass
-   - python3 -m pytest tests/<module>/ --cov=<pkg> → coverage >= 85%
-   - ruff check <pkg>/ → clean
-   - mypy --strict <pkg>/ → clean
-3. Dispatch fresh critic (Agent, never reuse critics)
-   - Reports: NOTHING_FURTHER | NEEDS_CHANGES
-4. If NEEDS_CHANGES: fix, re-run gates, dispatch ANOTHER fresh critic
-5. Loop until NOTHING_FURTHER
-6. Commit: feat(codeforge-mN): <what> (cite SYSTEM_DESIGN section)
-7. If implementation diverged from SYSTEM_DESIGN.md: update the doc, commit separately
-8. Tick checkbox in this file
-9. Move to next module
+1. READ   (module doc + test plan doc + DESIGN.md section)
+2. RED    (write tests first in tests/test_step_NN_<name>.py, verify they fail)
+3. GREEN  (implement cells/step_NN_<name>.py minimally to pass)
+4. GATES  (pytest, coverage ≥ 85% line, ruff, mypy --strict)
+5. CRITIC ≥ 2 fresh critics on the (.py + test) pair return NOTHING_FURTHER
+6. MERGE  (orchestrator merges worktree → main)
 ```
 
-**Hard rules:**
-- `from __future__ import annotations` on every file
-- Every implementer task = one commit, conventional format
-- Fresh critic every round — never reuse
-- Test count must not drop between commits
-- Coverage must not drop below 85%
-- Zero `ruff check` or `mypy --strict` warnings introduced
-- No push until phase checklist is green
+**Rule — every numbered cell file goes through ≥ 2 fresh critic agents returning `NOTHING_FURTHER`**, identical to the Phase D gate. A third round fires if any prior returns `NEEDS_CHANGES`. Critics read main tree; authors use `isolation: "worktree"`.
 
----
+### 3.1 Quality gates (every commit)
 
-## 6. Parallel Execution Strategy
-
-**Speed rule: if two modules don't share state, they run in parallel.**
-
-The orchestrator (you, the main Claude session) does NOT implement modules directly. It spawns teammates via `Agent` with `isolation: "worktree"` for independent work, and uses `SendMessage` to coordinate. The orchestrator's job is: dispatch, monitor, review, merge.
-
-### 6.1 Parallelism Map — What Can Run Together
-
-All work happens in `CODEFORGE/codeforge/`. Reference code in `groundloop/` is READ-ONLY.
-
-```
-Phase 0: Foundation (all new files — high parallelism)
-├── Agent A (worktree): models.py + grader.py + tasks.py       ← data models + reward function
-├── Agent B (worktree): grounder.py                            ← AST grounding (independent module)
-├── Agent C (worktree): sandbox/ (all files)                   ← sandbox pipeline (independent module)
-│   (ALL THREE are independent — different files, no shared imports yet)
-├── Wait for all → merge → run full test suite
-└── Done
-
-Phase 1: Actions + Environment (some parallel, some sequential)
-├── Agent A (worktree): M3 kb/ (indexer, cluster, tokenizer, models)   ← KB subsystem
-├── Agent B (worktree): M4 interrogator/                               ← interrogator subsystem
-├── Agent C (worktree): M5 ralph/ (loop, synthesizer, checkpoint, models) ← ralph subsystem
-│   (M3, M4, M5 are INDEPENDENT subsystems — different directories, no shared state)
-├── Wait for all → merge
-├── Agent D (worktree): M6 audit/ (ledger, reporter, models)          ← depends on ralph models
-│   (SEQUENTIAL after M5 — uses ralph RunResult type)
-├── Wait → merge
-├── Agent E: M7 environment.py + observation.py                        ← imports ALL subsystems above
-│   (SEQUENTIAL — this is the glue that wires everything together)
-├── Agent F: M8 app.py + test_e2e.py + inference.py                   ← depends on environment
-└── Done
-
-Phase 2: MCP + Deployment
-├── Agent A (worktree): M9 mcp_server.py (tools + resources + prompts) ← new file
-├── Agent B (worktree): Dockerfile + pyproject.toml + openenv.yaml     ← deployment files
-│   (INDEPENDENT — MCP server and Docker config don't share files)
-├── Wait for both → merge
-├── openenv validate + HF deploy                                       ← sequential, needs HF token
-└── Done
-
-Phase 3: Intelligence Layer
-├── Agent A (worktree): M10 kb/code_graph.py                          ← new file in kb/
-├── Agent B (worktree): M11 scraper/ + kb/corpus_manager.py           ← new files
-├── Agent C (worktree): M12 ralph/synthesizer.py (LLMSynthesizer)     ← extends existing file
-│   (ALL THREE are independent — different files/dirs)
-├── Wait for all → merge
-├── Agent D: M13 ralph/planner.py + sandbox/metric.py tools filter    ← depends on M12
-└── Done
-```
-
-### 6.2 How To Spawn Parallel Teammates
-
-**For independent subsystems (e.g., M3 KB + M4 Interrogator + M5 Ralph — all in Phase 1):**
-```
-Send a SINGLE message with MULTIPLE Agent tool calls:
-
-Agent(
-  name="m3-kb-subsystem",
-  isolation: "worktree",
-  prompt: "Build the KB subsystem from scratch in CODEFORGE/codeforge/kb/.
-    Read CODEFORGE/SYSTEM_DESIGN.md §4.3.1 first.
-    Read groundloop/kb_indexer/index.py and groundloop/kb_indexer/cluster.py as REFERENCE — do not modify them.
-    Create: indexer.py (BM25 search), cluster.py (Jaccard + connected components), tokenizer.py, models.py (SearchResult, Cluster, ClusterManifest).
-    Write tests in CODEFORGE/tests/test_indexer.py and test_cluster.py.
-    TDD: test first RED, implement GREEN.
-    Quality gates: pytest pass, coverage >= 85%, ruff clean, mypy --strict clean.
-    from __future__ import annotations on every file.
-    When done, report files created and test results.",
-  run_in_background: true
-)
-
-Agent(
-  name="m4-interrogator",
-  isolation: "worktree",
-  prompt: "Build the interrogator from scratch in CODEFORGE/codeforge/interrogator/.
-    Read CODEFORGE/SYSTEM_DESIGN.md §4.5 first.
-    Read groundloop/interrogator/interrogator.py as REFERENCE — do not modify it.
-    Create: interrogator.py, models.py.
-    Write tests in CODEFORGE/tests/test_interrogator.py.
-    TDD: test first RED, implement GREEN.
-    Quality gates: pytest pass, coverage >= 85%, ruff clean, mypy --strict clean.
-    from __future__ import annotations on every file.
-    When done, report files created and test results.",
-  run_in_background: true
-)
-
-Agent(
-  name="m5-ralph",
-  isolation: "worktree",
-  prompt: "Build the Ralph orchestrator from scratch in CODEFORGE/codeforge/ralph/.
-    Read CODEFORGE/SYSTEM_DESIGN.md §4.4 and §4.8.5 first.
-    Read groundloop/ralph_orchestrator/loop.py as REFERENCE — do not modify it.
-    Also read CODEFORGE/ralph/ralph.sh and CODEFORGE/ralph/prompt.md for decomposition patterns.
-    Create: loop.py, synthesizer.py (Protocol + StubSynthesizer), checkpoint.py, models.py.
-    Write tests in CODEFORGE/tests/test_ralph_loop.py.
-    TDD: test first RED, implement GREEN.
-    Quality gates: pytest pass, coverage >= 85%, ruff clean, mypy --strict clean.
-    from __future__ import annotations on every file.
-    When done, report files created and test results.",
-  run_in_background: true
-)
-```
-
-All three run in isolated git worktrees. They create files in different directories. Zero conflict risk.
-
-**For critic reviews (always parallel with next implementation):**
-```
-After M3 finishes, spawn critic in background while M6 (audit) starts:
-
-Agent(
-  name="m3-critic-1",
-  prompt: "Review the KB subsystem in CODEFORGE/codeforge/kb/ against CODEFORGE/SYSTEM_DESIGN.md §4.3.1.
-    Check: does search() match the spec? Are cluster labels correct? Is BM25 scoring right?
-    Compare against the reference implementation in groundloop/kb_indexer/ — is anything missing?
-    Report NOTHING_FURTHER or NEEDS_CHANGES with specific file:line citations.",
-  run_in_background: true
-)
-```
-
-### 6.3 Rules for Parallel Execution
-
-1. **Never parallelize modules that touch the same file.** M7 (schema updates) touches `models.py` and `observation_builder.py` — it runs alone after M3-M6.
-2. **Worktree isolation is mandatory for implementers.** Use `isolation: "worktree"` so each agent has its own copy of the repo. Merge results back to main after review.
-3. **Critics run in the MAIN worktree.** They only read, never write. Safe to run concurrently.
-4. **If a merge conflict happens:** the orchestrator resolves it manually — never let an agent force-resolve.
-5. **Max 3 parallel agents at once.** More than that and context management becomes the bottleneck.
-6. **Every parallel agent gets the same briefing prefix:**
-   ```
-   "You are implementing CodeForge module [X].
-    MANDATORY: Read CODEFORGE/SYSTEM_DESIGN.md §[section] FIRST.
-    Follow it exactly. If the spec is wrong, report the discrepancy — do not silently diverge.
-    TDD: test first (RED), implement (GREEN), refactor.
-    Quality gates: pytest pass, coverage >= 85%, ruff clean, mypy --strict clean.
-    from __future__ import annotations on every file."
-   ```
-
-### 6.4 Estimated Speedup
-
-| Phase | Sequential | Parallel (3 agents) | Speedup |
-|---|---|---|---|
-| P0 (bug fixes) | 6 tasks serial | 2 parallel batches | ~2x |
-| P1 (M3-M8) | 6 modules serial | M3+M4 parallel, M5 overlap, M6 serial, M7+M8 serial | ~1.5x |
-| P2 (M9 + deploy) | 2 tasks serial | MCP + Docker parallel | ~2x |
-| P3 (M10-M13) | 4 modules serial | M10+M11+M12 parallel, M13 serial | ~2.5x |
-
-Total: ~40% faster than fully sequential, with higher quality because critics review in parallel with implementation of the next independent module.
-
----
-
-## 7. Build vs Integrate Decisions
-
-| Component | Decision | Rationale |
+| Gate | Command | Threshold |
 |---|---|---|
-| Skills corpus from ECC | **INTEGRATE** | Clone repo, add one glob, zero code changes, doubles corpus |
-| Skill add/remove/refresh | **BUILD** (~100 lines) | Specific to our JSONL format, mtime+body_hash fields exist |
-| AST code graph (KB2) | **BUILD** (~80 lines) | ast stdlib + networkx. Graphify needs Claude API calls — breaks determinism |
-| Ralph retry loop | **KEEP OURS** | snarktank/ralph is bash, not Python. Our ralph_orchestrator is already clean |
-| LLM Synthesizer | **BUILD** (~150 lines) | No clean drop-in. Synthesizer Protocol already defined |
-| Task Planner | **BUILD** (~200 lines) | SWE-agent too coupled. Our tasks are simple enough |
-| BM25 search | **KEEP** (rank_bm25) | Adequate for 2,500 nodes |
+| pytest | `python3 -m pytest tests/ -v` | 100% pass |
+| coverage | `python3 -m pytest tests/ --cov=cells --cov-branch` | line ≥ 85%, branch ≥ 75% on touched files |
+| ruff | `ruff check cells/ tests/ app.py demo/ notebooks/` | 0 warnings |
+| mypy | `mypy --strict cells/ app.py demo/` | 0 errors |
+| openenv | `openenv validate .` | passes (C3 onward) |
+| notebook build | `python3 notebooks/build_notebook.py` | produces valid .ipynb |
+
+### 3.2 TDD author briefing (mandatory prefix for every implementer agent)
+
+```
+You are implementing cells/step_NN_<name>.py + tests/test_step_NN_<name>.py for DriftCall Phase C.
+
+MANDATORY READS (in order):
+  1. DRIFTCALL/DESIGN.md §<relevant section>
+  2. DRIFTCALL/docs/modules/<module>.md   (the design contract)
+  3. DRIFTCALL/docs/tests/<module>_tests.md  (the test contract)
+  4. Existing cells/ merged from earlier batches (if any)
+  5. DRIFTCALL/CLAUDE.md §2 (cell structure + 25-cell list + naming)
+
+TDD workflow:
+  1. Write tests/test_step_NN_<name>.py FIRST from the test plan doc — verify they fail (RED).
+  2. Implement cells/step_NN_<name>.py minimally — verify tests pass (GREEN).
+  3. Refactor only if quality gates demand it.
+  4. Never add functions, classes, or features not in the module doc.
+
+Cell-structure rules:
+  - File is top-level code only (no `if __name__ == "__main__":` block).
+  - File must be importable: `from cells.step_NN_<name> import X` works.
+  - `from __future__ import annotations` on every file.
+  - Frozen dataclasses only (frozen=True).
+  - Imports at top of file (other cells use `from cells.step_NN_... import`).
+  - Short markdown preamble at `cells/step_NN_<name>.md` (1–3 sentences).
+
+Hard rules:
+  - No placeholders, no TODOs, no `# type: ignore`, no `# noqa`
+  - No hardcoded secrets
+  - No LLM judge in reward pipeline (ever)
+  - Pure functions where the doc says "pure"
+  - If the doc is wrong, STOP — do not diverge
+  - Quality gates ALL must pass before marking task complete
+```
 
 ---
 
-## 8. Reference Repos (`CODEFORGE/`)
+## 4. Phase C Batch Plan
 
-| Repo | Stars | What we use | What we skip |
-|---|---|---|---|
-| `graphify/` | 27K | Architecture pattern for KB2 (ast + graph + communities). Query interface concepts (BFS/DFS/path). | Claude API extraction (breaks determinism). Tree-sitter (overkill for Python-only). Leiden algorithm (Jaccard CC is enough). |
-| `ralph/` | 17K | PRD→user-story decomposition pattern for M13 planner. Loop-with-fresh-context-per-iteration concept. | Bash script (not importable). Git branch management. Amp/Claude CLI integration. |
-| `everything-claude-code/` | 157K | 306 unique SKILL.md files as corpus source for M11. Exact format match (YAML frontmatter + markdown). | Platform-specific duplicates (.agents/, .cursor/, translations). Non-skill files. |
+5 batches. Each implementer owns a non-overlapping set of step_NN files.
+
+### Batch C1 — Leaves (parallel worktrees, ~4h)
+
+| Agent | Step files owned | Companion |
+|---|---|---|
+| **coder-A1** | `step_04_models.py` | `tests/test_step_04_models.py` |
+| **coder-A2** | `step_05_vendors.py` | `tests/test_step_05_vendors.py` |
+| **coder-C1** | `step_09_audio.py` | `tests/test_step_09_audio.py` |
+| **coder-D1** | `step_01_install.py` + `step_02_imports.py` + `Dockerfile` + `pyproject.toml` + `requirements.txt` + `openenv.yaml` + `.gitignore` + `README.md` skeleton | (no tests — config files; README gets a basic smoke test) |
+
+**Gate:** every agent pytest green on their subset, coverage ≥ 85%, ruff + mypy clean; ≥ 2 fresh critics each → NOTHING_FURTHER.
+
+### Batch C2 — Drift + Task-Gen + Rewards + Env (sequenced)
+
+Depends on C1 merge.
+
+| Order | Agent | Files |
+|---|---|---|
+| 1 (parallel) | coder-A2 | `step_06_drift_injector.py` + `tests/test_step_06_drift_injector.py` |
+| 1 (parallel) | coder-A3 | `step_07_task_generator.py` + `tests/test_step_07_task_generator.py` |
+| 1 (parallel) | coder-C2 | `step_03_fixtures.py` + `data/` authored (templates.yaml, i18n.yaml, drift_patterns/*.yaml, api_schemas/*) |
+| 2 | coder-B1 | `step_08_rewards.py` + `tests/test_step_08_rewards.py` |
+| 3 | coder-A4 | `step_10_env.py` + `tests/test_step_10_env.py` (composes 4–9) |
+| 4 | coder-B2 | `step_11_smoke_env.py` + `tests/test_step_11_smoke_env.py` |
+
+### Batch C3 — Server + Data Space Push (parallel)
+
+| Agent | Files |
+|---|---|
+| **coder-A5** | `app.py` (FastAPI + OpenEnv REST) + `tests/test_app.py` |
+| **coder-B3** | `tests/test_e2e.py` (end-to-end episode) |
+| **coder-D2** | Deploy env Space to HF (CPU basic, free tier) + `openenv validate` green against live Space |
+| **coder-D3** | `notebooks/build_notebook.py` (jupytext concatenator, reads `cells/step_NN_*.py` + `.md` in numeric order, produces `.ipynb`) |
+
+### Batch C4 — Training + Eval + Demo (parallel)
+
+| Agent | Files |
+|---|---|
+| **coder-C3** | `step_12_gemma_boot.py` + `step_13_grpo_config.py` + `step_14_custom_trainer.py` + tests |
+| **coder-C4** | `step_15_train_stage1.py` + `step_16_train_stage2.py` + `step_17_train_stage3.py` + tests |
+| **coder-C5** | `step_18_eval_baseline.py` + `step_19_eval_final.py` + `step_20_probe.py` + `step_21_plots.py` + `step_22_summary.py` + tests |
+| **coder-D4** | `step_23_demo_gradio.py` + `demo/app_gradio.py` (Space variant) + `step_24_deploy_hf.py` + `step_25_conclusion.py` + tests |
+
+### Batch C5 — Ship (serial, ~4h + training compute)
+
+1. coder-C3 + V100: run Stage 1/2/3 GRPO (500 steps total, ~14h wall-clock)
+2. coder-C5: final eval on 50 held-out → EvalReport + 4 curves
+3. coder-B1: reward-hacking probe 200 eps → `docs/probe_report.md`
+4. coder-D4: push trained LoRA to HF Hub + demo Space with LoRA loaded
+5. coder-D3: rebuild `notebooks/train_driftcall.ipynb` with real training numbers, commit
+6. coder-D4: blog post + YouTube video + pitch deck
+7. All hands: pitch rehearsal × 3
 
 ---
 
-## 9. Commands
+## 5. Notebook Builder Contract (`notebooks/build_notebook.py`)
 
-All commands run from the repo root (`/home/krrish/Desktop/Project/openenv-DGXAI`).
+```python
+# Pseudocode for the builder; concrete impl in C3 batch.
+# Reads cells/ in numeric order, emits notebooks/train_driftcall.ipynb.
+
+import jupytext
+from pathlib import Path
+
+def build() -> None:
+    cells_dir = Path("cells")
+    ipynb_path = Path("notebooks/train_driftcall.ipynb")
+
+    # 1. Sort cells/step_NN_*.py by NN.
+    py_files = sorted(cells_dir.glob("step_[0-9][0-9]_*.py"))
+
+    # 2. For each .py, find matching .md sibling (step_NN_<name>.md). Use as markdown cell.
+    notebook = jupytext.new_notebook()
+    for py in py_files:
+        md_sibling = py.with_suffix(".md")
+        if md_sibling.exists():
+            notebook.cells.append(jupytext.new_markdown_cell(md_sibling.read_text()))
+        notebook.cells.append(jupytext.new_code_cell(py.read_text()))
+
+    # 3. Write .ipynb.
+    jupytext.write(notebook, ipynb_path, fmt="ipynb")
+
+if __name__ == "__main__":
+    build()
+```
+
+Invariants:
+- Rebuilding is idempotent: same inputs → byte-identical `.ipynb`.
+- No cell in the notebook duplicates code that's already in a prior cell.
+- Every numbered .py file in `cells/` becomes exactly one code cell, in numeric order.
+- Every `cells/step_NN_<name>.md` becomes a markdown cell preceding its code twin.
+
+---
+
+## 6. TeamCreate Dispatch Patterns
+
+### 6.1 Parallel implementer batch
+
+Send ONE message with 4 Agent calls, `isolation: "worktree"`, `run_in_background: true`. Each gets the TDD briefing prefix (§3.2) + file list + module + test plan doc paths.
+
+### 6.2 Critic round (≥2 per cell, main tree, read-only)
+
+Critics:
+- Round 1: one critic per numbered cell, parallel
+- Round 2: fresh critics verify fixes OR confirm clean
+- Round 3: only if any round returned `NEEDS_CHANGES`
+
+### 6.3 Rules
+
+1. **Max 4 concurrent agents**
+2. **Never reuse a critic** — fresh each round
+3. **Merge conflicts = orchestrator-only**
+4. **If two agents need the same cell, redesign the batch**
+5. **Quality gates are binding**
+
+---
+
+## 7. Commands
+
+Run from `DRIFTCALL/` unless noted.
 
 | Purpose | Command |
 |---|---|
-| **CODEFORGE tests** | `python3 -m pytest CODEFORGE/tests/ -v` |
-| **CODEFORGE coverage** | `python3 -m pytest CODEFORGE/tests/ --cov=CODEFORGE/codeforge --cov-report=term` |
-| **CODEFORGE lint** | `ruff check CODEFORGE/codeforge/` |
-| **CODEFORGE types** | `mypy --strict CODEFORGE/codeforge/` |
-| **CODEFORGE server** | `uvicorn CODEFORGE.codeforge.app:app --host 0.0.0.0 --port 7860` |
-| **CODEFORGE baseline** | `python3 CODEFORGE/inference.py` |
-| **CODEFORGE Docker** | `docker build -t code-forge CODEFORGE/ && docker run -p 7860:7860 code-forge` |
-| Old tests (reference) | `python3 -m pytest tests/ -v` |
-| Deploy to HF | `git push space main` |
+| Install dev | `uv pip install -e '.[dev]'` |
+| Tests | `python3 -m pytest tests/ -v` |
+| Coverage | `python3 -m pytest tests/ --cov=cells --cov-branch --cov-report=term-missing` |
+| Lint | `ruff check cells/ tests/ app.py demo/ notebooks/` |
+| Format | `ruff format cells/ tests/ app.py demo/` |
+| Types | `mypy --strict cells/ app.py demo/` |
+| OpenEnv validate | `openenv validate .` |
+| Env server local | `uvicorn app:app --host 0.0.0.0 --port 8000` |
+| Train Stage N | `python3 cells/step_15_train_stage1.py` (run standalone; same as notebook cell) |
+| Notebook build | `python3 notebooks/build_notebook.py` |
+| Docker build | `docker build -t driftcall-env .` |
+| HF Space env | `hf upload <team>/driftcall-env . --repo-type space` |
+| HF Hub model | `model.push_to_hub("<team>/gemma-3n-e2b-driftcall-lora", safe_serialization=True)` |
+| Gemma 3n smoke | `python3 scripts/smoke_gemma3n_boot.py` |
 
 ---
 
-## 10. Tasks (3 levels, unchanged)
+## 8. Sanity Checks (before every commit)
 
-| Level | Task ID | Budget | Target | Tools |
-|---|---|---|---|---|
-| easy | `greet_single_file` | 4 | 0.90 | ruff, imports, mypy |
-| medium | `greet_with_tests` | 6 | 0.80 | ruff, imports, mypy, pytest |
-| hard | `multi_file_module` | 10 | 0.70 | ruff, imports, mypy, pytest |
-
----
-
-## 11. Round-1 EpistemicNav (DO NOT TOUCH)
-
-Round 1 shipped 2026-04-08. Left untouched under `server/`, `data/`, and git history for judge verification. Round-1 models (`EpistemicAction`, `EpistemicObservation`, `ActionType`, `EvidenceSnippet`) coexist in `models.py` — do not modify them.
-
-Verify: `git diff d252064..HEAD -- server/ | wc -l` should be 0.
+1. Current batch's tests green
+2. Coverage ≥ 85% line on touched cells
+3. `ruff check` clean
+4. `mypy --strict` clean
+5. `from __future__ import annotations` in every `.py`
+6. Frozen dataclasses only
+7. **Code matches module doc + test plan exactly** — if diverges, escalate
+8. No `# type: ignore`, `# noqa`, TODOs
+9. No hardcoded secrets
+10. Commit message: `feat(driftcall-c<N>): step_NN_<name> (docs/modules/<x>.md §N)`
 
 ---
 
-## 12. Sanity Checks (before every commit)
+## 9. Phase C Kickoff Checklist
 
-1. All CODEFORGE tests green: `python3 -m pytest CODEFORGE/tests/ -v`
-2. Old tests still green (don't break the reference): `python3 -m pytest tests/ -v`
-3. Audit invariant: every reward traces to (sandbox, grounding, skill) triple
-4. Round-1 `server/` untouched: `git diff d252064..HEAD -- server/ | wc -l` = 0
-5. No hardcoded secrets
-6. `ruff check CODEFORGE/codeforge/` clean, `mypy --strict CODEFORGE/codeforge/` clean
-7. SYSTEM_DESIGN.md matches what the code actually does
+Before Batch C1:
 
----
-
-## 13. What NOT To Do
-
-- Do NOT use Graphify's Claude API extraction — grading must be LLM-free and deterministic
-- Do NOT import snarktank/ralph bash scripts — our Python ralph_orchestrator is the foundation
-- Do NOT scrape everything-claude-code's duplicate directories (.agents/, .cursor/, translations) — only `skills/*/SKILL.md`
-- Do NOT modify `server/`, `data/`, or Round-1 models in `models.py`
-- Do NOT add the uncertain floor value to MCP tool descriptions (leaks the exploit)
-- Do NOT mock the sandbox or grounder in integration tests — run real tools
-- Do NOT add features beyond what the current phase requires
-- Do NOT push until the phase checklist is green
+- [ ] Gemma 3n E2B smoke test passes on V100 (DESIGN.md §16.A.1)
+- [ ] Unsloth 2026.4.5+, TRL 0.23+, PyTorch 2.5+ installed
+- [ ] Kokoro-82M + faster-whisper-small in local HF cache
+- [ ] HF CLI authenticated (`hf auth login`)
+- [ ] Team `driftcall-code` created ✅
+- [ ] Team roles assigned: coder-A (env/vendors/models/env), coder-B (rewards/tests), coder-C (audio/training/eval), coder-D (deploy/demo/notebook)
+- [ ] `pyproject.toml` draft reviewed
+- [ ] `.gitignore` excludes `checkpoints/`, `.cache/`, `*.pyc`, `__pycache__/`, `*.ipynb_checkpoints/`
 
 ---
 
-## 14. Skills (for the orchestrator)
+## 10. What NOT To Do
 
-| Skill | When |
-|---|---|
-| `/tdd`, `/python-testing` | Every module implementation |
-| `/python-review` | Quality reviewer prompt |
-| `/security-review` | M6 audit ledger, M9 MCP server |
-| `/superpowers:systematic-debugging` | Test suite regressions |
-| `/superpowers:verification-before-completion` | Before ticking any checkbox |
-| `/huggingface-skills:hf-cli` | HF Space deployment |
-
-Do NOT invoke `/superpowers:brainstorming` — design is locked in `CODEFORGE/SYSTEM_DESIGN.md`.
+- ❌ Modify any Phase D doc without orchestrator approval
+- ❌ Improvise architecture — every class/function is in a module doc
+- ❌ Add an LLM judge anywhere in the reward pipeline
+- ❌ Put TTS/ASR in the training loop (text-only GRPO)
+- ❌ Load Gemma 4 E4B on V100 for training (E2B only)
+- ❌ Merge 4-bit → 16-bit naively (DESIGN.md §10.5)
+- ❌ Write features not in the docs
+- ❌ Skip tests (TDD is rigid)
+- ❌ Run more than 4 concurrent implementer agents
+- ❌ Touch files outside your batch assignment
+- ❌ Force-resolve merge conflicts via agent
+- ❌ Use deprecated `huggingface-cli upload` — use `hf upload`
+- ❌ Commit notebook without regenerating (`python3 notebooks/build_notebook.py`)
+- ❌ Create `step_NN_*.py` files outside the 25-cell list without orchestrator approval
 
 ---
 
-**This file IS the execution plan. `CODEFORGE/SYSTEM_DESIGN.md` IS the spec. Read both before any major decision. Tick checkboxes as you complete them. Work phase by phase. Critic every module. Fix what critics find. Move on only when NOTHING_FURTHER.**
+## 11. Escalation & Stop Conditions
+
+**Escalate (pause dispatch) if:**
+- Gemma 3n E2B smoke fails on V100 → block; escalate to user (no fallback model)
+- `openenv validate` fails after 3 attempts → block
+- Stage-1 training R1 < 0.4 at step 100 → block; reward/curriculum revisit
+- Critic finds consistent Phase D doc flaw → update spec first
+- Merge conflict across differently-owned cells → ownership was wrong
+- V100 unavailable > 8h → block; Colab T4 fallback
+
+**Hard stop (terminate, re-plan with user) if:**
+- HF Hub/Spaces outage > 2h (risk_book.md R06-STOP)
+- Team drops below 3 active members
+- Reward hacking in training that probe doesn't catch
+
+---
+
+## 12. Change Log
+
+| Date | Change | By |
+|---|---|---|
+| 2026-04-24 | Phase D doc-first methodology | Orchestrator |
+| 2026-04-25 | Phase C numbered-cell structure. 25 cells in `cells/step_NN_<name>.py`, each = one notebook cell AND importable module. Builder concatenates in numeric order. Same critic-gate discipline as Phase D. | Orchestrator |
+
+---
+
+**Phase D = specs. Phase C = 25 numbered cells that ARE both the notebook and the package. Read the module doc. Read the test plan. Write tests first. Implement the cell. Pass the gates. 2 critics clean. Ship.**

@@ -1,8 +1,0 @@
-[tool.ruff]
-line-length = 100
-
-[tool.mypy]
-strict = true
-explicit_package_bases = true
-mypy_path = "."
-files = ["."]

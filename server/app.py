@@ -1,161 +1,36 @@
-from fastapi import FastAPI, Response
-import logging
+"""DriftCall FastAPI server — OpenEnv-expected module path.
+
+Re-exports ``app`` from the project-root ``app.py`` so ``openenv validate``
+discovers it under ``server/app.py``. The single source of truth is the
+root-level ``app.py``; this file MUST NOT add routing or handler behavior.
+
+``main()`` exists solely so ``openenv validate`` finds a callable entry
+point at ``server/app.py:main`` and so ``python -m server.app`` boots the
+server identically to ``uvicorn app:app``.
+"""
+
+from __future__ import annotations
+
 import os
-import subprocess
-import sys
-import json
 
-from openenv.core.env_server.http_server import create_app
-from server.environment import EpistemicNavEnvironment
-from server.grader import compute_reward
-from models import EpistemicAction, EpistemicObservation, ActionType
+from app import app, create_app
 
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(
-    level=getattr(logging, LOG_LEVEL, logging.INFO),
-    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
-)
-
-_env_instance = EpistemicNavEnvironment()
-app = create_app(lambda: _env_instance, EpistemicAction, EpistemicObservation)
+__all__ = ["app", "create_app", "main"]
 
 
-@app.get("/", summary="Health check", description="Returns environment name and status. Used by automated validators to confirm the Space is live.")
-def root() -> dict:
-    return {
-        "name": "epistemic-nav",
-        "status": "ok",
-        "docs": "/docs",
-    }
+def main() -> None:
+    """Boot the FastAPI server via uvicorn.
 
-
-@app.get("/favicon.ico", include_in_schema=False)
-def favicon() -> Response:
-    return Response(status_code=204)
-
-
-@app.get("/tasks", summary="List tasks and action schema", description="Returns all available tasks (easy/medium/hard) with their IDs, descriptions, and the full action schema showing required fields for QUERY and COMMIT actions.")
-def get_tasks() -> dict:
-    return {
-        "tasks": [
-            {
-                "id": "single_hop",
-                "description": "Single-hop factual claim. One query sufficient.",
-                "difficulty": "easy",
-            },
-            {
-                "id": "multi_hop",
-                "description": "Multi-hop claim requiring evidence synthesis from multiple sources.",
-                "difficulty": "medium",
-            },
-            {
-                "id": "contradictory",
-                "description": "Contradictory evidence. Correct answer is uncertain.",
-                "difficulty": "hard",
-            },
-        ],
-        "action_schema": {
-            "action_type": {
-                "type": "string",
-                "enum": ["query", "commit"],
-                "description": "QUERY to search evidence, COMMIT to submit verdict.",
-            },
-            "query_text": {
-                "type": "string",
-                "description": "Search query for evidence retrieval. Required when action_type=query.",
-            },
-            "verdict": {
-                "type": "string",
-                "enum": ["true", "false", "uncertain"],
-                "description": "Verdict on the claim. Required when action_type=commit.",
-            },
-            "confidence": {
-                "type": "number",
-                "minimum": 0.0,
-                "maximum": 1.0,
-                "description": "Confidence in the verdict. Required when action_type=commit.",
-            },
-        },
-    }
-
-
-@app.get("/grader", summary="Get grader score", description="Returns the grader score for the current or most recently completed episode. Shows episode status, claim, reward, evidence count, and budget usage.")
-def get_grader() -> dict:
-    env = _env_instance
-    if env.current_claim is None:
-        return {"error": "No episode in progress or completed. Call /reset first."}
-
-    obs = env.state
-    if not obs.is_done:
-        return {
-            "status": "episode_in_progress",
-            "claim": obs.claim,
-            "budget_remaining": obs.budget_remaining,
-            "evidence_count": len(obs.evidence_gathered),
-            "last_reward": obs.last_reward,
-        }
-
-    return {
-        "status": "episode_completed",
-        "claim": obs.claim,
-        "task_level": obs.task_level,
-        "last_reward": obs.last_reward,
-        "evidence_count": len(obs.evidence_gathered),
-        "budget_used": env.max_budget - obs.budget_remaining,
-    }
-
-
-@app.post("/baseline", summary="Run baseline inference", description="Triggers the baseline inference script (inference.py) and returns scores for all 3 tasks. May take several minutes depending on LLM API latency. Requires API_BASE_URL, MODEL_NAME, and HF_TOKEN environment variables.")
-def run_baseline() -> dict:
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    inference_path = os.path.join(project_root, "inference.py")
-
-    try:
-        result = subprocess.run(
-            [sys.executable, inference_path],
-            capture_output=True,
-            text=True,
-            timeout=1200,
-            cwd=project_root,
-            env={**os.environ, "HF_SPACE": "http://localhost:7860"},
-        )
-
-        lines = result.stdout.strip().split("\n")
-        scores: dict[str, list[float]] = {}
-        for line in lines:
-            if line.startswith("[END]"):
-                parts = dict(p.split("=", 1) for p in line.split()[1:] if "=" in p)
-                score = float(parts.get("score", "0"))
-                task = "unknown"
-                for prev in reversed(lines[:lines.index(line)]):
-                    if prev.startswith("[START]"):
-                        start_parts = dict(
-                            p.split("=", 1) for p in prev.split()[1:] if "=" in p
-                        )
-                        task = start_parts.get("task", "unknown")
-                        break
-                scores.setdefault(task, []).append(score)
-
-        summary = {
-            task: round(sum(s) / len(s), 4) if s else 0.0
-            for task, s in scores.items()
-        }
-
-        return {
-            "status": "completed",
-            "scores": summary,
-            "raw_stdout": result.stdout,
-            "stderr": result.stderr[-500:] if result.stderr else "",
-        }
-    except subprocess.TimeoutExpired:
-        return {"status": "timeout", "error": "Baseline script exceeded 20 minute limit"}
-    except Exception as exc:
-        return {"status": "error", "error": str(exc)}
-
-
-def main():
+    Honors ``HOST`` / ``PORT`` env vars; defaults match the HF Space
+    contract (``0.0.0.0:7860``). Imported lazily so module import stays
+    side-effect-free.
+    """
     import uvicorn
-    uvicorn.run("server.app:app", host="0.0.0.0", port=7860, reload=True)
+
+    host = os.environ.get("HOST", "0.0.0.0")  # noqa: S104 - container bind
+    port = int(os.environ.get("PORT", "7860"))
+    uvicorn.run(app, host=host, port=port)
+
 
 if __name__ == "__main__":
     main()

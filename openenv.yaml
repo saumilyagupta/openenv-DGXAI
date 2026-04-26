@@ -1,23 +1,65 @@
-name: code-forge
-version: 0.1.0
-description: >
-  RL environment for training agents to iteratively synthesize Python
-  codebases from natural-language briefs. Agents can query a knowledge
-  base of coding-practice skills and submit candidate files; rewards
-  combine a programmatic quality signal (ruff/mypy/pytest/imports) with
-  AST-level symbol grounding.
-author: krrishchoudhary109
-tasks:
-  - id: greet_single_file
-    description: Single-file greet function with type hints.
-    difficulty: easy
-  - id: greet_with_tests
-    description: Multi-file greet + pytest + error handling.
-    difficulty: medium
-  - id: multi_file_module
-    description: Three-file module (entry + core + tests), mypy strict.
-    difficulty: hard
-max_budget: 10
-reward_range: [0.0, 1.0]
-hf_space: krrishchoudhary109/code-forge
-python_requires: ">=3.11"
+# openenv.yaml — consumed by `openenv validate`
+# Schema source: https://github.com/meta-pytorch/OpenEnv (v1.0).
+# Deploy spec: docs/modules/deploy_env_space.md §4.3.
+schema_version: "1.0"
+
+env:
+  id: driftcall
+  version: "0.1.0"
+  display_name: "DriftCall — Indic Voice Concierge under Schema Drift"
+  description: >
+    OpenEnv-compliant RL environment where a voice-first agent completes Indic
+    consumer concierge tasks while vendor APIs undergo mid-episode schema,
+    policy, T&C, pricing, and auth drift. Five independent reward components;
+    deterministic seeded drift; Hindi/Tamil/Kannada/Hinglish briefs via
+    Kokoro TTS + faster-whisper ASR.
+  license: apache-2.0
+  tags:
+    - openenv
+    - rl
+    - voice
+    - indic
+    - schema-drift
+    - grpo
+
+  entrypoint:
+    type: http
+    base_url: "https://driftcall-driftcall-env.hf.space"
+    endpoints:
+      reset: "/reset"
+      step: "/step"
+      state: "/state"
+      close: "/close"
+      health: "/healthz"
+    auth:
+      type: bearer
+      secret_env: DRIFTCALL_ENV_TOKEN
+
+  action_space:
+    ref: "cells.step_04_models:DriftCallAction"
+
+  observation_space:
+    ref: "cells.step_04_models:DriftCallObservation"
+
+  episode:
+    max_turns: 16
+    reset_config:
+      seed:
+        type: int
+        required: false
+      curriculum_stage:
+        type: int
+        range: [1, 3]
+        required: false
+      language_weights:
+        type: object
+        required: false
+      audio_boundary_enabled:
+        type: bool
+        required: false
+
+  reward:
+    shape: scalar
+    range: [-1.0, 1.0]
+    components:
+      ref: "docs/modules/rewards.md"
