@@ -109,7 +109,7 @@ export function LiveRL(): JSX.Element {
     <section className="section liverl" id="liverl">
       <div className="shell liverl__shell">
         <header className="liverl__header">
-          <span className="eyebrow">§07 — live RL</span>
+          <span className="eyebrow">§04 — live RL</span>
           <h2 className="liverl__title">
             <em>It's training</em> right now.
           </h2>

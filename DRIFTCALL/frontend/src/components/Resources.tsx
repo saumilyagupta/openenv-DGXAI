@@ -42,7 +42,7 @@ export function Resources(): JSX.Element {
     <section className="section resources" id="resources">
       <div className="shell resources__shell">
         <header className="resources__header">
-          <span className="eyebrow">§06 — resources</span>
+          <span className="eyebrow">§09 — resources</span>
           <h2 className="resources__title">
             Where everything lives.
           </h2>

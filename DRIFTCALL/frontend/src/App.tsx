@@ -1,4 +1,5 @@
 import { Architecture } from "./components/Architecture";
+import { BeforeAfter } from "./components/BeforeAfter";
 import { Demo } from "./components/Demo";
 import { Footer } from "./components/Footer";
 import { Future } from "./components/Future";
@@ -18,6 +19,7 @@ const NAV = [
   { id: "liverl", label: "live RL" },
   { id: "results", label: "results" },
   { id: "architecture", label: "arch" },
+  { id: "shift", label: "before / after" },
   { id: "future", label: "future" },
   { id: "resources", label: "links" },
 ] as const;
@@ -49,6 +51,7 @@ export function App(): JSX.Element {
         <LiveRL />
         <Results />
         <Architecture />
+        <BeforeAfter />
         <Future />
         <Resources />
       </main>

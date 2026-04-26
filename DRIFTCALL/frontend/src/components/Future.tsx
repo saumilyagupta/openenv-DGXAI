@@ -86,7 +86,7 @@ export function Future(): JSX.Element {
 
       <div className="shell future__shell">
         <header className="future__header">
-          <span className="eyebrow">§07 — future work</span>
+          <span className="eyebrow">§08 — future work</span>
           <h2 className="future__title">
             What the same primitive
             <br />

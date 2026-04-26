@@ -233,7 +233,7 @@ export function Results(): JSX.Element {
     <section className="section results" id="results">
       <div className="shell results__shell">
         <header className="results__header">
-          <span className="eyebrow">§04 — results</span>
+          <span className="eyebrow">§05 — results</span>
           <h2 className="results__title">
             Before / after,
             <br />

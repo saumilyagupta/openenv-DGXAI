@@ -1,0 +1,427 @@
+/* ─────────────────────────────────────────────────────────────
+ * §07 Before / After — diptych spreads.
+ * Each pair is a two-page printed spread: BEFORE on the left
+ * (deep ink, drained, grainy), AFTER on the right (warm paper,
+ * saffron alive). They are bound by a central hinge with two
+ * clamps and a mono counter. Visually unrelated to §07's
+ * stencil-and-diagonal slabs.
+ * ───────────────────────────────────────────────────────────── */
+
+.beforeafter {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* ── ambient backdrop: half NOW / half NEXT word-ghosts ─── */
+.ba__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  pointer-events: none;
+  user-select: none;
+  font-family: var(--font-display);
+  font-style: italic;
+  letter-spacing: -0.05em;
+  color: transparent;
+}
+.ba__bg-mark {
+  font-size: clamp(7rem, 22vw, 18rem);
+  line-height: 0.75;
+  align-self: center;
+  -webkit-text-stroke: 1px rgba(168, 162, 154, 0.10);
+}
+.ba__bg-mark--left {
+  justify-self: start;
+  padding-left: clamp(0.75rem, 2vw, 2.5rem);
+}
+.ba__bg-mark--right {
+  justify-self: end;
+  padding-right: clamp(0.75rem, 2vw, 2.5rem);
+  -webkit-text-stroke-color: rgba(255, 122, 23, 0.13);
+}
+
+/* ── shell ───────────────────────────────────────────────── */
+.ba__shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: clamp(2.5rem, 6vw, 5rem);
+}
+
+/* ── header ──────────────────────────────────────────────── */
+.ba__header {
+  display: grid;
+  gap: 1rem;
+  max-width: 70ch;
+}
+.ba__title {
+  font-size: var(--step-xl);
+  font-style: italic;
+  letter-spacing: -0.022em;
+  line-height: 0.96;
+}
+.ba__title em { color: var(--saffron); font-style: italic; }
+.ba__sub {
+  font-size: var(--step-m);
+  color: var(--paper-soft);
+  line-height: 1.55;
+  max-width: 64ch;
+}
+
+/* the legend strip: two cells separated by an arrow */
+.ba__legend {
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  border: 1px solid var(--ink-edge);
+  padding: 0.85rem 1rem;
+  background: linear-gradient(180deg, rgba(20,20,26,0.5), transparent);
+}
+@media (min-width: 720px) {
+  .ba__legend {
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1.25rem;
+    padding: 1rem 1.25rem;
+  }
+}
+.ba__legend-cell {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+}
+.ba__legend-tag {
+  font-size: var(--step-xxs);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.ba__legend-cell--before .ba__legend-tag { color: var(--ash); }
+.ba__legend-cell--after  .ba__legend-tag { color: var(--saffron); }
+.ba__legend-text {
+  font-size: var(--step-s);
+  color: var(--paper-soft);
+  line-height: 1.45;
+  max-width: 44ch;
+}
+.ba__legend-arrow {
+  font-size: var(--step-l);
+  color: var(--saffron);
+  text-align: center;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+/* ── pair list ───────────────────────────────────────────── */
+.ba__pairs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: clamp(2rem, 4vw, 3.5rem);
+}
+
+/* ── individual diptych ──────────────────────────────────── */
+.ba__pair {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "hinge"
+    "before"
+    "after";
+  gap: 0.75rem;
+  isolation: isolate;
+  /* staggered enter */
+  opacity: 0;
+  transform: translateY(14px);
+  animation: baPairIn 620ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation-delay: calc(var(--pair-i, 0) * 90ms + 100ms);
+}
+
+@keyframes baPairIn {
+  to { opacity: 1; transform: none; }
+}
+
+@media (min-width: 920px) {
+  .ba__pair {
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-areas: "before hinge after";
+    gap: 0;
+  }
+}
+
+/* ── panel base ──────────────────────────────────────────── */
+.ba__panel {
+  position: relative;
+  padding: clamp(1.5rem, 3vw, 2.4rem) clamp(1.4rem, 2.8vw, 2.2rem);
+  display: grid;
+  gap: 1.05rem;
+  align-content: start;
+  border: 1px solid var(--ink-edge);
+  overflow: hidden;
+  min-height: clamp(20rem, 38vw, 26rem);
+}
+
+/* BEFORE — drained ink */
+.ba__panel--before {
+  grid-area: before;
+  background:
+    radial-gradient(1200px 400px at -10% 0%, rgba(168,162,154,0.06), transparent 60%),
+    linear-gradient(180deg, var(--ink-base) 0%, var(--ink-deep) 100%);
+  color: var(--paper-soft);
+}
+.ba__panel--before .ba__scene {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.35rem, 2.1vw, 1.85rem);
+  line-height: 1.32;
+  color: var(--paper);
+  letter-spacing: -0.012em;
+  max-width: 32ch;
+}
+.ba__panel--before .ba__body {
+  font-size: var(--step-s);
+  color: var(--ash);
+  line-height: 1.55;
+  max-width: 46ch;
+}
+
+/* AFTER — alive paper */
+.ba__panel--after {
+  grid-area: after;
+  background:
+    radial-gradient(900px 320px at 110% 0%, rgba(255, 122, 23, 0.10), transparent 60%),
+    linear-gradient(180deg, var(--paper) 0%, #ebe4d6 100%);
+  color: var(--ink-base);
+  border-color: rgba(14, 14, 18, 0.30);
+}
+.ba__panel--after .ba__scene {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.35rem, 2.1vw, 1.85rem);
+  line-height: 1.32;
+  color: var(--ink-deep);
+  letter-spacing: -0.012em;
+  max-width: 34ch;
+  position: relative;
+  padding-left: 0.85rem;
+  border-left: 3px solid var(--saffron);
+}
+.ba__panel--after .ba__body {
+  font-size: var(--step-s);
+  color: #2a2a32;
+  line-height: 1.55;
+  max-width: 46ch;
+}
+
+/* panel head: tag + context */
+.ba__panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.85rem 1.1rem;
+  justify-content: space-between;
+}
+.ba__panel-tag {
+  font-size: var(--step-xxs);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.ba__panel--before .ba__panel-tag { color: var(--ash-deep); }
+.ba__panel--after  .ba__panel-tag { color: var(--saffron-deep); }
+.ba__panel-ctx {
+  font-size: var(--step-xxs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.ba__panel--before .ba__panel-ctx { color: var(--ash-mute); }
+.ba__panel--after  .ba__panel-ctx { color: rgba(14, 14, 18, 0.55); }
+
+/* meta line at bottom */
+.ba__meta {
+  margin-top: auto;
+  padding-top: 0.85rem;
+  border-top: 1px dashed currentColor;
+  border-color: rgba(168, 162, 154, 0.25);
+  font-size: var(--step-xxs);
+  letter-spacing: 0.05em;
+  line-height: 1.55;
+}
+.ba__panel--before .ba__meta { color: var(--ash); }
+.ba__panel--after .ba__meta {
+  color: rgba(14, 14, 18, 0.62);
+  border-color: rgba(14, 14, 18, 0.16);
+}
+
+/* ── decorative grain on BEFORE (subtle paper-noise) ─────── */
+.ba__panel-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(rgba(168, 162, 154, 0.10) 1px, transparent 1px),
+    radial-gradient(rgba(168, 162, 154, 0.06) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 1px 1px;
+  mix-blend-mode: overlay;
+  opacity: 0.55;
+}
+
+/* AFTER flare — saffron radial halo on hover */
+.ba__panel-flare {
+  position: absolute;
+  right: -30%;
+  bottom: -40%;
+  width: 70%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 122, 23, 0.20), transparent 70%);
+  transition: transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 380ms;
+  opacity: 0.6;
+}
+.ba__panel--after:hover .ba__panel-flare { transform: scale(1.25); opacity: 0.95; }
+
+/* ── hinge: book-binding between BEFORE and AFTER ────────── */
+.ba__hinge {
+  grid-area: hinge;
+  position: relative;
+  display: grid;
+  align-items: stretch;
+  justify-items: center;
+}
+
+@media (min-width: 920px) {
+  .ba__hinge {
+    width: 4.5rem;
+    grid-template-rows: 1fr auto 1fr;
+    align-content: center;
+  }
+}
+
+@media (max-width: 919.98px) {
+  .ba__hinge {
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: auto;
+    width: 100%;
+    height: 2.5rem;
+    align-items: center;
+  }
+}
+
+.ba__hinge::before {
+  content: "";
+  position: absolute;
+  background: var(--saffron);
+  z-index: 0;
+  filter: drop-shadow(0 0 6px var(--saffron-glow));
+}
+@media (min-width: 920px) {
+  .ba__hinge::before {
+    top: 1.4rem;
+    bottom: 1.4rem;
+    left: 50%;
+    width: 1px;
+    transform: translateX(-50%);
+  }
+}
+@media (max-width: 919.98px) {
+  .ba__hinge::before {
+    left: 1.4rem;
+    right: 1.4rem;
+    top: 50%;
+    height: 1px;
+    transform: translateY(-50%);
+  }
+}
+
+.ba__hinge-clamp {
+  width: 1.6rem;
+  height: 0.55rem;
+  background: var(--saffron);
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 0 10px var(--saffron-glow);
+}
+@media (max-width: 919.98px) {
+  .ba__hinge-clamp {
+    width: 0.55rem;
+    height: 1.6rem;
+  }
+}
+
+.ba__hinge-counter {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.35rem;
+  justify-items: center;
+  padding: 0.55rem 0.4rem;
+  background: var(--ink-deep);
+  border: 1px solid var(--saffron);
+}
+@media (max-width: 919.98px) {
+  .ba__hinge-counter {
+    grid-auto-flow: column;
+    gap: 0.6rem;
+    padding: 0.4rem 0.7rem;
+  }
+}
+.ba__hinge-num {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.6rem;
+  line-height: 0.85;
+  color: var(--saffron);
+  letter-spacing: -0.02em;
+}
+.ba__hinge-arrow {
+  font-size: var(--step-xxs);
+  letter-spacing: 0.15em;
+  color: var(--paper-soft);
+}
+@media (min-width: 920px) {
+  .ba__hinge-arrow {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+}
+
+/* ── footer line ─────────────────────────────────────────── */
+.ba__footer {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: baseline;
+  margin-top: clamp(1rem, 2vw, 2rem);
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--ink-edge);
+}
+.ba__footer-mark {
+  color: var(--saffron);
+  font-size: var(--step-l);
+  line-height: 1;
+}
+.ba__footer-line {
+  font-size: var(--step-m);
+  color: var(--paper-soft);
+  line-height: 1.5;
+  max-width: 64ch;
+}
+.ba__footer-line em {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--saffron);
+  font-size: 1.08em;
+  letter-spacing: -0.005em;
+}
+
+/* ── reduced motion ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ba__pair { animation: none; opacity: 1; transform: none; }
+  .ba__panel-flare { transition: none; }
+}

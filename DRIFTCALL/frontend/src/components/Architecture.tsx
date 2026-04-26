@@ -12,7 +12,7 @@ export function Architecture(): JSX.Element {
     <section className="section arch" id="architecture">
       <div className="shell arch__shell">
         <header className="arch__header">
-          <span className="eyebrow">§05 — architecture</span>
+          <span className="eyebrow">§06 — architecture</span>
           <h2 className="arch__title">
             <em>Three</em> deployable artefacts.
             <br />
