@@ -1094,6 +1094,20 @@ def main(argv: list[str] | None = None) -> int:
     )
     csv_path = args.csv_path if args.csv_path else (args.output_dir / "metrics.csv")
 
+    # Watch model: log gradients + parameters histograms every N steps.
+    if wandb_run is not None:
+        try:
+            import wandb as _wandb_watch
+            _wandb_watch.watch(
+                model,
+                log="all",            # gradients + parameters
+                log_freq=max(args.logging_steps, 5),
+                log_graph=False,      # graph logging is heavy; skip
+            )
+            print("[train] wandb.watch attached (log=all)")
+        except Exception as exc:
+            print(f"[train] wandb.watch failed (non-fatal): {exc}")
+
     # --- Env factory + task gen ---
     language_weights = STAGE_LANGUAGE_WEIGHTS[args.stage]
     stage_base_seed = STAGE_BASE_SEEDS[args.stage] + args.seed
@@ -1147,27 +1161,74 @@ def main(argv: list[str] | None = None) -> int:
         ep_seconds = time.time() - ep_t0
         wall_seconds = time.time() - wall_t0
 
+        # ── Per-rollout enrichments for richer wandb panels ────────────────
+        rewards_list = [float(r.reward) for r in rollouts]
+        comp_lens = [len(r.completion_text or "") for r in rollouts]
+        turn_counts = [int(getattr(r, "turn_count", 0) or 0) for r in rollouts]
+        terms = [str(getattr(r, "terminated_by", "") or "") for r in rollouts]
+        # Language is shared across the group (one goal per step).
+        goal_lang = str(getattr(goal, "language", "?"))
+        goal_intent = str(getattr(goal, "intent", "?"))
+
+        import statistics as _stats
+        def _q(xs: list[float], p: float) -> float:
+            if not xs: return 0.0
+            xs = sorted(xs)
+            k = max(0, min(len(xs) - 1, int(round(p * (len(xs) - 1)))))
+            return xs[k]
+
         log_row = {
             "step": step,
+            # Core
             "train/reward_mean": metrics.reward_mean,
             "train/reward_std": metrics.reward_std,
+            "train/reward_min": min(rewards_list) if rewards_list else 0.0,
+            "train/reward_max": max(rewards_list) if rewards_list else 0.0,
+            "train/reward_p25": _q(rewards_list, 0.25),
+            "train/reward_p50": _q(rewards_list, 0.50),
+            "train/reward_p75": _q(rewards_list, 0.75),
+            "train/reward_count_zero": sum(1 for r in rewards_list if r == 0.0),
+            "train/reward_count_nonzero": sum(1 for r in rewards_list if r != 0.0),
+            # GRPO components
             "train/policy_kl": metrics.kl,
-            "train/gen_length_mean": metrics.gen_length_mean,
-            "train/grad_norm": metrics.grad_norm,
+            "train/policy_loss": metrics.policy_loss,
             "train/loss": metrics.loss,
-            "train/learning_rate": optimizer.param_groups[0]["lr"],
-            "train/beta_adaptive": kl_ctrl.beta,
             "train/clipped_ratio_frac": metrics.clipped_ratio_frac,
             "train/advantage_mean": metrics.advantage_mean,
             "train/advantage_std": metrics.advantage_std,
-            "train/turns_mean": metrics.turns_mean,
+            "train/grad_norm": metrics.grad_norm,
+            "train/learning_rate": optimizer.param_groups[0]["lr"],
+            "train/beta_adaptive": kl_ctrl.beta,
+            # Reward decomposition (5 components from training.md §3.4)
             "train/r1_mean": metrics.r1_mean,
             "train/r2_mean": metrics.r2_mean,
             "train/r3_mean": metrics.r3_mean,
             "train/r4_mean": metrics.r4_mean,
             "train/r5_mean": metrics.r5_mean,
+            # Generation / episode shape
+            "train/gen_length_mean": metrics.gen_length_mean,
+            "train/gen_length_min": min(comp_lens) if comp_lens else 0,
+            "train/gen_length_max": max(comp_lens) if comp_lens else 0,
+            "train/turns_mean": metrics.turns_mean,
+            "train/turns_min": min(turn_counts) if turn_counts else 0,
+            "train/turns_max": max(turn_counts) if turn_counts else 0,
+            # Per-language (sparse — one stage may not see every lang)
+            f"rewards/by_lang/{goal_lang}": _stats.fmean(rewards_list) if rewards_list else 0.0,
+            f"episode/turns_by_lang/{goal_lang}": _stats.fmean(turn_counts) if turn_counts else 0.0,
+            # Termination breakdown for this step's group
+            "episode/terminated_by/submitted": sum(1 for t in terms if t == "submitted"),
+            "episode/terminated_by/timeout":   sum(1 for t in terms if t == "timeout"),
+            "episode/terminated_by/error":     sum(1 for t in terms if t == "error"),
+            "episode/terminated_by/max_turns": sum(1 for t in terms if t == "max_turns"),
+            "episode/terminated_by/end":       sum(1 for t in terms if t == "end"),
+            # Goal context (constants per step — shows up in wandb groupings)
+            "context/goal_language": goal_lang,
+            "context/goal_intent": goal_intent,
+            "context/stage": args.stage,
+            # Timing
             "train/episode_seconds": ep_seconds,
             "train/wall_seconds": wall_seconds,
+            "train/steps_per_hour": 3600.0 / max(ep_seconds, 1e-6),
         }
 
         if step % args.logging_steps == 0 or step == args.num_steps - 1:
@@ -1185,6 +1246,39 @@ def main(argv: list[str] | None = None) -> int:
                 except Exception as exc:
                     print(f"[train] wandb.log failed: {exc}")
             _write_csv_row(csv_path, CSV_COLUMNS, log_row)
+
+        # Sample-completions table — logged every `sample_log_every` steps.
+        sample_every = max(args.logging_steps * 5, 25)
+        if wandb_run is not None and (step % sample_every == 0 or step == args.num_steps - 1):
+            try:
+                import wandb
+
+                advs = [float(getattr(r, "advantage", 0.0) or 0.0) for r in rollouts]
+                table = wandb.Table(
+                    columns=[
+                        "step", "rollout_idx", "language", "intent",
+                        "turn_count", "terminated_by", "reward", "advantage",
+                        "completion_len", "completion_preview",
+                    ]
+                )
+                for idx, r in enumerate(rollouts):
+                    txt = (r.completion_text or "").strip()
+                    preview = txt if len(txt) <= 1500 else (txt[:1500] + "…")
+                    table.add_data(
+                        step,
+                        idx,
+                        goal_lang,
+                        goal_intent,
+                        int(getattr(r, "turn_count", 0) or 0),
+                        str(getattr(r, "terminated_by", "") or ""),
+                        float(r.reward),
+                        advs[idx] if idx < len(advs) else 0.0,
+                        len(txt),
+                        preview,
+                    )
+                wandb.log({f"samples/step_{step:05d}": table}, step=step)
+            except Exception as exc:
+                print(f"[train] wandb sample table log failed: {exc}")
 
         if (step + 1) % args.save_steps == 0 and (step + 1) < args.num_steps:
             ckpt_dir = args.output_dir.parent / f"checkpoint-{step + 1}"
