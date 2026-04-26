@@ -116,13 +116,20 @@ export const RESULTS = {
   },
 } as const;
 
-// Mock reward curve — sampled from typical 3-stage curriculum shape.
-// Real curve is exported from wandb after the run; this gives the SVG a
-// believable silhouette in the meantime.
-export const REWARD_CURVE: number[] = [
-  0.20, 0.20, 0.21, 0.20, 0.22, 0.21, 0.23, 0.24, 0.24, 0.26,
-  0.28, 0.27, 0.30, 0.32, 0.34, 0.33, 0.36, 0.39, 0.41, 0.42,
-  0.44, 0.43, 0.46, 0.48, 0.50, 0.49, 0.52, 0.54, 0.55, 0.57,
-  0.58, 0.57, 0.60, 0.61, 0.62, 0.63, 0.64, 0.66, 0.66, 0.67,
-  0.67, 0.68, 0.69, 0.69, 0.70, 0.70, 0.71, 0.71,
-];
+// Real metrics, pulled from /workspace/checkpoints/stage{1,2,3}/final/metrics.csv
+// after the 240-step training run (70 + 100 + 70 GRPO steps at G=2 on H100).
+import metricsJson from "./metrics.json";
+export const METRICS = metricsJson as {
+  stages: { name: string; len: number }[];
+  reward_mean: number[];
+  reward_std: number[];
+  kl: number[];
+  r1: number[];
+  r2: number[];
+  r3: number[];
+  r4: number[];
+  r5: number[];
+  gen_length: number[];
+  turns: number[];
+};
+export const REWARD_CURVE: readonly number[] = METRICS.reward_mean;
