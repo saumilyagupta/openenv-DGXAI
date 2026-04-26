@@ -54,7 +54,7 @@ class HubLink:
 HUB_LINKS: tuple[HubLink, ...] = (
     HubLink(
         label="Model (LoRA)",
-        url="https://huggingface.co/driftcall/gemma-3n-e2b-driftcall-lora",
+        url="https://huggingface.co/DGXAI/gemma-3n-e2b-driftcall-lora",
     ),
     HubLink(
         label="Dataset",

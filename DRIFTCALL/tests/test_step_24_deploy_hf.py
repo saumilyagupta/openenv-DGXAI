@@ -75,7 +75,7 @@ def _patch_run(
 
 class TestConstants:
     def test_default_lora_repo(self) -> None:
-        assert DEFAULT_LORA_REPO_ID == "driftcall/gemma-3n-e2b-driftcall-lora"
+        assert DEFAULT_LORA_REPO_ID == "DGXAI/gemma-3n-e2b-driftcall-lora"
 
     def test_default_dataset_repo(self) -> None:
         assert DEFAULT_DATASET_REPO_ID == "driftcall/driftcall-indic-briefs"

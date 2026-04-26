@@ -91,4 +91,4 @@ canonical sources at the repo root:
 - `requirements.txt`   — runtime deps (no training stack)
 
 The model + LoRA adapter are **not** baked into the Space — eval calls reach
-out to HF Hub for the trained adapter (`DGXAI/gemma-4-e2b-driftcall-lora`).
+out to HF Hub for the trained adapter (`DGXAI/gemma-3n-e2b-driftcall-lora`).

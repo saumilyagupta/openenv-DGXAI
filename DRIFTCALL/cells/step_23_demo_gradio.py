@@ -261,7 +261,7 @@ class ModelLoader:
         self,
         *,
         base_model_id: str = "unsloth/gemma-3n-E2B-it",
-        trained_adapter_id: str = "driftcall/gemma-3n-e2b-driftcall-lora",
+        trained_adapter_id: str = "DGXAI/gemma-3n-e2b-driftcall-lora",
         max_seq_length: int = 4096,
     ) -> None:
         self._base_model_id = base_model_id
