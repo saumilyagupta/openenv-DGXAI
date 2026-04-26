@@ -164,10 +164,24 @@ export function LiveRL(): JSX.Element {
 
         <Sparkline values={rewardHistoryRef.current} pulseAt={pulseStep} />
 
-        {status && status.boot_lines.length > 0 && !status.boot_complete ? (
-          <pre className="liverl__bootlog mono">
-            {status.boot_lines.slice(-12).join("\n")}
-          </pre>
+        {status && status.boot_lines.length > 0 ? (
+          <div className="liverl__terminal" aria-live="polite">
+            <header className="liverl__terminal-head">
+              <span className="liverl__terminal-dot" aria-hidden />
+              <span className="mono liverl__terminal-label">
+                training log
+                <span className="liverl__terminal-meta">
+                  {status.boot_complete ? "· live · tail" : "· booting · loading model"}
+                </span>
+              </span>
+              <span className="mono liverl__terminal-path">
+                stdout :: scripts/train_driftcall_grpo.py
+              </span>
+            </header>
+            <pre className="liverl__bootlog mono">
+              {status.boot_lines.slice(-14).join("\n")}
+            </pre>
+          </div>
         ) : null}
 
         {error ? (

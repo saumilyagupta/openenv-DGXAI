@@ -176,17 +176,81 @@
   color: var(--ash-deep);
 }
 
-/* ───── Boot log + start button ───── */
+/* ───── Live training log — terminal-style frame ───── */
+.liverl__terminal {
+  display: grid;
+  border: 1px solid var(--ink-edge);
+  background: var(--ink-deep);
+  overflow: hidden;
+}
+.liverl__terminal-head {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.55rem 1rem;
+  background: linear-gradient(180deg, #1a1a22, var(--ink-base));
+  border-bottom: 1px solid var(--ink-edge);
+  flex-wrap: wrap;
+}
+.liverl__terminal-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--saffron);
+  box-shadow: 0 0 8px var(--saffron-glow);
+  animation: liverlTermPulse 1.6s ease-in-out infinite;
+  flex: 0 0 auto;
+}
+@keyframes liverlTermPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.85); }
+}
+.liverl__terminal-label {
+  font-size: var(--step-xxs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--saffron);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.liverl__terminal-meta {
+  color: var(--ash);
+  letter-spacing: 0.12em;
+}
+.liverl__terminal-path {
+  margin-left: auto;
+  font-size: var(--step-xxs);
+  letter-spacing: 0.06em;
+  color: var(--ash-deep);
+  text-transform: lowercase;
+}
+
 .liverl__bootlog {
+  margin: 0;
   background: var(--ink-base);
-  border: var(--line-thin);
   padding: 1rem 1.2rem;
   font-size: var(--step-xxs);
   color: var(--paper-soft);
-  line-height: 1.5;
+  line-height: 1.55;
   white-space: pre-wrap;
-  max-height: 220px;
+  word-break: break-word;
+  max-height: 280px;
   overflow: auto;
+  /* faint scanline texture */
+  background-image:
+    linear-gradient(180deg, transparent 0%, var(--ink-base) 100%),
+    repeating-linear-gradient(0deg, rgba(255, 122, 23, 0.02) 0px, rgba(255, 122, 23, 0.02) 1px, transparent 1px, transparent 3px);
+  background-blend-mode: normal, overlay;
+}
+.liverl__bootlog::-webkit-scrollbar {
+  width: 6px;
+}
+.liverl__bootlog::-webkit-scrollbar-thumb {
+  background: var(--ink-edge);
+}
+.liverl__bootlog::-webkit-scrollbar-thumb:hover {
+  background: var(--saffron-deep);
 }
 
 .liverl__btn {
