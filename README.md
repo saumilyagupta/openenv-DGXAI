@@ -205,24 +205,35 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-  Audit[(audit trail)] --> R1[R1 task completion<br/>binary]
-  Audit --> R2[R2 drift detection<br/>binary, ≤2 turn lag]
-  Audit --> R3[R3 constraint adherence<br/>0-1]
-  Audit --> R4[R4 format compliance<br/>0-1]
-  Audit --> R5[R5 anti-hack penalty<br/>−1 to 0]
+    Audit["audit trail"]
+    R1["R1 task completion - binary"]
+    R2["R2 drift detection - binary, max 2 turn lag"]
+    R3["R3 constraint adherence - 0 to 1"]
+    R4["R4 format compliance - 0 to 1"]
+    R5["R5 anti-hack penalty - -1 to 0"]
+    Q["quality - weighted sum"]
+    Conf["stated confidence"]
+    Brier["brier = squared error of confidence vs R1"]
+    Reward["reward = quality times 1 minus brier"]
 
-  R1 --> Q{quality<br/>weighted sum}
-  R2 --> Q
-  R3 --> Q
-  R4 --> Q
-  R5 --> Q
+    Audit --> R1
+    Audit --> R2
+    Audit --> R3
+    Audit --> R4
+    Audit --> R5
 
-  Q --> Brier
-  Conf[stated confidence] --> Brier{(confidence − R1)²}
-  Brier --> Reward([reward = quality × (1−brier)])
+    R1 --> Q
+    R2 --> Q
+    R3 --> Q
+    R4 --> Q
+    R5 --> Q
 
-  classDef formula fill:#0e0e12,stroke:#ff7a17,color:#f0eae0
-  class Q,Brier,Reward formula
+    Q --> Brier
+    Conf --> Brier
+    Brier --> Reward
+
+    classDef formula fill:#0e0e12,stroke:#ff7a17,color:#f0eae0,stroke-width:2px
+    class Q,Brier,Reward formula
 ```
 
 ```text
