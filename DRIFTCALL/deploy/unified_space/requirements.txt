@@ -1,0 +1,34 @@
+# DriftCall — Unified Space runtime deps.
+# Combines the env Space stack (FastAPI + OpenEnv + audio) with the
+# demo Space stack (Gradio + base/lora model loading) so /demo runs
+# natively at /demo path — no iframe, no redirect.
+
+# ── OpenEnv FastAPI server ─────────────────────────────────────
+fastapi>=0.115
+uvicorn[standard]>=0.32
+openenv>=0.1.10,<0.2
+pydantic>=2.7
+PyYAML>=6.0
+huggingface_hub>=0.25
+cachetools>=5.3
+
+# ── Audio (TTS + ASR) ─────────────────────────────────────────
+kokoro>=0.3,<0.4
+faster-whisper>=1.0,<2.0
+torchaudio>=2.5
+soundfile>=0.12
+numpy<2.0
+
+# ── Gradio demo ───────────────────────────────────────────────
+gradio>=5.8,<6
+spaces>=0.30
+pandas>=2.0
+
+# ── Model loading (base + LoRA adapter) ───────────────────────
+torch>=2.5
+transformers>=4.51
+peft>=0.13
+unsloth>=2026.4.5
+timm>=1.0
+bitsandbytes>=0.43
+accelerate>=1.0

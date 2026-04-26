@@ -49,7 +49,10 @@ mkdir -p "$SPACE_DIR"
 #    point is self-contained inside the build dir.
 cp "$REPO_ROOT/app.py"            "$SPACE_DIR/app.py"
 cp "$REPO_ROOT/openenv.yaml"      "$SPACE_DIR/openenv.yaml"
-cp "$REPO_ROOT/requirements.txt"  "$SPACE_DIR/requirements.txt"
+
+# Demo Gradio app — renamed to demo_app.py so unified_app.py can import it
+# as a top-level module. The original lives at demo/app_gradio.py.
+cp "$REPO_ROOT/demo/app_gradio.py"  "$SPACE_DIR/demo_app.py"
 
 rsync -a --delete \
     --exclude '__pycache__' --exclude '*.pyc' \
@@ -57,8 +60,9 @@ rsync -a --delete \
 rsync -a --delete \
     "$REPO_ROOT/data/"   "$SPACE_DIR/data/"
 
-# 4) Copy unified_app + Dockerfile + Space card from the unified_space
-#    template (these live only here, not at the repo root).
+# 4) Copy unified-specific files (requirements.txt OVERRIDES the root copy
+#    because we add Gradio + model deps for the bundled /demo).
+cp "$REPO_ROOT/deploy/unified_space/requirements.txt" "$SPACE_DIR/requirements.txt"
 cp "$REPO_ROOT/deploy/unified_space/unified_app.py"  "$SPACE_DIR/unified_app.py"
 cp "$REPO_ROOT/deploy/unified_space/Dockerfile"       "$SPACE_DIR/Dockerfile"
 cp "$REPO_ROOT/deploy/unified_space/README.md"        "$SPACE_DIR/README.md"
