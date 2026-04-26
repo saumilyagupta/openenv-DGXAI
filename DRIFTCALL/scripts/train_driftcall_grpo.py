@@ -1094,19 +1094,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     csv_path = args.csv_path if args.csv_path else (args.output_dir / "metrics.csv")
 
-    # Watch model: log gradients + parameters histograms every N steps.
-    if wandb_run is not None:
-        try:
-            import wandb as _wandb_watch
-            _wandb_watch.watch(
-                model,
-                log="all",            # gradients + parameters
-                log_freq=max(args.logging_steps, 5),
-                log_graph=False,      # graph logging is heavy; skip
-            )
-            print("[train] wandb.watch attached (log=all)")
-        except Exception as exc:
-            print(f"[train] wandb.watch failed (non-fatal): {exc}")
+    # NOTE: `wandb.watch(log="all")` was tried here but blocks the main thread
+    # on PEFT/LoRA models — thousands of param-grad hooks fill the wandb pipe
+    # mid-step. Gradient norm is logged scalar-wise via `train/grad_norm` instead.
 
     # --- Env factory + task gen ---
     language_weights = STAGE_LANGUAGE_WEIGHTS[args.stage]
