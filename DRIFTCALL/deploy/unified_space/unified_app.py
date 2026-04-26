@@ -23,6 +23,7 @@ and source pages are rendered server-side from local data.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +31,12 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from app import app as openenv_app  # type: ignore[import-not-found]
+# `app.py` refuses to start without DRIFTCALL_ENV_TOKEN. For the hackathon
+# demo Space we publish a known public token so anyone can hit the OpenEnv
+# API end-to-end. To restrict access, override via Space Settings → Secrets.
+os.environ.setdefault("DRIFTCALL_ENV_TOKEN", "driftcall-demo")
+
+from app import app as openenv_app  # noqa: E402  # type: ignore[import-not-found]
 
 LORA_HUB_URL = "https://huggingface.co/DGXAI/gemma-3n-e2b-driftcall-lora"
 SOURCE_URL = "https://github.com/saumilyagupta/openenv-DGXAI"
@@ -156,19 +162,22 @@ _ENV_BODY = """
 </table>
 
 <h2>Try it</h2>
+<p>This Space publishes a known public bearer token so anyone can exercise
+the API end-to-end:
+<code style="background:#14141a;border:1px solid #1f1f28;padding:.05em .4em">driftcall-demo</code>.</p>
 <pre><code># 1) probe (no auth)
 curl https://saumilyajj-driftcall.hf.space/healthz
 
 # 2) reset
 curl -X POST https://saumilyajj-driftcall.hf.space/reset \\
-  -H "Authorization: Bearer $TOKEN" \\
+  -H "Authorization: Bearer driftcall-demo" \\
   -H "X-Session-Id: smoke-001" \\
   -H "Content-Type: application/json" \\
   -d '{"seed": 42, "curriculum_stage": 2}'
 
 # 3) step
 curl -X POST https://saumilyajj-driftcall.hf.space/step \\
-  -H "Authorization: Bearer $TOKEN" \\
+  -H "Authorization: Bearer driftcall-demo" \\
   -H "X-Session-Id: smoke-001" \\
   -H "Content-Type: application/json" \\
   -d '{"action": {"type": "end_episode"}}'</code></pre>
