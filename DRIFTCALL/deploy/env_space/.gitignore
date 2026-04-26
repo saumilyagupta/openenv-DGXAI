@@ -1,0 +1,14 @@
+# Build artifacts (regenerable from canonical sources).
+build/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+
+# HF Space runtime (never push to repo).
+.cache/
+checkpoints/
+logs/
+wandb/
+*.log
