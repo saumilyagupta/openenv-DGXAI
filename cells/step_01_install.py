@@ -1,13 +1,23 @@
-"""Cell 01 — Install pinned dependencies.
+"""Cell 01 — Install pinned dependencies + notebook bootstrap.
 
-Runs once at notebook boot. On Colab the notebook kernel is a bare Python 3
-install, so we ``pip install`` the flat pin set from ``requirements.txt``.
-Locally we skip reinstall if every pin is already importable.
+Runs once at notebook boot. Does three things:
 
-Also authenticates with the Hugging Face Hub when an ``HF_TOKEN`` environment
-variable is set; on interactive sessions the user can run ``hf auth login``
-separately. No network calls are attempted when ``HF_TOKEN`` is absent — the
-cell remains a no-op so offline unit tests pass.
+1. **(Colab only) clones the repo** into ``/content/openenv-DGXAI`` if absent
+   and ``chdir`` into it, so subsequent cells see ``cells/`` and ``data/``
+   on disk.
+2. **Adds the repo root to ``sys.path``** so cross-cell imports such as
+   ``from cells.step_04_models import GoalSpec`` resolve when the notebook
+   runs cells in a single global namespace.
+3. **Installs the pinned ``requirements.txt``**. Idempotent — on a configured
+   local machine where every pin is already importable the step is a no-op.
+
+Also authenticates with the Hugging Face Hub when ``HF_TOKEN`` is set in the
+environment. ``HF_TOKEN`` absent → no-op so offline unit tests pass.
+
+Notebook-safe: ``__file__`` is **undefined** when this source is executed as
+a Jupyter cell (rather than imported as a module), so the repo root is
+discovered via ``Path.cwd()`` walk + the optional ``__file__`` fallback —
+never by dereferencing ``__file__`` unconditionally.
 """
 
 from __future__ import annotations
@@ -19,6 +29,9 @@ import sys
 from pathlib import Path
 
 REQUIREMENTS_FILENAME = "requirements.txt"
+REPO_URL = "https://github.com/saumilyagupta/openenv-DGXAI.git"
+REPO_DIRNAME = "openenv-DGXAI"
+REPO_BRANCH = "submission"
 
 # Packages whose import name differs from their distribution name. Only list
 # the handful we actually probe with ``is_installed``; everything else uses
@@ -41,23 +54,104 @@ def is_installed(distribution: str) -> bool:
     return importlib.util.find_spec(module) is not None
 
 
-def _find_requirements() -> Path | None:
-    """Locate ``requirements.txt`` alongside the project root (worktree-safe)."""
+def is_colab() -> bool:
+    """Detect Google Colab runtime (``google.colab`` is always importable there)."""
 
-    candidates = [
-        Path.cwd() / REQUIREMENTS_FILENAME,
-        Path(__file__).resolve().parent.parent / REQUIREMENTS_FILENAME,
-    ]
+    return importlib.util.find_spec("google.colab") is not None
+
+
+def _module_dir() -> Path | None:
+    """Resolve this file's directory; ``None`` when running as a notebook cell."""
+
+    file_attr = globals().get("__file__")
+    if file_attr is None:
+        return None
+    try:
+        return Path(file_attr).resolve().parent
+    except (OSError, ValueError):
+        return None
+
+
+def _looks_like_repo_root(candidate: Path) -> bool:
+    return (candidate / REQUIREMENTS_FILENAME).is_file() and (candidate / "cells").is_dir()
+
+
+def find_repo_root() -> Path:
+    """Locate the repo root. Walks cwd + parents, falls back to ``__file__``-derived path."""
+
+    candidates: list[Path] = []
+    cwd = Path.cwd().resolve()
+    candidates.append(cwd)
+    candidates.extend(cwd.parents[:3])
+    mod = _module_dir()
+    if mod is not None:
+        candidates.append(mod.parent)
+    candidates.append(Path("/content") / REPO_DIRNAME)
+
+    seen: set[Path] = set()
+    for c in candidates:
+        c = c.resolve() if c.exists() else c
+        if c in seen:
+            continue
+        seen.add(c)
+        if _looks_like_repo_root(c):
+            return c
+    return cwd
+
+
+def _find_requirements() -> Path | None:
+    """Locate ``requirements.txt`` — checks cwd, then parents up to depth 3,
+    then the directory derived from ``__file__`` (script context only)."""
+
+    candidates: list[Path] = []
+    cwd = Path.cwd()
+    candidates.append(cwd / REQUIREMENTS_FILENAME)
+    for parent in cwd.parents[:3]:
+        candidates.append(parent / REQUIREMENTS_FILENAME)
+    mod = _module_dir()
+    if mod is not None:
+        candidates.append(mod.parent / REQUIREMENTS_FILENAME)
     for candidate in candidates:
         if candidate.is_file():
             return candidate
     return None
 
 
-def is_colab() -> bool:
-    """Detect Google Colab runtime (``google.colab`` is always importable there)."""
+def colab_clone_if_needed() -> Path | None:
+    """On Colab, clone the repo into ``/content`` if absent and ``chdir`` into it.
 
-    return importlib.util.find_spec("google.colab") is not None
+    Guarded so unit tests that monkeypatch ``is_colab`` to ``True`` on a
+    non-Colab host never invoke ``git clone``: real Colab always has a
+    ``/content`` directory, so we additionally require that to exist.
+    """
+
+    if not is_colab():
+        return None
+    content_root = Path("/content")
+    if not content_root.is_dir():
+        return None
+    target = content_root / REPO_DIRNAME
+    if not target.is_dir():
+        cmd = [
+            "git",
+            "clone",
+            "--depth=1",
+            "--branch",
+            REPO_BRANCH,
+            REPO_URL,
+            str(target),
+        ]
+        subprocess.run(cmd, check=True)
+    os.chdir(target)
+    return target
+
+
+def add_to_syspath(repo_root: Path) -> None:
+    """Prepend ``repo_root`` to ``sys.path`` so ``from cells.step_NN_*`` resolves."""
+
+    p = str(repo_root)
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 
 def pip_install(requirements_path: Path) -> int:
@@ -88,6 +182,9 @@ def install(force: bool = False) -> int:
     :param force: Reinstall even if every dependency is importable.
     :returns: 0 when deps already satisfied or pip succeeded; non-zero on pip failure.
     """
+
+    colab_clone_if_needed()
+    add_to_syspath(find_repo_root())
 
     requirements_path = _find_requirements()
     if requirements_path is None:
