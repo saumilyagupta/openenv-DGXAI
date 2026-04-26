@@ -39,9 +39,16 @@ ENV PYTHONUNBUFFERED=1 \
     GRADIO_ANALYTICS_ENABLED=False \
     GRADIO_SERVER_NAME=0.0.0.0
 
+# gcc + python3-dev are needed at runtime (not just build) because Triton
+# JIT-compiles a CUDA helper on first GPU call (Inductor backend). Without a
+# C compiler the GRPO subprocess crashes during model load with:
+#   torch._inductor.exc.InductorError: Failed to find C compiler
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libsndfile1 ffmpeg ca-certificates \
+        gcc g++ python3-dev \
     && rm -rf /var/lib/apt/lists/*
+
+ENV CC=gcc CXX=g++
 
 COPY --from=builder /install /usr/local
 COPY --from=builder /weights /root/.cache/huggingface
