@@ -61,5 +61,45 @@ env:
   reward:
     shape: scalar
     range: [-1.0, 1.0]
+    # The reward function lives in `cells/step_08_rewards.py`. Five independent
+    # components are computed at episode termination; combined into a quality
+    # score, calibrated by a Brier penalty + uncertain floor, then clamped.
+    # Implementation entrypoint:
+    impl: "cells.step_08_rewards:compute_rewards"
+    pipeline:
+      - "cells.step_08_rewards:combine_quality"   # weighted mix of R1..R5
+      - "cells.step_08_rewards:brier_penalty"     # confidence calibration
+      - "cells.step_08_rewards:apply_uncertain_floor"  # 0.50 floor when uncertain
+      - "cells.step_08_rewards:final_reward"      # final scalar in [-1, 1]
     components:
-      ref: "docs/modules/rewards.md"
+      - id: R1
+        name: task_completion
+        weight: 0.40
+        impl: "cells.step_08_rewards:task_completion"
+        description: >
+          Goal achieved (correct booking, payment success, vendor confirmation).
+      - id: R2
+        name: drift_detection
+        weight: 0.20
+        impl: "cells.step_08_rewards:drift_detection"
+        description: >
+          Agent detects mid-episode schema/policy/auth drift and adapts.
+      - id: R3
+        name: constraint_adherence
+        weight: 0.20
+        impl: "cells.step_08_rewards:constraint_adherence"
+        description: >
+          Honours user constraints (budget, time window, dietary, lang).
+      - id: R4
+        name: format_compliance
+        weight: 0.10
+        impl: "cells.step_08_rewards:format_compliance"
+        description: >
+          Tool args parse cleanly against the (possibly drifted) schema.
+      - id: R5
+        name: anti_hack_penalty
+        weight: 0.10
+        impl: "cells.step_08_rewards:anti_hack_penalty"
+        description: >
+          Penalty for known reward-hacking patterns flagged in probe set.
+    docs: "docs/modules/rewards.md"

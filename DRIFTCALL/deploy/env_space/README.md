@@ -52,8 +52,34 @@ Error envelope:
 - Action:      `cells.step_04_models:DriftCallAction`
 - Observation: `cells.step_04_models:DriftCallObservation`
 
-Reward: scalar in `[-1.0, 1.0]`, decomposed into 5 components
-(see `docs/modules/rewards.md` in the source repo).
+## Reward function
+
+Reward is a scalar in `[-1.0, 1.0]`, computed at episode termination from
+five independent components, combined → calibrated → clamped:
+
+| ID | Component | Weight | Implementation |
+|---:|---|---:|---|
+| R1 | `task_completion`      | 0.40 | `cells.step_08_rewards:task_completion` |
+| R2 | `drift_detection`      | 0.20 | `cells.step_08_rewards:drift_detection` |
+| R3 | `constraint_adherence` | 0.20 | `cells.step_08_rewards:constraint_adherence` |
+| R4 | `format_compliance`    | 0.10 | `cells.step_08_rewards:format_compliance` |
+| R5 | `anti_hack_penalty`    | 0.10 | `cells.step_08_rewards:anti_hack_penalty` |
+
+Pipeline:
+
+```python
+quality        = combine_quality(R1..R5, weights)
+brier          = brier_penalty(confidence, R1)
+reward_raw     = quality * (1 - brier)
+reward         = apply_uncertain_floor(reward_raw, confidence, quality)  # floor=0.50
+final         := clamp(reward, -1.0, 1.0)
+```
+
+**Hard rule (CLAUDE.md §13):** No LLM judge anywhere in this pipeline.
+Every reward bit traces to deterministic, schema-grounded checks against
+the episode trace + the (possibly drifted) vendor schemas in `data/`.
+
+Full spec: `docs/modules/rewards.md` in the source repo.
 
 ## Episode params (passed in `/reset`)
 
