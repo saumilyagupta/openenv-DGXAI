@@ -8,7 +8,7 @@ sdk_version: "5.8.0"
 app_file: app.py
 pinned: true
 license: apache-2.0
-short_description: Voice-first Indic concierge demo — base vs trained Gemma-3n LoRA
+short_description: Indic voice concierge — base vs trained Gemma-3n LoRA
 tags:
   - gradio
   - voice

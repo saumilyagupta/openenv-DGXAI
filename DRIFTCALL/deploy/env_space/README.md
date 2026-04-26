@@ -6,7 +6,7 @@ colorTo: pink
 sdk: docker
 pinned: true
 license: apache-2.0
-short_description: OpenEnv-compliant Indic voice concierge env under schema drift
+short_description: Indic voice concierge env under schema drift
 tags:
   - openenv
   - rl
