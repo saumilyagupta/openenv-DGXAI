@@ -62,9 +62,8 @@ function CurveSvg({ data }: { data: readonly number[] }): JSX.Element {
               fontFamily="var(--font-mono)"
               fontSize="9"
               letterSpacing="0.1em"
-              textTransform="uppercase"
             >
-              {s.label}
+              {s.label.toUpperCase()}
             </text>
           </g>
         );

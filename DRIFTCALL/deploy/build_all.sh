@@ -35,10 +35,18 @@ HF_SPACE_REPO="${HF_SPACE_DEMO_REPO:-DGXAI/driftcall-demo}" \
 
 echo
 echo "================================================================"
+echo "[build_all] frontend_space"
+echo "================================================================"
+HF_SPACE_REPO="${HF_SPACE_SITE_REPO:-DGXAI/driftcall-site}" \
+    bash "$REPO_ROOT/deploy/frontend_space/build.sh" $PUSH_FLAG
+
+echo
+echo "================================================================"
 echo "[build_all] DONE"
 echo "================================================================"
 echo "Env Space:  https://huggingface.co/spaces/${HF_SPACE_ENV_REPO:-DGXAI/driftcall-env}"
 echo "Demo Space: https://huggingface.co/spaces/${HF_SPACE_DEMO_REPO:-DGXAI/driftcall-demo}"
+echo "Site:       https://huggingface.co/spaces/${HF_SPACE_SITE_REPO:-DGXAI/driftcall-site}"
 echo "LoRA:       https://huggingface.co/DGXAI/gemma-3n-e2b-driftcall-lora"
 echo
 echo "Inference smoke (run from repo root):"
