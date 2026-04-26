@@ -1,0 +1,7 @@
+# Build artifacts (regenerable from canonical sources).
+build/
+__pycache__/
+*.pyc
+*.pyo
+.cache/
+*.log

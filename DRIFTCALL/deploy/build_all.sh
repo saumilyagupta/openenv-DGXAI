@@ -42,8 +42,16 @@ HF_SPACE_REPO="${HF_SPACE_SITE_REPO:-DGXAI/driftcall-site}" \
 
 echo
 echo "================================================================"
+echo "[build_all] unified_space"
+echo "================================================================"
+HF_SPACE_REPO="${HF_SPACE_UNIFIED_REPO:-DGXAI/driftcall}" \
+    bash "$REPO_ROOT/deploy/unified_space/build.sh" $PUSH_FLAG
+
+echo
+echo "================================================================"
 echo "[build_all] DONE"
 echo "================================================================"
+echo "Unified:    https://huggingface.co/spaces/${HF_SPACE_UNIFIED_REPO:-DGXAI/driftcall}"
 echo "Env Space:  https://huggingface.co/spaces/${HF_SPACE_ENV_REPO:-DGXAI/driftcall-env}"
 echo "Demo Space: https://huggingface.co/spaces/${HF_SPACE_DEMO_REPO:-DGXAI/driftcall-demo}"
 echo "Site:       https://huggingface.co/spaces/${HF_SPACE_SITE_REPO:-DGXAI/driftcall-site}"
