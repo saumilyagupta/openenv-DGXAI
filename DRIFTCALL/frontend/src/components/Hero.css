@@ -43,6 +43,7 @@
 }
 
 .hero__brand {
+  position: relative;
   display: inline-block;
   font-style: italic;
   color: var(--paper);
@@ -51,6 +52,27 @@
     0 0 0 transparent;
 }
 .hero__brand::first-letter {
+  color: var(--saffron);
+}
+
+/* Telemetry readout produced by @chenglou/pretext — sits under the brand. */
+.pretext__telemetry {
+  position: absolute;
+  inset-inline-start: 0.05em;
+  inset-block-start: calc(100% + 0.4rem);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ash-deep);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: rise 1100ms 1500ms var(--ease-out-expo) both;
+}
+.pretext__telemetry > span:last-child {
   color: var(--saffron);
 }
 

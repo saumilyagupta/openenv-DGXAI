@@ -56,13 +56,34 @@ frontend/
 - **Grain:** 9999-z film-grain SVG overlay at 7.5% opacity, mix-blend-mode
   overlay — gives every surface a quiet analog texture.
 
-## Pretext
+## Pretext (vendored)
 
-The site uses `@chenglou/pretext` (Cheng Lou's pre-rendered text primitive)
-for the hero brand mark. Imported lazily inside `components/Pretext.tsx`; if
-the package fails to resolve at runtime, the wrapper falls back to a CSS-only
-per-glyph staggered rise so the page never blanks. See `Pretext.tsx` for the
-exact resolve-or-fallback path.
+The site uses `@chenglou/pretext` — Cheng Lou's pure-JS text measurement &
+layout library. It is **vendored** under `frontend/vendor/pretext/` (full
+clone of the upstream MIT repo, v0.0.6) and resolved via a Vite alias in
+`vite.config.ts`:
+
+```ts
+resolve: {
+  alias: {
+    "@chenglou/pretext": "./vendor/pretext/src/layout.ts",
+  },
+},
+optimizeDeps: { exclude: ["@chenglou/pretext"] }
+```
+
+Why vendor: builds never depend on the public npm registry. `npm install`
+on this project pulls only React, Motion, Lucide. There is nothing called
+`@chenglou/pretext` in `package.json`.
+
+What we use it for: in `src/components/Pretext.tsx`, on mount we call
+`prepare(text, font)` and `layout(prepared, width, lineHeight)` against
+the rendered hero brand. The returned `width`, `height`, and `lineCount`
+are displayed as a small monospace telemetry strip under the title — a
+typographic flourish that doubles as proof we're actually using the
+library, not just decorating with it. If the import fails for any
+reason, the wrapper degrades to a per-glyph CSS staggered rise so the
+page never white-screens.
 
 ## Embedding the live demo
 
