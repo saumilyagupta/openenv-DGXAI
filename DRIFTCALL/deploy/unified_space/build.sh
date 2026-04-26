@@ -82,7 +82,7 @@ done
 
 # Top-level docs / metadata files. README.md is renamed to PROJECT_README.md
 # so it doesn't shadow the Space-card README.md that HF uses for the page.
-for f in DESIGN.md CLAUDE.md pyproject.toml; do
+for f in DESIGN.md CLAUDE.md BLOG.md pyproject.toml; do
     if [[ -f "$REPO_ROOT/$f" ]]; then
         cp "$REPO_ROOT/$f" "$SPACE_DIR/$f"
     fi
