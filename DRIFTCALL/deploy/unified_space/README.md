@@ -24,19 +24,24 @@ project site, both under the same hostname. OpenEnv routes are at the
 canonical bare paths (no `/api` prefix), so the registry and the gym
 client see this Space exactly as it sees the dedicated env Space.
 
-## URL surface
+## URL surface — everything under one origin
 
 | Path             | Method   | What it does |
 |------------------|----------|--------------|
-| `/`              | `GET`    | static project site (Vite-built React + pretext) |
-| `/assets/*`      | `GET`    | site bundle (CSS, JS, fonts) |
+| `/`              | `GET`    | project site (Vite-built React + pretext) |
+| `/assets/*`      | `GET`    | site bundle (CSS / JS / fonts) |
 | `/healthz`       | `GET`    | OpenEnv health probe (`text/plain "ok"`) |
-| `/reset`         | `POST`   | OpenEnv reset (bearer auth + X-Session-Id) |
+| `/reset`         | `POST`   | OpenEnv reset (bearer + X-Session-Id) |
 | `/step`          | `POST`   | OpenEnv step |
 | `/state`         | `GET`    | OpenEnv read-only state |
 | `/close`         | `POST`   | OpenEnv close session |
-| `/openenv.yaml`  | `GET`    | the manifest (served from disk) |
-| `/demo`          | `GET`    | 302 → dedicated Gradio demo Space |
+| `/openenv.yaml`  | `GET`    | OpenEnv v1.0 manifest |
+| `/docs`          | `GET`    | FastAPI / Swagger UI for the env routes |
+| `/demo`          | `GET`    | inline voice demo (iframes the GPU Space, stays on our host) |
+| `/env`           | `GET`    | landing page with curl recipes for the env routes |
+| `/lora`          | `GET`    | 302 → trained LoRA on HF Hub |
+| `/source`        | `GET`    | 302 → repo on GitHub |
+| `/site`          | `GET`    | 302 → `/` (typed-URL convenience) |
 
 The OpenEnv routes do not collide with the static frontend because
 they are HTTP verb-specific (`POST /reset`, `POST /step`, `POST /close`,
