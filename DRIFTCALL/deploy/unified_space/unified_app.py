@@ -116,10 +116,11 @@ _NAV_LINKS = [
 
 
 def _page(title: str, slug: str, body: str, active: str) -> str:
-    nav = "\n    ".join(
-        f'<a href="{href}" {"class=\"is-active\"" if href == active else ""}>{label}</a>'
-        for (href, label) in _NAV_LINKS
-    )
+    nav_items: list[str] = []
+    for href, label in _NAV_LINKS:
+        cls = ' class="is-active"' if href == active else ""
+        nav_items.append(f'<a href="{href}"{cls}>{label}</a>')
+    nav = "\n    ".join(nav_items)
     return (
         _HEAD
         .replace("__TITLE__", title)
