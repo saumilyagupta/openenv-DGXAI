@@ -1,6 +1,0 @@
-{
-  "enabledPlugins": {
-    "everything-claude-code@everything-claude-code": true,
-    "hf-cli@huggingface-skills": true
-  }
-}

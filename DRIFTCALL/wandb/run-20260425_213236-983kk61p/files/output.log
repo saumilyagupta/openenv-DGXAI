@@ -1,8 +1,0 @@
-wandb: Initializing weave.
-[36m[1mweave[0m: wandb version 0.26.1 is available!  To upgrade, please run:
-[36m[1mweave[0m:  $ pip install wandb --upgrade
-[36m[1mweave[0m: Logged in as Weights & Biases user: vasudeo118.
-[36m[1mweave[0m: View Weave data at https://wandb.ai/vasudeo118-lnmiit/driftcall/weave
-[train] step=   0 reward=0.175±0.025 loss=-0.0300 kl=+0.0000 beta=0.0054 lr=5.00e-06 grad=320612.312 ep_s=73.5
-[train] step=   1 reward=0.200±0.000 loss=+0.0000 kl=+0.0000 beta=0.0010 lr=0.00e+00 grad=8743.339 ep_s=33.1
-[train] saving final adapter -> /workspace/openenv-DGXAI/DRIFTCALL/checkpoints/smoke/final

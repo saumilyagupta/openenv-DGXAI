@@ -13,6 +13,7 @@ env/
 # Secrets
 .env
 .env.*
+.driftcall.env
 !.env.example
 # cells/_secrets.py IS tracked — user runs in a private repo and accepts the
 # risk of hardcoded credentials. Rotate by editing the file then re-pushing.
@@ -39,11 +40,12 @@ htmlcov/
 # Training artifacts
 checkpoints/
 .cache/
-
+unsloth_compiled_cache/
+wandb/
 mlruns/
 
 # Logs
-
+logs/
 
 # Build
 build/

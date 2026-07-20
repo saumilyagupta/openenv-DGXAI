@@ -1,13 +1,25 @@
+# Root ignores for the DriftCall-only repo.
+# Product-level ignores live in DRIFTCALL/.gitignore.
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Python / tooling at repo root
 .venv/
-.env
+venv/
 __pycache__/
-*.pyc
-data/claims_easy.json
-data/claims_medium.json
-data/claims_hard.json
-data/claims_partial.json
-data/evidence_easy.json
-data/evidence_medium.json
-data/evidence_hard.json
-groundloop/kb/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .coverage
+.coverage.*
+htmlcov/
+
+# Secrets (never commit at root)
+.env
+.env.*
+.driftcall.env
+!.env.example
