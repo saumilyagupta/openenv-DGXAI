@@ -20,7 +20,7 @@ license: apache-2.0
 
 [![Live Space](https://img.shields.io/badge/%F0%9F%A4%97%20Space-saumilyajj%2Fdriftcall-ff7a17?style=for-the-badge)](https://huggingface.co/spaces/saumilyajj/driftcall)
 [![Trained LoRA](https://img.shields.io/badge/%F0%9F%A4%97%20Weights-DGXAI%2Fgemma--3n--e2b--driftcall--lora-ff7a17?style=for-the-badge)](https://huggingface.co/DGXAI/gemma-3n-e2b-driftcall-lora)
-[![GitHub](https://img.shields.io/badge/GitHub-openenv--DGXAI-0e0e12?style=for-the-badge&logo=github)](https://github.com/saumilyagupta/openenv-DGXAI)
+[![GitHub](https://img.shields.io/badge/GitHub-DriftCall-0e0e12?style=for-the-badge&logo=github)](https://github.com/saumilyagupta/DriftCall)
 [![License](https://img.shields.io/badge/License-Apache_2.0-0e0e12?style=for-the-badge)](https://www.apache.org/licenses/LICENSE-2.0)
 
 </div>
@@ -292,7 +292,7 @@ gantt
 | Mean turns to complete | 6 (gives up) | **3–4** |
 | Valid JSON tool calls | ~60 % | **98 %+** |
 
-Full demo episodes (one per drift × language) live in [`BLOG.md`](DRIFTCALL/BLOG.md).
+Full demo episodes (one per drift × language) live in [`BLOG.md`](BLOG.md).
 
 ---
 
@@ -300,31 +300,18 @@ Full demo episodes (one per drift × language) live in [`BLOG.md`](DRIFTCALL/BLO
 
 ```mermaid
 flowchart TB
-  Root[openenv-DGXAI]
-  Root --> DC[DRIFTCALL/]
-  Root --> CF[CODEFORGE/]
-  Root --> Round1[server/, data/, models.py<br/>Round-1 EpistemicNav · do not touch]
+  Root[DriftCall]
 
-  DC --> Cells[cells/<br/>step_01..25_*.py — notebook source]
-  DC --> App[app.py<br/>FastAPI + OpenEnv]
-  DC --> DemoApp[demo/<br/>Gradio voice demo]
-  DC --> Scripts[scripts/<br/>train_driftcall_grpo.py]
-  DC --> Notebooks[notebooks/<br/>train_driftcall.ipynb<br/>colab_clone_and_train.ipynb]
-  DC --> Deploy[deploy/unified_space/<br/>Docker + build.sh]
-  DC --> Docs[docs/<br/>14 module specs + 14 test plans]
-  DC --> Blog[BLOG.md<br/>HF blog post]
-  DC --> Design[DESIGN.md<br/>master spec]
-
-  classDef hot fill:#ff7a17,stroke:#0e0e12,color:#0e0e12,stroke-width:2px
-  classDef cold fill:#1a1a22,stroke:#262630,color:#a8a29a
-  class DC hot
-  class Round1 cold
+  Root --> Cells[cells/<br/>step_01..25_*.py]
+  Root --> App[app.py<br/>FastAPI + OpenEnv]
+  Root --> DemoApp[demo/<br/>Gradio voice demo]
+  Root --> Scripts[scripts/<br/>train_driftcall_grpo.py]
+  Root --> Notebooks[notebooks/<br/>train_driftcall.ipynb]
+  Root --> Deploy[deploy/unified_space/]
+  Root --> Frontend[frontend/]
+  Root --> Docs[docs/<br/>module specs + test plans]
+  Root --> Specs[DESIGN.md · CLAUDE.md · BLOG.md]
 ```
-
-> **The active project is `DRIFTCALL/`**.
-> `CODEFORGE/` is a parallel research track. `server/`, `data/`, `models.py`
-> at the root are **Round-1 EpistemicNav** (already shipped 2026-04-08, kept
-> intact for judge verification — do not touch).
 
 ---
 
@@ -343,8 +330,8 @@ flowchart TB
 
 ```bash
 # 1. Clone & install
-git clone https://github.com/saumilyagupta/openenv-DGXAI
-cd openenv-DGXAI/DRIFTCALL
+git clone https://github.com/saumilyagupta/DriftCall
+cd DriftCall
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev]'
 
@@ -374,7 +361,7 @@ flowchart LR
   class B,C,D,E,F step
 ```
 
-[**→ Open `notebooks/colab_clone_and_train.ipynb` in Colab**](https://colab.research.google.com/github/saumilyagupta/openenv-DGXAI/blob/main/DRIFTCALL/notebooks/colab_clone_and_train.ipynb)
+[**→ Open `notebooks/colab_clone_and_train.ipynb` in Colab**](https://colab.research.google.com/github/saumilyagupta/DriftCall/blob/main/notebooks/colab_clone_and_train.ipynb)
 
 ---
 
@@ -382,8 +369,8 @@ flowchart LR
 
 | Notebook | Purpose | Builder |
 |---|---|---|
-| [`DRIFTCALL/notebooks/train_driftcall.ipynb`](DRIFTCALL/notebooks/train_driftcall.ipynb) | Full curriculum (concatenation of `cells/step_NN_*.py`) | `python3 DRIFTCALL/notebooks/build_notebook.py` |
-| [`DRIFTCALL/notebooks/colab_clone_and_train.ipynb`](DRIFTCALL/notebooks/colab_clone_and_train.ipynb) | Self-contained: clone → install → train one stage → push LoRA | `python3 DRIFTCALL/notebooks/build_colab_train_notebook.py` |
+| [`notebooks/train_driftcall.ipynb`](notebooks/train_driftcall.ipynb) | Full curriculum (concatenation of `cells/step_NN_*.py`) | `python3 notebooks/build_notebook.py` |
+| [`notebooks/colab_clone_and_train.ipynb`](notebooks/colab_clone_and_train.ipynb) | Self-contained: clone → install → train one stage → push LoRA | `python3 notebooks/build_colab_train_notebook.py` |
 
 Both builders produce byte-identical `.ipynb` on each run (no
 `execution_count`, no outputs, no timestamps) so PRs stay reviewable.
@@ -430,7 +417,7 @@ flowchart LR
 The same primitive — *deterministic agent · invariant intent · mutating
 environment* — generalises to emergency dispatch, multilingual classrooms,
 and a plumbing layer for the entire Indic voice stack. Detail: §6 of
-[`DRIFTCALL/BLOG.md`](DRIFTCALL/BLOG.md).
+[`BLOG.md`](BLOG.md).
 
 ---
 
@@ -438,12 +425,12 @@ and a plumbing layer for the entire Indic voice stack. Detail: §6 of
 
 | Doc | What |
 |---|---|
-| [`DRIFTCALL/DESIGN.md`](DRIFTCALL/DESIGN.md) | Master spec, v1.0 LOCKED |
-| [`DRIFTCALL/CLAUDE.md`](DRIFTCALL/CLAUDE.md) | Phase-C build plan, 25 numbered cells |
-| [`DRIFTCALL/BLOG.md`](DRIFTCALL/BLOG.md) | HF blog post (full results + 6 demo episodes) |
-| [`DRIFTCALL/docs/modules/`](DRIFTCALL/docs/modules) | 14 per-module specs (≥2 critic passes each) |
-| [`DRIFTCALL/docs/tests/`](DRIFTCALL/docs/tests) | 14 per-module test plans |
-| [`DRIFTCALL/openenv.yaml`](DRIFTCALL/openenv.yaml) | OpenEnv v1.0 manifest |
+| [`DESIGN.md`](DESIGN.md) | Master spec, v1.0 LOCKED |
+| [`CLAUDE.md`](CLAUDE.md) | Phase-C build plan, 25 numbered cells |
+| [`BLOG.md`](BLOG.md) | HF blog post (full results + 6 demo episodes) |
+| [`docs/modules/`](docs/modules) | 14 per-module specs (≥2 critic passes each) |
+| [`docs/tests/`](docs/tests) | 14 per-module test plans |
+| [`openenv.yaml`](openenv.yaml) | OpenEnv v1.0 manifest |
 
 ---
 
@@ -471,6 +458,6 @@ Hackathon** (India, April 2026) by **Team DGX-AI**.
 
 ### ✦
 
-[**→ Open the live Space**](https://huggingface.co/spaces/saumilyajj/driftcall) &nbsp;·&nbsp; [**→ Read the blog**](DRIFTCALL/BLOG.md) &nbsp;·&nbsp; [**→ Pull the LoRA**](https://huggingface.co/DGXAI/gemma-3n-e2b-driftcall-lora) &nbsp;·&nbsp; [**→ Train your own**](https://colab.research.google.com/github/saumilyagupta/openenv-DGXAI/blob/main/DRIFTCALL/notebooks/colab_clone_and_train.ipynb)
+[**→ Open the live Space**](https://huggingface.co/spaces/saumilyajj/driftcall) &nbsp;·&nbsp; [**→ Read the blog**](BLOG.md) &nbsp;·&nbsp; [**→ Pull the LoRA**](https://huggingface.co/DGXAI/gemma-3n-e2b-driftcall-lora) &nbsp;·&nbsp; [**→ Train your own**](https://colab.research.google.com/github/saumilyagupta/DriftCall/blob/main/notebooks/colab_clone_and_train.ipynb)
 
 </div>
