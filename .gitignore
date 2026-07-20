@@ -1,25 +1,53 @@
-# Root ignores for the DriftCall-only repo.
-# Product-level ignores live in DRIFTCALL/.gitignore.
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
 
-# OS / editor
+# Virtual environments
+.venv/
+venv/
+env/
+.envrc
+
+# Secrets
+.env
+.env.*
+.driftcall.env
+!.env.example
+# cells/_secrets.py IS tracked — user runs in a private repo and accepts the
+# risk of hardcoded credentials. Rotate by editing the file then re-pushing.
+# To scrub from history if repo ever goes public:
+#   git filter-repo --path cells/_secrets.py --invert-paths
+
+# Editor / OS
 .DS_Store
 .idea/
 .vscode/
 
-# Python / tooling at repo root
-.venv/
-venv/
-__pycache__/
-*.py[cod]
+# Test + coverage artifacts
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 .coverage.*
+coverage.xml
 htmlcov/
 
-# Secrets (never commit at root)
-.env
-.env.*
-.driftcall.env
-!.env.example
+# Jupyter
+.ipynb_checkpoints/
+
+# Training artifacts
+checkpoints/
+.cache/
+unsloth_compiled_cache/
+wandb/
+mlruns/
+
+# Logs
+logs/
+
+# Build
+build/
+dist/
+*.egg-info/
